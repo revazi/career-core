@@ -142,6 +142,8 @@ Port the mature deterministic resume checks and aggregation policy without frame
 - strengths, weaknesses, actions, and warnings derived only from checks
 - deterministic result fixtures corresponding to Django behavior
 - compatibility/difference report for the selected Django policy version
+- additive `career.resume_analysis.v1` and `career resume analyze` contracts while preserving Phase 1 evaluation semantics
+- authoritative scoring from `resume_normalization_v1` deterministic baseline only
 
 ### Out of scope
 
@@ -163,6 +165,8 @@ Port the mature deterministic resume checks and aggregation policy without frame
 - overall/category scores remain in range for every adversarial fixture
 - Rust golden fixtures demonstrate declared parity or document intentional differences
 - no recommendation contains facts absent from the source/check evidence
+- existing `career.resume_evaluation.v1` fixtures remain byte-equivalent
+- assisted normalization values cannot enter authoritative analysis
 
 ## Phase 4 — Job normalization and conservative matching
 

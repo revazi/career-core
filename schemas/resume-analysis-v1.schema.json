@@ -1,0 +1,562 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/revazi/career-core/main/schemas/resume-analysis-v1.schema.json",
+  "title": "career-core deterministic resume analysis v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "policy_version",
+    "reference_policy_version",
+    "normalization_policy_version",
+    "core_version",
+    "document_id",
+    "scoring_weights",
+    "overall_score",
+    "category_scores",
+    "summary",
+    "checks",
+    "confidence_context",
+    "top_strengths",
+    "top_weaknesses",
+    "improvement_actions",
+    "warnings"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "career.resume_analysis.v1"
+    },
+    "policy_version": {
+      "const": "resume_analysis_v1"
+    },
+    "reference_policy_version": {
+      "const": "deterministic_v2"
+    },
+    "normalization_policy_version": {
+      "const": "resume_normalization_v1"
+    },
+    "core_version": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "document_id": {
+      "type": ["string", "null"],
+      "maxLength": 128
+    },
+    "scoring_weights": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "format_ats",
+        "content_strength",
+        "experience_impact",
+        "skills_coverage",
+        "presentation",
+        "completeness"
+      ],
+      "properties": {
+        "format_ats": { "const": 20 },
+        "content_strength": { "const": 25 },
+        "experience_impact": { "const": 20 },
+        "skills_coverage": { "const": 15 },
+        "presentation": { "const": 10 },
+        "completeness": { "const": 10 }
+      }
+    },
+    "overall_score": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "category_scores": {
+      "$ref": "#/$defs/categoryValues"
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 300
+    },
+    "checks": {
+      "type": "array",
+      "minItems": 18,
+      "maxItems": 18,
+      "prefixItems": [
+        {
+          "allOf": [
+            { "$ref": "#/$defs/check" },
+            { "properties": { "check_id": { "const": "contact_email_present" }, "category": { "const": "completeness" } } }
+          ]
+        },
+        {
+          "allOf": [
+            { "$ref": "#/$defs/check" },
+            { "properties": { "check_id": { "const": "contact_name_present" }, "category": { "const": "completeness" } } }
+          ]
+        },
+        {
+          "allOf": [
+            { "$ref": "#/$defs/check" },
+            { "properties": { "check_id": { "const": "contact_phone_or_link_present" }, "category": { "const": "completeness" } } }
+          ]
+        },
+        {
+          "allOf": [
+            { "$ref": "#/$defs/check" },
+            { "properties": { "check_id": { "const": "summary_present" }, "category": { "const": "content_strength" } } }
+          ]
+        },
+        {
+          "allOf": [
+            { "$ref": "#/$defs/check" },
+            { "properties": { "check_id": { "const": "experience_section_present" }, "category": { "const": "completeness" } } }
+          ]
+        },
+        {
+          "allOf": [
+            { "$ref": "#/$defs/check" },
+            { "properties": { "check_id": { "const": "education_section_present" }, "category": { "const": "completeness" } } }
+          ]
+        },
+        {
+          "allOf": [
+            { "$ref": "#/$defs/check" },
+            { "properties": { "check_id": { "const": "skills_section_present" }, "category": { "const": "skills_coverage" } } }
+          ]
+        },
+        {
+          "allOf": [
+            { "$ref": "#/$defs/check" },
+            { "properties": { "check_id": { "const": "experience_bullets_present" }, "category": { "const": "experience_impact" } } }
+          ]
+        },
+        {
+          "allOf": [
+            { "$ref": "#/$defs/check" },
+            { "properties": { "check_id": { "const": "experience_bullet_length_quality" }, "category": { "const": "experience_impact" } } }
+          ]
+        },
+        {
+          "allOf": [
+            { "$ref": "#/$defs/check" },
+            { "properties": { "check_id": { "const": "experience_date_ranges_present" }, "category": { "const": "presentation" } } }
+          ]
+        },
+        {
+          "allOf": [
+            { "$ref": "#/$defs/check" },
+            { "properties": { "check_id": { "const": "experience_chronology_consistency" }, "category": { "const": "presentation" } } }
+          ]
+        },
+        {
+          "allOf": [
+            { "$ref": "#/$defs/check" },
+            { "properties": { "check_id": { "const": "measurable_impact_in_bullets" }, "category": { "const": "experience_impact" } } }
+          ]
+        },
+        {
+          "allOf": [
+            { "$ref": "#/$defs/check" },
+            { "properties": { "check_id": { "const": "skills_count_quality" }, "category": { "const": "skills_coverage" } } }
+          ]
+        },
+        {
+          "allOf": [
+            { "$ref": "#/$defs/check" },
+            { "properties": { "check_id": { "const": "weak_phrasing_penalty" }, "category": { "const": "content_strength" } } }
+          ]
+        },
+        {
+          "allOf": [
+            { "$ref": "#/$defs/check" },
+            { "properties": { "check_id": { "const": "keyword_repetition_penalty" }, "category": { "const": "presentation" } } }
+          ]
+        },
+        {
+          "allOf": [
+            { "$ref": "#/$defs/check" },
+            { "properties": { "check_id": { "const": "ats_section_header_clarity" }, "category": { "const": "format_ats" } } }
+          ]
+        },
+        {
+          "allOf": [
+            { "$ref": "#/$defs/check" },
+            { "properties": { "check_id": { "const": "ats_line_density" }, "category": { "const": "format_ats" } } }
+          ]
+        },
+        {
+          "allOf": [
+            { "$ref": "#/$defs/check" },
+            { "properties": { "check_id": { "const": "parse_quality_proxy" }, "category": { "const": "format_ats" } } }
+          ]
+        }
+      ],
+      "items": false
+    },
+    "confidence_context": {
+      "$ref": "#/$defs/confidenceContext"
+    },
+    "top_strengths": {
+      "type": "array",
+      "maxItems": 3,
+      "items": {
+        "$ref": "#/$defs/finding"
+      }
+    },
+    "top_weaknesses": {
+      "type": "array",
+      "maxItems": 3,
+      "items": {
+        "$ref": "#/$defs/finding"
+      }
+    },
+    "improvement_actions": {
+      "type": "array",
+      "maxItems": 3,
+      "items": {
+        "$ref": "#/$defs/action"
+      }
+    },
+    "warnings": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 6,
+      "prefixItems": [
+        {
+          "allOf": [
+            { "$ref": "#/$defs/warning" },
+            { "properties": { "code": { "const": "general_ats_readiness_only" } } }
+          ]
+        },
+        {
+          "allOf": [
+            { "$ref": "#/$defs/warning" },
+            { "properties": { "code": { "const": "visual_layout_not_evaluated" } } }
+          ]
+        }
+      ],
+      "items": {
+        "$ref": "#/$defs/warning"
+      }
+    }
+  },
+  "$defs": {
+    "category": {
+      "enum": [
+        "format_ats",
+        "content_strength",
+        "experience_impact",
+        "skills_coverage",
+        "presentation",
+        "completeness"
+      ]
+    },
+    "categoryValues": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "format_ats",
+        "content_strength",
+        "experience_impact",
+        "skills_coverage",
+        "presentation",
+        "completeness"
+      ],
+      "properties": {
+        "format_ats": { "$ref": "#/$defs/score" },
+        "content_strength": { "$ref": "#/$defs/score" },
+        "experience_impact": { "$ref": "#/$defs/score" },
+        "skills_coverage": { "$ref": "#/$defs/score" },
+        "presentation": { "$ref": "#/$defs/score" },
+        "completeness": { "$ref": "#/$defs/score" }
+      }
+    },
+    "score": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "checkId": {
+      "enum": [
+        "contact_email_present",
+        "contact_name_present",
+        "contact_phone_or_link_present",
+        "summary_present",
+        "experience_section_present",
+        "education_section_present",
+        "skills_section_present",
+        "experience_bullets_present",
+        "experience_bullet_length_quality",
+        "experience_date_ranges_present",
+        "experience_chronology_consistency",
+        "measurable_impact_in_bullets",
+        "skills_count_quality",
+        "weak_phrasing_penalty",
+        "keyword_repetition_penalty",
+        "ats_section_header_clarity",
+        "ats_line_density",
+        "parse_quality_proxy"
+      ]
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["evidence_id", "kind", "source", "value"],
+      "properties": {
+        "evidence_id": {
+          "type": "string",
+          "pattern": "^resume\\.analysis\\.[a-z0-9_]+\\.(normalized_field|metric|parse_confidence|field_status)$",
+          "maxLength": 120
+        },
+        "kind": {
+          "enum": [
+            "normalized_field",
+            "derived_metric",
+            "parse_confidence",
+            "field_status"
+          ]
+        },
+        "source": {
+          "anyOf": [
+            { "type": "null" },
+            { "$ref": "resume-normalization-v1.schema.json#/$defs/sourceSpan" }
+          ]
+        },
+        "value": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 240
+        }
+      }
+    },
+    "check": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "check_id",
+        "category",
+        "raw_score",
+        "score",
+        "score_adjusted",
+        "passed",
+        "outcome",
+        "detection_status",
+        "explanation",
+        "evidence"
+      ],
+      "properties": {
+        "check_id": {
+          "$ref": "#/$defs/checkId"
+        },
+        "category": {
+          "$ref": "#/$defs/category"
+        },
+        "raw_score": {
+          "$ref": "#/$defs/score"
+        },
+        "score": {
+          "$ref": "#/$defs/score"
+        },
+        "score_adjusted": {
+          "type": "boolean"
+        },
+        "passed": {
+          "type": "boolean"
+        },
+        "outcome": {
+          "enum": ["passed", "failed", "inconclusive"]
+        },
+        "detection_status": {
+          "enum": ["detected", "likely_missing", "not_detected", null]
+        },
+        "explanation": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "evidence": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 2,
+          "items": {
+            "$ref": "#/$defs/evidence"
+          }
+        }
+      }
+    },
+    "coreField": {
+      "enum": ["contact", "summary", "experience", "education", "skills"]
+    },
+    "fieldStatus": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["field", "status"],
+      "properties": {
+        "field": {
+          "$ref": "#/$defs/coreField"
+        },
+        "status": {
+          "enum": ["detected", "likely_missing", "not_detected"]
+        }
+      }
+    },
+    "confidenceContext": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "score_source",
+        "parse_confidence",
+        "field_statuses",
+        "uncertain_fields",
+        "likely_missing_fields",
+        "fallbacks_applied",
+        "uncertain_score_floor",
+        "adjusted_check_ids",
+        "adjustment_applied"
+      ],
+      "properties": {
+        "score_source": {
+          "const": "deterministic_normalization_baseline"
+        },
+        "parse_confidence": {
+          "$ref": "resume-normalization-v1.schema.json#/$defs/confidence"
+        },
+        "field_statuses": {
+          "type": "array",
+          "minItems": 5,
+          "maxItems": 5,
+          "items": {
+            "$ref": "#/$defs/fieldStatus"
+          }
+        },
+        "uncertain_fields": {
+          "type": "array",
+          "maxItems": 5,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/coreField"
+          }
+        },
+        "likely_missing_fields": {
+          "type": "array",
+          "maxItems": 5,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/coreField"
+          }
+        },
+        "fallbacks_applied": {
+          "type": "array",
+          "maxItems": 3,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "experience_from_date_ranges",
+              "skills_from_comma_separated_lines",
+              "education_from_degree_phrases"
+            ]
+          }
+        },
+        "uncertain_score_floor": {
+          "const": 50
+        },
+        "adjusted_check_ids": {
+          "type": "array",
+          "maxItems": 18,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/checkId"
+          }
+        },
+        "adjustment_applied": {
+          "type": "boolean"
+        }
+      }
+    },
+    "findingStatus": {
+      "enum": ["confirmed", "provisional"]
+    },
+    "finding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["area", "title", "reason", "basis_check_id", "status"],
+      "properties": {
+        "area": {
+          "$ref": "#/$defs/category"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "basis_check_id": {
+          "$ref": "#/$defs/checkId"
+        },
+        "status": {
+          "$ref": "#/$defs/findingStatus"
+        }
+      }
+    },
+    "action": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["priority", "area", "action", "basis_check_id", "status"],
+      "properties": {
+        "priority": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 3
+        },
+        "area": {
+          "$ref": "#/$defs/category"
+        },
+        "action": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "basis_check_id": {
+          "$ref": "#/$defs/checkId"
+        },
+        "status": {
+          "$ref": "#/$defs/findingStatus"
+        }
+      }
+    },
+    "warning": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "message", "related_fields"],
+      "properties": {
+        "code": {
+          "enum": [
+            "general_ats_readiness_only",
+            "visual_layout_not_evaluated",
+            "parse_confidence_provisional",
+            "fields_not_detected",
+            "conservative_fallback_applied",
+            "normalization_output_truncated"
+          ]
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "related_fields": {
+          "type": "array",
+          "maxItems": 5,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/coreField"
+          }
+        }
+      }
+    }
+  }
+}

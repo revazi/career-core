@@ -62,6 +62,8 @@ Tests:
 - deterministic portions of `accounts/test_analysis_flows.py`
 - scoring-focused cases in `accounts/test_services.py`
 
+Phase 3 ports all 18 `deterministic_v2` check rules, category weights, aggregation, and confidence-aware missing-data adjustments. Selected complete and messy fixtures compare equivalent normalized facts against the reference scorer. Rust adds bounded source evidence and deterministic actions, preserves the Phase 1 evaluation contract separately, and never scores LLM-merged fields.
+
 Exclude:
 
 - `resume_interpretation.py`

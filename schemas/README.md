@@ -14,10 +14,11 @@ Current schemas:
 - `capabilities-v1.schema.json` — capability discovery
 - `resume-input-v1.schema.json` — bounded plain-text resume input
 - `resume-evaluation-v1.schema.json` — Phase 1 section-coverage evaluation
+- `resume-analysis-v1.schema.json` — full deterministic resume-readiness scoring, checks, evidence, uncertainty, and actions
 - `resume-normalization-v1.schema.json` — deterministic normalized resume, confidence, provenance, warnings, and enrichment eligibility
 - `resume-enrichment-proposal-v1.schema.json` — provider-neutral source-grounded proposal
 - `resume-enrichment-input-v1.schema.json` — resume plus explicit proposal envelope
 - `resume-enrichment-result-v1.schema.json` — preserved deterministic baseline plus separate assisted document and merge provenance
 - `error-v1.schema.json` — machine-readable core and CLI failures
 
-Composite enrichment schemas reference sibling schema files. Offline validators should resolve them from this directory; for `check-jsonschema`, pass `--base-uri "file://$(pwd)/schemas/"` from the repository root.
+Composite analysis and enrichment schemas reference sibling schema files. Offline validators should resolve them from this directory; for `check-jsonschema`, pass `--base-uri "file://$(pwd)/schemas/"` from the repository root.

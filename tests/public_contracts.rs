@@ -1,6 +1,7 @@
 use career_core::{
-    ResumeEnrichmentInputV1, ResumeEnrichmentResultV1, ResumeEvaluationV1, ResumeInputV1,
-    ResumeNormalizationV1, apply_resume_enrichment, evaluate_resume, normalize_resume,
+    ResumeAnalysisV1, ResumeEnrichmentInputV1, ResumeEnrichmentResultV1, ResumeEvaluationV1,
+    ResumeInputV1, ResumeNormalizationV1, analyze_resume, apply_resume_enrichment, evaluate_resume,
+    normalize_resume,
 };
 
 const SCHEMAS: &[(&str, &str)] = &[
@@ -15,6 +16,10 @@ const SCHEMAS: &[(&str, &str)] = &[
     (
         "resume-evaluation-v1",
         include_str!("../schemas/resume-evaluation-v1.schema.json"),
+    ),
+    (
+        "resume-analysis-v1",
+        include_str!("../schemas/resume-analysis-v1.schema.json"),
     ),
     (
         "resume-normalization-v1",
@@ -96,6 +101,77 @@ fn reviewed_resume_normalization_fixtures_match_the_typed_contract() {
             .unwrap_or_else(|error| panic!("{name} normalization failed: {error}"));
 
         assert_eq!(actual, expected, "typed fixture changed for {name}");
+    }
+}
+
+#[test]
+fn reviewed_resume_analysis_fixtures_match_the_typed_contract() {
+    for (name, input_json, expected_json) in [
+        (
+            "complete-analysis",
+            include_str!("../fixtures/resume/phase3/complete-analysis.input.json"),
+            include_str!("../fixtures/resume/phase3/complete-analysis.expected.json"),
+        ),
+        (
+            "messy-analysis",
+            include_str!("../fixtures/resume/phase3/messy-analysis.input.json"),
+            include_str!("../fixtures/resume/phase3/messy-analysis.expected.json"),
+        ),
+    ] {
+        let input: ResumeInputV1 = serde_json::from_str(input_json)
+            .unwrap_or_else(|error| panic!("invalid {name} input fixture: {error}"));
+        let expected: ResumeAnalysisV1 = serde_json::from_str(expected_json)
+            .unwrap_or_else(|error| panic!("invalid {name} expected fixture: {error}"));
+        let actual = analyze_resume(&input)
+            .unwrap_or_else(|error| panic!("{name} analysis failed: {error}"));
+
+        assert_eq!(actual, expected, "typed fixture changed for {name}");
+    }
+}
+
+#[test]
+fn selected_resume_analysis_scores_match_the_independent_reference_fixture() {
+    let reference: serde_json::Value = serde_json::from_str(include_str!(
+        "../fixtures/resume/phase3/deterministic-v2-reference.json"
+    ))
+    .expect("reference comparison fixture should be JSON");
+    assert_eq!(reference["reference_policy_version"], "deterministic_v2");
+    assert_eq!(reference["comparison_basis"], "equivalent_normalized_facts");
+
+    for (index, input_json) in [
+        include_str!("../fixtures/resume/phase3/complete-analysis.input.json"),
+        include_str!("../fixtures/resume/phase3/messy-analysis.input.json"),
+    ]
+    .into_iter()
+    .enumerate()
+    {
+        let input: ResumeInputV1 =
+            serde_json::from_str(input_json).expect("comparison input should be typed JSON");
+        let actual =
+            serde_json::to_value(analyze_resume(&input).expect("comparison input should analyze"))
+                .expect("analysis should serialize");
+        let expected = &reference["fixtures"][index];
+
+        assert_eq!(actual["overall_score"], expected["overall_score"]);
+        assert_eq!(actual["category_scores"], expected["category_scores"]);
+        let actual_checks = actual["checks"]
+            .as_array()
+            .expect("actual checks should be an array");
+        let expected_checks = expected["checks"]
+            .as_array()
+            .expect("reference checks should be an array");
+        assert_eq!(actual_checks.len(), expected_checks.len());
+        for (actual_check, expected_check) in actual_checks.iter().zip(expected_checks) {
+            assert_eq!(actual_check["check_id"], expected_check["id"]);
+            assert_eq!(actual_check["category"], expected_check["category"]);
+            assert_eq!(actual_check["score"], expected_check["score"]);
+            assert_eq!(actual_check["passed"], expected_check["passed"]);
+            assert_eq!(
+                actual_check["detection_status"],
+                expected_check["detection_status"]
+            );
+            assert_eq!(actual_check["explanation"], expected_check["details"]);
+        }
     }
 }
 

@@ -60,6 +60,13 @@ jobs:
           cmp /tmp/resume-evaluation.json fixtures/resume/phase1/complete-sections.expected.json
 
           cargo run --quiet --locked -p career-cli -- \
+            resume analyze \
+            --input fixtures/resume/phase3/complete-analysis.input.json \
+            > /tmp/resume-analysis.json
+          python3 -m json.tool /tmp/resume-analysis.json > /dev/null
+          cmp /tmp/resume-analysis.json fixtures/resume/phase3/complete-analysis.expected.json
+
+          cargo run --quiet --locked -p career-cli -- \
             resume normalize \
             --input fixtures/resume/phase2/complete-normalization.input.json \
             > /tmp/resume-normalization.json

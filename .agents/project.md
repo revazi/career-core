@@ -41,7 +41,8 @@ The existing Django project at `../resume-ai` remains an independent application
 - **check**: one versioned scoring rule with score, status, explanation, and evidence
 - **evidence**: a bounded source-grounded reference supporting a result
 - **warning**: uncertainty or limitation that a consumer must not hide
-- **evaluation**: deterministic resume checks and aggregate score
+- **section evaluation**: the preserved Phase 1 core-header coverage operation
+- **resume analysis**: the full deterministic readiness checks, category scores, evidence, findings, actions, and limitations
 - **match**: deterministic comparison between normalized resume and job evidence
 - **capability**: a versioned operation advertised as available or planned
 - **adapter**: CLI, Swift binding, or other boundary depending on the core

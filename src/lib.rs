@@ -60,6 +60,12 @@ pub fn capabilities() -> Capabilities {
                     .to_owned(),
             },
             Capability {
+                id: "resume.analyze".to_owned(),
+                status: CapabilityStatus::Available,
+                summary: "Analyze resume readiness with 18 explainable deterministic checks and confidence-aware evidence."
+                    .to_owned(),
+            },
+            Capability {
                 id: "resume.normalize".to_owned(),
                 status: CapabilityStatus::Available,
                 summary: "Normalize bounded resume text into source-grounded deterministic facts and confidence."
@@ -110,6 +116,7 @@ mod tests {
             vec![
                 "core.capabilities",
                 "resume.evaluate",
+                "resume.analyze",
                 "resume.normalize",
                 "resume.enrich",
             ]

@@ -69,6 +69,24 @@ career resume evaluate --input <path|-> [--format json|text]
 
 The input and result contracts are `career.resume_input.v1` and `career.resume_evaluation.v1`. This operation evaluates core-section header coverage only. Agent explanations must retain the limited-scope warning and must not label this score as complete resume quality or ATS compatibility.
 
+## Available Phase 3 operation
+
+```bash
+career resume analyze --input <path|-> [--format json|text]
+```
+
+Input is `career.resume_input.v1`; output is `career.resume_analysis.v1`. This is the full deterministic resume-readiness operation. It always scores `resume_normalization_v1` deterministic baseline facts and cannot consume an assisted document.
+
+Agents must:
+
+- distinguish `raw_score` from confidence-adjusted `score`
+- describe `inconclusive` checks and `provisional` findings as unverified
+- cite `basis_check_id` and bounded evidence for actions or explanations
+- preserve the general-ATS and visual-layout warnings
+- never describe the result as a proprietary ATS ranking or a hiring-outcome prediction
+
+`resume evaluate` remains the unchanged Phase 1 section-coverage operation; do not present it as an alias for `resume analyze`.
+
 ## Available Phase 2 operations
 
 ```bash
@@ -86,7 +104,7 @@ An agent may attempt external enrichment only when all of these are true:
 
 The agent then submits one `career.resume_enrichment_input.v1` envelope to `resume enrich`. It must copy values from source text, populate only `target_sections`, and leave ambiguous targets empty. Invalid proposals are not repaired by guesswork.
 
-`resume enrich` performs no model call. It returns the unchanged deterministic normalization under `baseline` and accepted values under `assisted_document`. Authoritative scores must consume the baseline. If the external model or validation fails, the agent must continue with the deterministic normalization rather than treating the operation as failed.
+`resume enrich` performs no model call. It returns the unchanged deterministic normalization under `baseline` and accepted values under `assisted_document`. Authoritative scores must consume the baseline. `resume analyze` enforces this by accepting only the original resume input and independently rerunning deterministic normalization. If the external model or validation fails, the agent must continue with the deterministic normalization rather than treating the operation as failed.
 
 ## Distribution stages
 

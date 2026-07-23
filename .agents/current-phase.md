@@ -2,86 +2,81 @@
 
 ## Most recently completed phase
 
-**Phase 2 — Deterministic resume normalization and provider-neutral assisted boundary**
+**Phase 3 — Explainable resume evaluation parity**
 
 ## Status
 
-Complete. Phase 3 has not started.
+Complete. Phase 4 has not started.
 
-## Implemented
+## Implemented so far
 
-- `career.resume_normalization.v1` and `resume_normalization_v1` deterministic contracts.
-- Bounded contact, summary, experience, education, skills, projects, and certifications structures.
-- Source spans and explicit transformations for every non-empty normalized value.
-- Shared explicit whole-line aliases for all six sections.
-- Conservative experience blocks plus experience, skills, and education fallback heuristics.
-- Five-signal integer parser confidence with unknown/low/medium/high labels and explicit gates.
-- Detected, likely-missing, and not-detected field statuses without converting uncertainty into absence.
-- Stable section metadata, fallback identifiers, truncation metadata, and warnings.
-- `career resume normalize --input <path|-> --format json|text`.
-- `career.resume_enrichment_proposal.v1`, input, result, and policy contracts.
-- Low-confidence-and-empty-field enrichment eligibility in canonical target order.
-- Strict proposal shape, character, list, entry, target, and source-grounding validation.
-- Conservative empty-target-only merge with deterministic/external/not-available provenance.
-- A complete immutable deterministic baseline plus a separately labeled assisted document.
-- Preserved deterministic confidence and explicit warning that assisted fields are non-authoritative.
-- `career resume enrich --input <path|-> --format json|text` with no provider or network behavior.
-- Updated agent guidance for opt-in host orchestration, failure isolation, and baseline authority.
-- Synthetic clean, messy, source-grounded proposal, Unicode, sparse, prompt-like, limit, and invalid-output coverage.
-- Public schemas, contract documentation, CLI golden fixtures, and CI smoke checks.
-- Capability discovery marks `resume.normalize` and `resume.enrich` available.
+- Preserved `career.resume_evaluation.v1` and `career resume evaluate` as the unchanged Phase 1 section-coverage operation.
+- Added additive `career.resume_analysis.v1`, `resume_analysis_v1`, and `career resume analyze` contracts.
+- Full analysis independently runs `resume_normalization_v1` and scores only `deterministic_document`.
+- Added all 18 `deterministic_v2` scoring rules in canonical order.
+- Added six integer category scores with weights 20/25/20/15/10/10.
+- Added deterministic round-half-to-even category and weighted overall aggregation.
+- Added raw and adjusted check scores, pass states, conclusive/inconclusive outcomes, and field detection statuses.
+- Added the fixed low/unknown-confidence missing-data floor of 50 while preserving raw scores.
+- Added bounded source/metric/confidence/status evidence for every check.
+- Added confirmed/provisional strengths and weaknesses plus check-derived bounded improvement actions.
+- Added mandatory general-ATS and visual-layout limitations.
+- Added synthetic complete and messy golden fixtures with explicit reference provenance.
+- Added public schema, contract documentation, CLI JSON/text behavior, and agent guidance.
 
-## Architecture decision
+## Compatibility and reference scope
 
-The root library still has no API-key, provider, prompt, model-call, or network behavior. An opted-in agent or application owns those concerns. The core emits eligible targets, validates an explicit proposal as untrusted data, and creates a separate assisted view. Future authoritative scoring consumes the deterministic baseline only.
+The selected reference is Django `deterministic_v2` from:
 
-## Reference scope
+- `../resume-ai/accounts/services/resume_scoring.py`
+- `../resume-ai/accounts/services/resume_analysis_response.py`
+- `../resume-ai/accounts/services/resume_analysis_preview.py`
+- `ResumeScoringServiceTests` in `../resume-ai/accounts/test_services.py`
+- deterministic normalization fixture coverage in `../resume-ai/accounts/test_normalization_fixtures.py`
 
-Behavior and bounds were intentionally adapted from:
+For the complete and messy fixtures, all 18 check scores, pass states, detection statuses, explanations, six category scores, and overall score match the reference when supplied equivalent normalized facts.
 
-- `../resume-ai/accounts/services/resume_normalization.py`
-- `../resume-ai/accounts/services/resume_normalization_fallback_validation.py`
-- `../resume-ai/accounts/services/normalization_fallback_merge.py`
-- normalization tests and synthetic fixtures under `../resume-ai/accounts/`
-- reference versions `resume_normalization_v7`, `resume_normalization_llm_fallback_v1`, and `resume_normalization_fallback_merge_v1`
+Intentional differences:
 
-Provider execution, prompts, Django persistence, and score coupling were not ported. The Rust baseline/assisted split, date-as-phone rejection, and education-date grouping are intentional differences. This is selected fixture/rule adaptation, not full Django policy parity.
+- Rust scores only its independently reproducible deterministic normalization baseline.
+- Django LLM-merged normalization values are not an authoritative Rust scoring input.
+- Rust adds source spans, raw scores, explicit outcomes, basis check IDs, provisional strength labels, and deterministic actions.
+- Django persistence IDs, timestamps, credits, model calls, and API envelopes are excluded.
+- End-to-end raw-text parity is limited by documented normalization-policy differences.
 
 ## Verification completed locally
 
 - `cargo fmt --all --check`
 - `cargo clippy --workspace --all-targets --all-features -- -D warnings`
-- `cargo test --workspace --all-features --locked` — 47 tests passed
+- `cargo test --workspace --all-features --locked` — 61 tests passed
 - `cargo build --workspace --all-features --locked`
 - rustdoc with warnings denied
-- capability JSON and text smoke checks
-- Phase 1 evaluation goldens remain unchanged
-- Phase 2 deterministic and assisted JSON/text CLI checks pass
-- deterministic normalization and enrichment goldens match byte-for-byte
-- enrichment `baseline` exactly equals the independent deterministic messy-resume golden
+- capability JSON/text checks expose `resume.analyze` as available
+- Phase 1 evaluation and all Phase 2 normalization/enrichment goldens remain byte-equivalent
+- complete and messy Phase 3 JSON goldens match byte-for-byte; text output retains provisional and ATS-limit warnings
 - all schemas pass Draft 2020-12 metaschema validation
-- input, normalization, proposal, enrichment-input, enrichment-result, and representative error documents validate with `check-jsonschema`
-- all six Rust section alias sets exactly match `resume_normalization_v7`
-- clean-clone formatting, Clippy, 47-test, locked-build, and all three CLI golden checks
-- regex dependency family declares Rust 1.65 MSRV and permissive MIT/Apache/Unlicense-compatible licensing
-- all relative Markdown links resolve
-- README JSON and CI YAML parse
-- Agent Skill metadata and size checks pass
+- Phase 3 inputs and outputs validate with `check-jsonschema`; representative earlier contracts remain valid
+- compact reference projection regenerated by executing Django `deterministic_v2` and matched byte-for-byte
+- public-contract tests compare every reference check score, pass state, detection status, explanation, category score, and overall score
+- score, evidence, finding, action, warning, Unicode, prompt-like, unknown/low-confidence, explicit-empty, truncation, and adversarial bounds pass
+- dependency tree contains no network, provider, TLS, async-runtime, or telemetry stack
+- relative Markdown links, README JSON, CI YAML, and Agent Skill checks pass
 - credential-pattern scan reports no findings
 - Fallow changed-code and security checks report no findings; Fallow does not currently analyze Rust source for health metrics
 - `git diff --check`
-- GitHub Actions PR run `30002160729` — passed, including Rust 1.85 compatibility, 47 tests, locked build, and all CLI golden checks
+- clean-clone formatting, Clippy, 61-test, locked-build, rustdoc, capabilities, and all four CLI golden checks pass
+- GitHub Actions PR run `30005243174` — passed, including Rust 1.85 compatibility, 61 tests, locked build, and all CLI golden checks
 
 ## Explicitly unavailable
 
-- complete `deterministic_v2` resume evaluation and ATS-readiness checks
+- proprietary ATS ranking or employer-specific prediction
+- visual PDF/DOCX layout inspection, conversion, or OCR
+- LLM interpretation or automatic resume rewriting
 - job-description normalization and resume-to-job matching
-- provider clients, model calls, prompt construction, or API-key handling
-- automatic rewriting or mutation of source resumes
-- PDF/DOCX ingestion or OCR
+- provider clients, prompts, model calls, or API-key handling
 - Swift bindings and SwiftUI host orchestration
 - MCP or provider-specific adapters
 
 ## Next phase after approval
 
-Phase 3 will port explainable deterministic resume evaluation and ATS-readiness checks against the deterministic normalization contract. Do not begin Phase 3 until Phase 2 is green, reviewed, merged, and explicitly approved.
+Phase 4 will add bounded job-description normalization and conservative resume-to-job matching. Do not begin Phase 4 until Phase 3 is fully verified, reviewed, merged, and explicitly approved.
