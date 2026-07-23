@@ -1,12 +1,12 @@
 # Current phase
 
-## Active sub-phase
+## Most recently completed sub-phase
 
 **Phase 4A — Deterministic job-description normalization**
 
 ## Status
 
-Implementation and clean-clone verification are complete on `feature/job-normalization-v1`. GitHub Actions and review are pending. Phase 4B matching has not started.
+Complete. Phase 4B matching has not started.
 
 ## Approved scope
 
@@ -76,8 +76,7 @@ Provider fallback execution, fallback merge, Django models/API fields, URL fetch
 - Fallow changed-code and security checks report no findings; Fallow does not currently analyze Rust source for health metrics
 - `git diff --check`
 - clean-clone formatting, Clippy, 79-test, locked-build, rustdoc, capabilities, all resume goldens, and the job-normalization golden pass
-
-GitHub Actions, including Rust 1.85 compatibility, remains pending until the branch is pushed.
+- GitHub Actions PR run `30008565537` — passed, including Rust 1.85 compatibility, 79 tests, locked build, and all CLI golden checks
 
 ## Next sub-phase after approval
 
