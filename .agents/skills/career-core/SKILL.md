@@ -26,13 +26,31 @@ From this repository:
 cargo run --quiet -p career-cli -- capabilities
 ```
 
-JSON is the default. Invoke only entries whose `status` is `available`. During repository bootstrap, only `core.capabilities` is available; resume evaluation and job matching are planned.
+JSON is the default. Invoke only entries whose `status` is `available`. `core.capabilities` and the bounded `resume.evaluate` operation are available; job matching remains planned.
 
 For human-readable discovery:
 
 ```bash
 cargo run --quiet -p career-cli -- capabilities --format text
 ```
+
+## Evaluate supported resume text
+
+Prepare `career.resume_input.v1` JSON with a `text` field containing text already extracted from the resume. Then run:
+
+```bash
+career resume evaluate --input /path/to/input.json
+```
+
+From this repository:
+
+```bash
+cargo run --quiet -p career-cli -- resume evaluate --input /path/to/input.json
+```
+
+Use `--input -` for stdin and `--format text` only for human display. The JSON result is authoritative for agent decisions.
+
+The Phase 1 score measures recognized Summary, Experience, Education, and Skills header coverage only. Always communicate the `limited_evaluation_scope` warning; never present the score as complete resume quality or ATS compatibility.
 
 ## Rules
 

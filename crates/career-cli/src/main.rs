@@ -1,10 +1,22 @@
 #![forbid(unsafe_code)]
 
-use std::io::{self, Write};
+use std::fs::File;
+use std::io::{self, Read, Write};
+use std::path::PathBuf;
 use std::process::ExitCode;
 
-use career_core::{Capabilities, CapabilityStatus, capabilities};
-use clap::{Parser, Subcommand, ValueEnum};
+use career_core::{
+    Capabilities, CapabilityStatus, ERROR_SCHEMA_VERSION, ResumeDetectionStatusV1,
+    ResumeEvaluationErrorV1, ResumeEvaluationV1, ResumeInputV1, capabilities, evaluate_resume,
+};
+use clap::{Parser, Subcommand, ValueEnum, error::ErrorKind};
+use serde_json::json;
+
+const MAX_CLI_INPUT_BYTES: usize = 262_144;
+const EXIT_INPUT_IO: u8 = 3;
+const EXIT_INVALID_JSON: u8 = 4;
+const EXIT_INVALID_INPUT: u8 = 5;
+const EXIT_OUTPUT_FAILURE: u8 = 6;
 
 #[derive(Debug, Parser)]
 #[command(
@@ -25,6 +37,24 @@ enum Command {
         #[arg(long, value_enum, default_value_t = OutputFormat::Json)]
         format: OutputFormat,
     },
+    /// Evaluate resume input.
+    Resume {
+        #[command(subcommand)]
+        command: ResumeCommand,
+    },
+}
+
+#[derive(Debug, Subcommand)]
+enum ResumeCommand {
+    /// Evaluate recognized core-section coverage from versioned JSON input.
+    Evaluate {
+        /// Read input JSON from this path, or use `-` for stdin.
+        #[arg(long)]
+        input: PathBuf,
+        /// Select machine-readable JSON or concise human-readable text.
+        #[arg(long, value_enum, default_value_t = OutputFormat::Json)]
+        format: OutputFormat,
+    },
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, ValueEnum)]
@@ -33,43 +63,249 @@ enum OutputFormat {
     Text,
 }
 
+#[derive(Debug)]
+enum CliFailure {
+    Adapter {
+        code: &'static str,
+        message: String,
+        field_path: Option<&'static str>,
+        exit_code: u8,
+    },
+    Evaluation(ResumeEvaluationErrorV1),
+}
+
+impl CliFailure {
+    fn invalid_arguments() -> Self {
+        Self::Adapter {
+            code: "invalid_arguments",
+            message: "Command arguments were invalid. Run `career --help` for usage.".to_owned(),
+            field_path: None,
+            exit_code: 2,
+        }
+    }
+
+    fn input_read_failed() -> Self {
+        Self::Adapter {
+            code: "input_read_failed",
+            message: "Could not read resume input.".to_owned(),
+            field_path: Some("input"),
+            exit_code: EXIT_INPUT_IO,
+        }
+    }
+
+    fn cli_input_too_large(actual_bytes: usize) -> Self {
+        Self::Adapter {
+            code: "cli_input_too_large",
+            message: format!(
+                "CLI input must contain at most {MAX_CLI_INPUT_BYTES} bytes; received more than that limit ({actual_bytes} bytes read)."
+            ),
+            field_path: Some("input"),
+            exit_code: EXIT_INPUT_IO,
+        }
+    }
+
+    fn invalid_json(error: &serde_json::Error) -> Self {
+        Self::Adapter {
+            code: "invalid_json",
+            message: format!(
+                "Resume input must be valid career.resume_input.v1 JSON (line {}, column {}).",
+                error.line(),
+                error.column()
+            ),
+            field_path: Some("input"),
+            exit_code: EXIT_INVALID_JSON,
+        }
+    }
+
+    fn output_failure() -> Self {
+        Self::Adapter {
+            code: "output_write_failed",
+            message: "Could not write command output.".to_owned(),
+            field_path: None,
+            exit_code: EXIT_OUTPUT_FAILURE,
+        }
+    }
+
+    fn exit_code(&self) -> u8 {
+        match self {
+            Self::Adapter { exit_code, .. } => *exit_code,
+            Self::Evaluation(_) => EXIT_INVALID_INPUT,
+        }
+    }
+
+    fn report(&self, format: OutputFormat, error_output: &mut impl Write) {
+        let result = match (self, format) {
+            (
+                Self::Adapter {
+                    code,
+                    message,
+                    field_path,
+                    ..
+                },
+                OutputFormat::Json,
+            ) => {
+                let document = json!({
+                    "schema_version": ERROR_SCHEMA_VERSION,
+                    "code": code,
+                    "message": message,
+                    "field_path": field_path,
+                });
+                serde_json::to_writer_pretty(&mut *error_output, &document)
+                    .and_then(|()| writeln!(error_output).map_err(serde_json::Error::io))
+            }
+            (Self::Evaluation(error), OutputFormat::Json) => {
+                serde_json::to_writer_pretty(&mut *error_output, error)
+                    .and_then(|()| writeln!(error_output).map_err(serde_json::Error::io))
+            }
+            (
+                Self::Adapter {
+                    code,
+                    message,
+                    field_path,
+                    ..
+                },
+                OutputFormat::Text,
+            ) => writeln!(
+                error_output,
+                "career [{code}]: {message}{}",
+                field_path
+                    .map(|path| format!(" (field: {path})"))
+                    .unwrap_or_default()
+            )
+            .map_err(serde_json::Error::io),
+            (Self::Evaluation(error), OutputFormat::Text) => writeln!(
+                error_output,
+                "career [{}]: {} (field: {})",
+                error.code.as_str(),
+                error.message,
+                error.field_path
+            )
+            .map_err(serde_json::Error::io),
+        };
+
+        let _ = result;
+    }
+}
+
 fn main() -> ExitCode {
-    match run(Cli::parse(), &mut io::stdout().lock()) {
+    let cli = match Cli::try_parse() {
+        Ok(cli) => cli,
+        Err(error)
+            if matches!(
+                error.kind(),
+                ErrorKind::DisplayHelp | ErrorKind::DisplayVersion
+            ) =>
+        {
+            return if error.print().is_ok() {
+                ExitCode::SUCCESS
+            } else {
+                ExitCode::from(EXIT_OUTPUT_FAILURE)
+            };
+        }
+        Err(_) => {
+            let error = CliFailure::invalid_arguments();
+            error.report(OutputFormat::Json, &mut io::stderr().lock());
+            return ExitCode::from(error.exit_code());
+        }
+    };
+    let output_format = cli.output_format();
+    let result = run(cli, &mut io::stdin().lock(), &mut io::stdout().lock());
+
+    match result {
         Ok(()) => ExitCode::SUCCESS,
         Err(error) => {
-            eprintln!("career: {error}");
-            ExitCode::FAILURE
+            let exit_code = error.exit_code();
+            error.report(output_format, &mut io::stderr().lock());
+            ExitCode::from(exit_code)
         }
     }
 }
 
-fn run(cli: Cli, output: &mut impl Write) -> Result<(), Box<dyn std::error::Error>> {
+impl Cli {
+    fn output_format(&self) -> OutputFormat {
+        match &self.command {
+            Command::Capabilities { format } => *format,
+            Command::Resume {
+                command: ResumeCommand::Evaluate { format, .. },
+            } => *format,
+        }
+    }
+}
+
+fn run(
+    cli: Cli,
+    standard_input: &mut impl Read,
+    output: &mut impl Write,
+) -> Result<(), CliFailure> {
     match cli.command {
         Command::Capabilities { format } => {
             let document = capabilities();
             match format {
-                OutputFormat::Json => {
-                    serde_json::to_writer_pretty(&mut *output, &document)?;
-                    writeln!(output)?;
-                }
-                OutputFormat::Text => write_capabilities_text(output, &document)?,
+                OutputFormat::Json => write_json(output, &document),
+                OutputFormat::Text => write_capabilities_text(output, &document),
+            }
+        }
+        Command::Resume {
+            command: ResumeCommand::Evaluate { input, format },
+        } => {
+            let input_bytes = read_input(&input, standard_input)?;
+            let resume_input = serde_json::from_slice::<ResumeInputV1>(&input_bytes)
+                .map_err(|error| CliFailure::invalid_json(&error))?;
+            let evaluation = evaluate_resume(&resume_input).map_err(CliFailure::Evaluation)?;
+            match format {
+                OutputFormat::Json => write_json(output, &evaluation),
+                OutputFormat::Text => write_resume_evaluation_text(output, &evaluation),
             }
         }
     }
-
-    Ok(())
 }
 
-fn write_capabilities_text(output: &mut impl Write, document: &Capabilities) -> io::Result<()> {
-    writeln!(output, "career-core {}", document.core_version)?;
-    writeln!(output, "schema: {}", document.schema_version)?;
-    writeln!(output, "deterministic: {}", document.deterministic)?;
+fn read_input(path: &PathBuf, standard_input: &mut impl Read) -> Result<Vec<u8>, CliFailure> {
+    if path.as_os_str() == "-" {
+        read_bounded(standard_input)
+    } else {
+        let mut file = File::open(path).map_err(|_| CliFailure::input_read_failed())?;
+        read_bounded(&mut file)
+    }
+}
+
+fn read_bounded(reader: &mut impl Read) -> Result<Vec<u8>, CliFailure> {
+    let mut bytes = Vec::new();
+    reader
+        .take((MAX_CLI_INPUT_BYTES + 1) as u64)
+        .read_to_end(&mut bytes)
+        .map_err(|_| CliFailure::input_read_failed())?;
+
+    if bytes.len() > MAX_CLI_INPUT_BYTES {
+        return Err(CliFailure::cli_input_too_large(bytes.len()));
+    }
+
+    Ok(bytes)
+}
+
+fn write_json(output: &mut impl Write, document: &impl serde::Serialize) -> Result<(), CliFailure> {
+    serde_json::to_writer_pretty(&mut *output, document)
+        .map_err(|_| CliFailure::output_failure())?;
+    writeln!(output).map_err(|_| CliFailure::output_failure())
+}
+
+fn write_capabilities_text(
+    output: &mut impl Write,
+    document: &Capabilities,
+) -> Result<(), CliFailure> {
+    writeln!(output, "career-core {}", document.core_version)
+        .map_err(|_| CliFailure::output_failure())?;
+    writeln!(output, "schema: {}", document.schema_version)
+        .map_err(|_| CliFailure::output_failure())?;
+    writeln!(output, "deterministic: {}", document.deterministic)
+        .map_err(|_| CliFailure::output_failure())?;
     writeln!(
         output,
         "network requests: {}",
         document.performs_network_requests
-    )?;
-    writeln!(output, "capabilities:")?;
+    )
+    .map_err(|_| CliFailure::output_failure())?;
+    writeln!(output, "capabilities:").map_err(|_| CliFailure::output_failure())?;
 
     for capability in &document.capabilities {
         let status = match capability.status {
@@ -80,7 +316,43 @@ fn write_capabilities_text(output: &mut impl Write, document: &Capabilities) -> 
             output,
             "  - {} [{}]: {}",
             capability.id, status, capability.summary
-        )?;
+        )
+        .map_err(|_| CliFailure::output_failure())?;
+    }
+
+    Ok(())
+}
+
+fn write_resume_evaluation_text(
+    output: &mut impl Write,
+    evaluation: &ResumeEvaluationV1,
+) -> Result<(), CliFailure> {
+    writeln!(
+        output,
+        "Resume section-coverage evaluation: {}/100",
+        evaluation.score
+    )
+    .map_err(|_| CliFailure::output_failure())?;
+
+    for check in &evaluation.checks {
+        let status = match check.status {
+            ResumeDetectionStatusV1::DetectedWithContent => "detected with content",
+            ResumeDetectionStatusV1::DetectedWithoutContent => "detected without content",
+            ResumeDetectionStatusV1::NotDetected => "not detected",
+        };
+        writeln!(
+            output,
+            "  - {}: {} ({}/100)",
+            check.section.label(),
+            status,
+            check.score
+        )
+        .map_err(|_| CliFailure::output_failure())?;
+    }
+
+    writeln!(output, "Warnings:").map_err(|_| CliFailure::output_failure())?;
+    for warning in &evaluation.warnings {
+        writeln!(output, "  - {}", warning.message).map_err(|_| CliFailure::output_failure())?;
     }
 
     Ok(())
@@ -91,13 +363,14 @@ mod tests {
     use super::*;
 
     #[test]
-    fn text_output_identifies_planned_features() {
+    fn text_output_identifies_available_and_planned_features() {
         let mut output = Vec::new();
         write_capabilities_text(&mut output, &capabilities()).expect("text output should render");
         let output = String::from_utf8(output).expect("output should be UTF-8");
 
         assert!(output.contains("core.capabilities [available]"));
-        assert!(output.contains("resume.evaluate [planned]"));
+        assert!(output.contains("resume.evaluate [available]"));
+        assert!(output.contains("job.match [planned]"));
         assert!(output.contains("network requests: false"));
     }
 }

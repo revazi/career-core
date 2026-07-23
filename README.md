@@ -4,7 +4,7 @@
 
 The project is intentionally **not an AI service**. The core performs no network requests and has no LLM dependency. Native applications, command-line tools, and coding-agent integrations can use its versioned evidence and scoring contracts. Optional AI interpretation belongs in a host application or agent, outside the authoritative core.
 
-> **Status:** repository bootstrap. Capability discovery is available; resume evaluation and job matching are explicitly reported as planned until their contracts and golden fixtures are implemented.
+> **Status:** Phase 1. Capability discovery and bounded resume section-coverage evaluation are available. Full resume normalization/scoring and job matching remain planned.
 
 ## Goals
 
@@ -22,6 +22,8 @@ The project is intentionally **not an AI service**. The core performs no network
 ├── src/                         career-core library package
 ├── crates/career-cli/           `career` command-line adapter
 ├── schemas/                     versioned public JSON schemas
+├── fixtures/                    synthetic reviewed golden contracts
+├── docs/contracts/              public scoring and limit rules
 ├── .agents/                     project and agent-integration handbook
 ├── AGENTS.md                    instructions loaded by coding agents
 ├── LICENSE-MIT
@@ -67,8 +69,8 @@ JSON is the default output:
     },
     {
       "id": "resume.evaluate",
-      "status": "planned",
-      "summary": "Evaluate resume content with explainable deterministic checks."
+      "status": "available",
+      "summary": "Evaluate recognized resume section coverage with explainable deterministic checks."
     },
     {
       "id": "job.match",
@@ -88,6 +90,38 @@ cargo run --quiet -p career-cli -- capabilities --format text
 ```
 
 The project includes an Agent Skills-compatible guide at `.agents/skills/career-core/SKILL.md`. Pi discovers that skill after the repository is trusted. Other coding agents can read the same file or invoke the CLI directly.
+
+## Evaluate resume section coverage
+
+Provide versioned JSON containing text already extracted by the caller:
+
+```json
+{
+  "schema_version": "career.resume_input.v1",
+  "text": "SUMMARY\nBackend engineer.\nEXPERIENCE\nBuilt reliable services.\nEDUCATION\nExample University\nSKILLS\nRust, SQL",
+  "metadata": {
+    "document_id": "optional-caller-id"
+  }
+}
+```
+
+Evaluate a file:
+
+```bash
+cargo run --quiet -p career-cli -- \
+  resume evaluate --input fixtures/resume/phase1/complete-sections.input.json
+```
+
+Or pipe JSON through stdin:
+
+```bash
+cat fixtures/resume/phase1/complete-sections.input.json | \
+  cargo run --quiet -p career-cli -- resume evaluate --input -
+```
+
+Add `--format text` for concise human output. JSON results use `career.resume_evaluation.v1`; invalid input produces `career.error.v1` on stderr with a nonzero exit code.
+
+Phase 1 scores only whether four recognized core headers have following content. It does **not** claim to measure complete resume quality or ATS compatibility. See [`docs/contracts/resume-evaluation-v1.md`](docs/contracts/resume-evaluation-v1.md) for limits, aliases, scoring, evidence, warnings, and provenance.
 
 ## Reference implementation
 

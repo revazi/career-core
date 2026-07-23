@@ -3,6 +3,18 @@
 
 use serde::{Deserialize, Serialize};
 
+mod resume;
+
+pub use resume::{
+    ERROR_SCHEMA_VERSION, EVALUATION_SCHEMA_VERSION, INPUT_SCHEMA_VERSION,
+    MAX_DOCUMENT_ID_CHARACTERS, MAX_EVIDENCE_EXCERPT_CHARACTERS, MAX_RESUME_LINE_CHARACTERS,
+    MAX_RESUME_LINES, MAX_RESUME_TEXT_CHARACTERS, RESUME_SECTION_COVERAGE_POLICY_VERSION,
+    ResumeCheckCategoryV1, ResumeCheckV1, ResumeDetectionStatusV1, ResumeEvaluationErrorCodeV1,
+    ResumeEvaluationErrorV1, ResumeEvaluationScopeV1, ResumeEvaluationV1, ResumeEvidenceKindV1,
+    ResumeEvidenceV1, ResumeInputMetadataV1, ResumeInputV1, ResumeSectionDetectionV1,
+    ResumeSectionV1, ResumeWarningCodeV1, ResumeWarningV1, evaluate_resume,
+};
+
 /// Version of the machine-readable capability document.
 pub const CAPABILITIES_SCHEMA_VERSION: &str = "career.capabilities.v1";
 
@@ -51,8 +63,8 @@ pub fn capabilities() -> Capabilities {
             },
             Capability {
                 id: "resume.evaluate".to_owned(),
-                status: CapabilityStatus::Planned,
-                summary: "Evaluate resume content with explainable deterministic checks."
+                status: CapabilityStatus::Available,
+                summary: "Evaluate recognized resume section coverage with explainable deterministic checks."
                     .to_owned(),
             },
             Capability {
@@ -80,7 +92,7 @@ mod tests {
     }
 
     #[test]
-    fn only_discovery_is_available_during_bootstrap() {
+    fn discovery_and_resume_evaluation_are_available() {
         let capabilities = capabilities();
         let available_ids = capabilities
             .capabilities
@@ -89,7 +101,7 @@ mod tests {
             .map(|capability| capability.id.as_str())
             .collect::<Vec<_>>();
 
-        assert_eq!(available_ids, vec!["core.capabilities"]);
+        assert_eq!(available_ids, vec!["core.capabilities", "resume.evaluate"]);
     }
 
     #[test]

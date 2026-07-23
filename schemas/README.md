@@ -12,3 +12,6 @@ Rules:
 Current schemas:
 
 - `capabilities-v1.schema.json` — capability discovery
+- `resume-input-v1.schema.json` — bounded plain-text resume input
+- `resume-evaluation-v1.schema.json` — Phase 1 section-coverage evaluation
+- `error-v1.schema.json` — machine-readable core and CLI failures

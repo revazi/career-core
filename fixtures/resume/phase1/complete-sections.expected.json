@@ -1,0 +1,120 @@
+{
+  "schema_version": "career.resume_evaluation.v1",
+  "policy_version": "resume_section_coverage_v1",
+  "core_version": "0.1.0",
+  "document_id": "phase1-complete-sections",
+  "scope": "section_coverage",
+  "score": 100,
+  "detected_sections": [
+    {
+      "section": "summary",
+      "status": "detected_with_content",
+      "line_number": 4,
+      "header_excerpt": "EXECUTIVE SUMMARY:"
+    },
+    {
+      "section": "experience",
+      "status": "detected_with_content",
+      "line_number": 7,
+      "header_excerpt": "CAREER HISTORY:"
+    },
+    {
+      "section": "education",
+      "status": "detected_with_content",
+      "line_number": 11,
+      "header_excerpt": "ACADEMIC HISTORY:"
+    },
+    {
+      "section": "skills",
+      "status": "detected_with_content",
+      "line_number": 14,
+      "header_excerpt": "KEY SKILLS:"
+    }
+  ],
+  "checks": [
+    {
+      "check_id": "resume.section.summary.detected",
+      "category": "section_coverage",
+      "section": "summary",
+      "status": "detected_with_content",
+      "score": 100,
+      "passed": true,
+      "explanation": "A recognized Summary header with following content was detected.",
+      "evidence": [
+        {
+          "evidence_id": "resume.section_header.summary.line_4",
+          "kind": "recognized_section_header",
+          "section": "summary",
+          "line_number": 4,
+          "excerpt": "EXECUTIVE SUMMARY:"
+        }
+      ]
+    },
+    {
+      "check_id": "resume.section.experience.detected",
+      "category": "section_coverage",
+      "section": "experience",
+      "status": "detected_with_content",
+      "score": 100,
+      "passed": true,
+      "explanation": "A recognized Experience header with following content was detected.",
+      "evidence": [
+        {
+          "evidence_id": "resume.section_header.experience.line_7",
+          "kind": "recognized_section_header",
+          "section": "experience",
+          "line_number": 7,
+          "excerpt": "CAREER HISTORY:"
+        }
+      ]
+    },
+    {
+      "check_id": "resume.section.education.detected",
+      "category": "section_coverage",
+      "section": "education",
+      "status": "detected_with_content",
+      "score": 100,
+      "passed": true,
+      "explanation": "A recognized Education header with following content was detected.",
+      "evidence": [
+        {
+          "evidence_id": "resume.section_header.education.line_11",
+          "kind": "recognized_section_header",
+          "section": "education",
+          "line_number": 11,
+          "excerpt": "ACADEMIC HISTORY:"
+        }
+      ]
+    },
+    {
+      "check_id": "resume.section.skills.detected",
+      "category": "section_coverage",
+      "section": "skills",
+      "status": "detected_with_content",
+      "score": 100,
+      "passed": true,
+      "explanation": "A recognized Skills header with following content was detected.",
+      "evidence": [
+        {
+          "evidence_id": "resume.section_header.skills.line_14",
+          "kind": "recognized_section_header",
+          "section": "skills",
+          "line_number": 14,
+          "excerpt": "KEY SKILLS:"
+        }
+      ]
+    }
+  ],
+  "warnings": [
+    {
+      "code": "limited_evaluation_scope",
+      "message": "This score measures recognized core-section coverage only; it is not a complete resume-quality or ATS score.",
+      "related_sections": [
+        "summary",
+        "experience",
+        "education",
+        "skills"
+      ]
+    }
+  ]
+}

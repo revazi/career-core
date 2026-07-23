@@ -41,9 +41,24 @@ jobs:
       - name: Build workspace
         run: cargo build --workspace --all-features --locked
 
-      - name: Verify agent capability output
+      - name: Verify minimum supported Rust version
+        run: |
+          rustup toolchain install 1.85.0 --profile minimal --no-self-update
+          cargo +1.85.0 check --workspace --all-targets --all-features --locked
+
+      - name: Verify agent JSON contracts
         run: |
           cargo run --quiet --locked -p career-cli -- capabilities > /tmp/capabilities.json
           python3 -m json.tool /tmp/capabilities.json > /dev/null
-          python3 -m json.tool schemas/capabilities-v1.schema.json > /dev/null
           grep -q '"schema_version": "career.capabilities.v1"' /tmp/capabilities.json
+
+          cargo run --quiet --locked -p career-cli -- \
+            resume evaluate \
+            --input fixtures/resume/phase1/complete-sections.input.json \
+            > /tmp/resume-evaluation.json
+          python3 -m json.tool /tmp/resume-evaluation.json > /dev/null
+          cmp /tmp/resume-evaluation.json fixtures/resume/phase1/complete-sections.expected.json
+
+          for schema in schemas/*.schema.json; do
+            python3 -m json.tool "$schema" > /dev/null
+          done

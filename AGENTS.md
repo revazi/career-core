@@ -86,6 +86,8 @@ cargo clippy --workspace --all-targets --all-features -- -D warnings
 cargo test --workspace --all-features
 cargo build --workspace --all-features --locked
 cargo run --quiet -p career-cli -- capabilities
+cargo run --quiet -p career-cli -- resume evaluate \
+  --input fixtures/resume/phase1/complete-sections.input.json
 ```
 
 Also run `git diff --check`. If a public schema changes, validate examples and explain compatibility impact.
