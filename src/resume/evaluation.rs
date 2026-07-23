@@ -1,91 +1,15 @@
 use super::contract::{
-    EVALUATION_SCHEMA_VERSION, INPUT_SCHEMA_VERSION, MAX_DOCUMENT_ID_CHARACTERS,
-    MAX_EVIDENCE_EXCERPT_CHARACTERS, MAX_RESUME_LINE_CHARACTERS, MAX_RESUME_LINES,
-    MAX_RESUME_TEXT_CHARACTERS, RESUME_SECTION_COVERAGE_POLICY_VERSION, ResumeCheckCategoryV1,
-    ResumeCheckV1, ResumeDetectionStatusV1, ResumeEvaluationErrorCodeV1, ResumeEvaluationErrorV1,
-    ResumeEvaluationScopeV1, ResumeEvaluationV1, ResumeEvidenceKindV1, ResumeEvidenceV1,
-    ResumeInputV1, ResumeSectionDetectionV1, ResumeSectionV1, ResumeWarningCodeV1, ResumeWarningV1,
+    EVALUATION_SCHEMA_VERSION, MAX_EVIDENCE_EXCERPT_CHARACTERS,
+    RESUME_SECTION_COVERAGE_POLICY_VERSION, ResumeCheckCategoryV1, ResumeCheckV1,
+    ResumeDetectionStatusV1, ResumeEvaluationErrorV1, ResumeEvaluationScopeV1, ResumeEvaluationV1,
+    ResumeEvidenceKindV1, ResumeEvidenceV1, ResumeInputV1, ResumeSectionDetectionV1,
+    ResumeSectionV1, ResumeWarningCodeV1, ResumeWarningV1,
 };
-
-const SUMMARY_ALIASES: &[&str] = &[
-    "summary",
-    "professional summary",
-    "executive summary",
-    "career summary",
-    "profile",
-    "professional profile",
-    "personal profile",
-    "profile summary",
-    "objective",
-    "career objective",
-    "professional objective",
-    "about me",
-];
-
-const EXPERIENCE_ALIASES: &[&str] = &[
-    "experience",
-    "work experience",
-    "professional experience",
-    "relevant experience",
-    "employment experience",
-    "employment history",
-    "work history",
-    "career history",
-    "career experience",
-    "professional background",
-];
-
-const EDUCATION_ALIASES: &[&str] = &[
-    "education",
-    "academic background",
-    "educational background",
-    "academic history",
-    "education history",
-    "education and training",
-    "training and education",
-    "academic qualifications",
-];
+use super::normalization_contract::ResumeNormalizationSectionV1;
+use super::sections::match_section_header;
+use super::validation::validate_resume_input;
 
 const EXPECTED_SECTION_COUNT: u8 = 4;
-
-const SKILLS_ALIASES: &[&str] = &[
-    "skills",
-    "technical skills",
-    "core skills",
-    "key skills",
-    "professional skills",
-    "core competencies",
-    "technical competencies",
-    "technical expertise",
-    "technical proficiencies",
-    "areas of expertise",
-    "skills and expertise",
-    "tools and technologies",
-    "technologies",
-];
-
-const NON_CORE_BOUNDARY_ALIASES: &[&str] = &[
-    "projects",
-    "personal projects",
-    "selected projects",
-    "project experience",
-    "professional projects",
-    "academic projects",
-    "key projects",
-    "notable projects",
-    "portfolio projects",
-    "certifications",
-    "professional certifications",
-    "certificates",
-    "credentials",
-    "licenses",
-    "licenses and certifications",
-    "licenses & certifications",
-    "licenses / certifications",
-    "certifications and licenses",
-    "certificates and licenses",
-    "training and certifications",
-];
 
 #[derive(Clone, Debug)]
 struct DetectedSection {
@@ -98,8 +22,8 @@ struct DetectedSection {
 pub fn evaluate_resume(
     input: &ResumeInputV1,
 ) -> Result<ResumeEvaluationV1, ResumeEvaluationErrorV1> {
-    let lines = validate_input(input)?;
-    let detected = detect_sections(&lines);
+    let validated = validate_resume_input(input)?;
+    let detected = detect_sections(&validated.lines);
     let checks = build_checks(&detected);
     let score = checks
         .iter()
@@ -125,85 +49,6 @@ pub fn evaluate_resume(
         warnings: build_warnings(&detected),
         checks,
     })
-}
-
-fn validate_input(input: &ResumeInputV1) -> Result<Vec<&str>, ResumeEvaluationErrorV1> {
-    if input.schema_version != INPUT_SCHEMA_VERSION {
-        return Err(ResumeEvaluationErrorV1::new(
-            ResumeEvaluationErrorCodeV1::UnsupportedSchemaVersion,
-            format!("schema_version must be {INPUT_SCHEMA_VERSION}."),
-            "schema_version",
-        ));
-    }
-
-    if input.text.trim().is_empty() {
-        return Err(ResumeEvaluationErrorV1::new(
-            ResumeEvaluationErrorCodeV1::SourceTextEmpty,
-            "Resume text must contain non-whitespace characters.",
-            "text",
-        ));
-    }
-
-    let character_count = input.text.chars().count();
-    if character_count > MAX_RESUME_TEXT_CHARACTERS {
-        return Err(ResumeEvaluationErrorV1::new(
-            ResumeEvaluationErrorCodeV1::SourceTextTooLarge,
-            format!(
-                "Resume text must contain at most {MAX_RESUME_TEXT_CHARACTERS} characters; received {character_count}."
-            ),
-            "text",
-        ));
-    }
-
-    let lines = input.text.lines().collect::<Vec<_>>();
-    if lines.len() > MAX_RESUME_LINES {
-        return Err(ResumeEvaluationErrorV1::new(
-            ResumeEvaluationErrorCodeV1::SourceLineCountExceeded,
-            format!(
-                "Resume text must contain at most {MAX_RESUME_LINES} lines; received {}.",
-                lines.len()
-            ),
-            "text",
-        ));
-    }
-
-    for (index, line) in lines.iter().enumerate() {
-        let line = line.strip_suffix('\r').unwrap_or(line);
-        let line_character_count = line.chars().count();
-        if line_character_count > MAX_RESUME_LINE_CHARACTERS {
-            return Err(ResumeEvaluationErrorV1::new(
-                ResumeEvaluationErrorCodeV1::SourceLineTooLong,
-                format!(
-                    "Resume line {} must contain at most {MAX_RESUME_LINE_CHARACTERS} characters; received {line_character_count}.",
-                    index + 1
-                ),
-                format!("text.lines[{}]", index + 1),
-            ));
-        }
-    }
-
-    if let Some(document_id) = &input.metadata.document_id {
-        if document_id.trim().is_empty() {
-            return Err(ResumeEvaluationErrorV1::new(
-                ResumeEvaluationErrorCodeV1::DocumentIdEmpty,
-                "metadata.document_id must contain non-whitespace characters when provided.",
-                "metadata.document_id",
-            ));
-        }
-
-        let identifier_character_count = document_id.chars().count();
-        if identifier_character_count > MAX_DOCUMENT_ID_CHARACTERS {
-            return Err(ResumeEvaluationErrorV1::new(
-                ResumeEvaluationErrorCodeV1::DocumentIdTooLong,
-                format!(
-                    "metadata.document_id must contain at most {MAX_DOCUMENT_ID_CHARACTERS} characters; received {identifier_character_count}."
-                ),
-                "metadata.document_id",
-            ));
-        }
-    }
-
-    Ok(lines)
 }
 
 fn detect_sections(lines: &[&str]) -> Vec<DetectedSection> {
@@ -251,29 +96,22 @@ fn detect_sections(lines: &[&str]) -> Vec<DetectedSection> {
 }
 
 fn match_section(line: &str) -> Option<ResumeSectionV1> {
-    let normalized = normalize_header(line);
-    [
-        (ResumeSectionV1::Summary, SUMMARY_ALIASES),
-        (ResumeSectionV1::Experience, EXPERIENCE_ALIASES),
-        (ResumeSectionV1::Education, EDUCATION_ALIASES),
-        (ResumeSectionV1::Skills, SKILLS_ALIASES),
-    ]
-    .into_iter()
-    .find_map(|(section, aliases)| aliases.contains(&normalized.as_str()).then_some(section))
+    match match_section_header(line)? {
+        ResumeNormalizationSectionV1::Summary => Some(ResumeSectionV1::Summary),
+        ResumeNormalizationSectionV1::Experience => Some(ResumeSectionV1::Experience),
+        ResumeNormalizationSectionV1::Education => Some(ResumeSectionV1::Education),
+        ResumeNormalizationSectionV1::Skills => Some(ResumeSectionV1::Skills),
+        ResumeNormalizationSectionV1::Projects | ResumeNormalizationSectionV1::Certifications => {
+            None
+        }
+    }
 }
 
 fn is_non_core_boundary_header(line: &str) -> bool {
-    let normalized = normalize_header(line);
-    NON_CORE_BOUNDARY_ALIASES.contains(&normalized.as_str())
-}
-
-fn normalize_header(line: &str) -> String {
-    line.trim()
-        .to_lowercase()
-        .replace(':', "")
-        .split_whitespace()
-        .collect::<Vec<_>>()
-        .join(" ")
+    matches!(
+        match_section_header(line),
+        Some(ResumeNormalizationSectionV1::Projects | ResumeNormalizationSectionV1::Certifications)
+    )
 }
 
 fn build_checks(detected: &[DetectedSection]) -> Vec<ResumeCheckV1> {
@@ -424,36 +262,17 @@ fn truncate_chars(value: &str, maximum: usize) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::resume::{ResumeInputMetadataV1, ResumeWarningCodeV1};
+    use crate::resume::{
+        INPUT_SCHEMA_VERSION, MAX_DOCUMENT_ID_CHARACTERS, MAX_RESUME_LINE_CHARACTERS,
+        MAX_RESUME_LINES, MAX_RESUME_TEXT_CHARACTERS, ResumeEvaluationErrorCodeV1,
+        ResumeInputMetadataV1, ResumeWarningCodeV1,
+    };
 
     fn input(text: impl Into<String>) -> ResumeInputV1 {
         ResumeInputV1 {
             schema_version: INPUT_SCHEMA_VERSION.to_owned(),
             text: text.into(),
             metadata: ResumeInputMetadataV1::default(),
-        }
-    }
-
-    #[test]
-    fn every_configured_alias_matches_its_canonical_section() {
-        for (section, aliases) in [
-            (ResumeSectionV1::Summary, SUMMARY_ALIASES),
-            (ResumeSectionV1::Experience, EXPERIENCE_ALIASES),
-            (ResumeSectionV1::Education, EDUCATION_ALIASES),
-            (ResumeSectionV1::Skills, SKILLS_ALIASES),
-        ] {
-            for alias in aliases {
-                let rendered = format!("  {}:  ", alias.to_uppercase());
-                assert_eq!(match_section(&rendered), Some(section), "alias: {alias}");
-            }
-        }
-
-        for alias in NON_CORE_BOUNDARY_ALIASES {
-            let rendered = format!("  {}:  ", alias.to_uppercase());
-            assert!(
-                is_non_core_boundary_header(&rendered),
-                "boundary alias: {alias}"
-            );
         }
     }
 

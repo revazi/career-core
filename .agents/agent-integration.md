@@ -47,6 +47,7 @@ An integrating agent must:
 5. never claim that `career-core` generated content it only evaluated
 6. obtain user approval before sending source documents to any external model or service
 7. avoid writing generated claims back into a resume without source evidence
+8. preserve the deterministic baseline and label every accepted external field as assisted
 
 ## Agent Skills
 
@@ -67,6 +68,25 @@ career resume evaluate --input <path|-> [--format json|text]
 ```
 
 The input and result contracts are `career.resume_input.v1` and `career.resume_evaluation.v1`. This operation evaluates core-section header coverage only. Agent explanations must retain the limited-scope warning and must not label this score as complete resume quality or ATS compatibility.
+
+## Available Phase 2 operations
+
+```bash
+career resume normalize --input <path|-> [--format json|text]
+career resume enrich --input <path|-> [--format json|text]
+```
+
+`resume normalize` returns `career.resume_normalization.v1`, including deterministic facts, source spans, confidence, field statuses, warnings, and an `enrichment_request`.
+
+An agent may attempt external enrichment only when all of these are true:
+
+1. `enrichment_request.status` is `eligible`
+2. the user has approved sending the bounded resume context to the current model/provider
+3. the agent can produce exact `career.resume_enrichment_proposal.v1` JSON
+
+The agent then submits one `career.resume_enrichment_input.v1` envelope to `resume enrich`. It must copy values from source text, populate only `target_sections`, and leave ambiguous targets empty. Invalid proposals are not repaired by guesswork.
+
+`resume enrich` performs no model call. It returns the unchanged deterministic normalization under `baseline` and accepted values under `assisted_document`. Authoritative scores must consume the baseline. If the external model or validation fails, the agent must continue with the deterministic normalization rather than treating the operation as failed.
 
 ## Distribution stages
 

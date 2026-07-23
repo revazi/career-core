@@ -12,6 +12,21 @@ career-core ─X─► adapters, UI, persistence, network, LLMs
 
 The repository root is the default `career-core` library package. Workspace packages are adapters. An adapter may translate inputs and outputs but must not duplicate or override authoritative scoring.
 
+Optional assisted normalization follows a split boundary:
+
+```text
+career-core deterministic normalization
+        │ emits eligible targets
+        ▼
+host/agent provider call (explicit opt-in, outside core)
+        │ submits an untrusted proposal
+        ▼
+career-core grounding validation + conservative merge
+        │
+        ├─ preserved deterministic baseline
+        └─ separately labeled assisted document
+```
+
 ## Core boundary
 
 The library accepts bounded typed values and returns typed deterministic results. It may:
@@ -19,6 +34,9 @@ The library accepts bounded typed values and returns typed deterministic results
 - normalize plain text
 - calculate confidence and scoring signals
 - compare explicit evidence
+- emit provider-neutral enrichment eligibility and target contracts
+- validate source-grounded external proposals as untrusted typed input
+- merge accepted proposal values only into eligible empty fields while preserving the baseline
 - serialize public contract types through Serde
 
 It may not:
@@ -103,8 +121,10 @@ The Django implementation is evidence for behavior, not architecture. Port pure 
 
 Parity must be declared per versioned operation and fixture set. Partial ports must use their own version and document differences.
 
+LLM/provider execution is never a core parity target. Proposal bounds, grounding checks, and conservative merge rules may be adapted into provider-neutral core validation because they operate deterministically on explicit caller input. Assisted values remain separate from authoritative deterministic scoring.
+
 ## Future Swift boundary
 
 Swift bindings belong in an adapter crate introduced only in the Swift phase. Prefer a small stable facade over exposing internal Rust types directly. The Swift adapter must translate core errors and owned contract types without moving platform behavior into the core.
 
-No FFI dependency or `unsafe` exception is approved during the current phases.
+No FFI dependency or `unsafe` exception is approved during the current phases. A future Swift host owns Keychain access, consent settings, provider clients, and network calls; it submits only the proposal contract to the core.

@@ -5,15 +5,7 @@ use serde::{Deserialize, Serialize};
 
 mod resume;
 
-pub use resume::{
-    ERROR_SCHEMA_VERSION, EVALUATION_SCHEMA_VERSION, INPUT_SCHEMA_VERSION,
-    MAX_DOCUMENT_ID_CHARACTERS, MAX_EVIDENCE_EXCERPT_CHARACTERS, MAX_RESUME_LINE_CHARACTERS,
-    MAX_RESUME_LINES, MAX_RESUME_TEXT_CHARACTERS, RESUME_SECTION_COVERAGE_POLICY_VERSION,
-    ResumeCheckCategoryV1, ResumeCheckV1, ResumeDetectionStatusV1, ResumeEvaluationErrorCodeV1,
-    ResumeEvaluationErrorV1, ResumeEvaluationScopeV1, ResumeEvaluationV1, ResumeEvidenceKindV1,
-    ResumeEvidenceV1, ResumeInputMetadataV1, ResumeInputV1, ResumeSectionDetectionV1,
-    ResumeSectionV1, ResumeWarningCodeV1, ResumeWarningV1, evaluate_resume,
-};
+pub use resume::*;
 
 /// Version of the machine-readable capability document.
 pub const CAPABILITIES_SCHEMA_VERSION: &str = "career.capabilities.v1";
@@ -68,6 +60,18 @@ pub fn capabilities() -> Capabilities {
                     .to_owned(),
             },
             Capability {
+                id: "resume.normalize".to_owned(),
+                status: CapabilityStatus::Available,
+                summary: "Normalize bounded resume text into source-grounded deterministic facts and confidence."
+                    .to_owned(),
+            },
+            Capability {
+                id: "resume.enrich".to_owned(),
+                status: CapabilityStatus::Available,
+                summary: "Validate and conservatively merge an explicit source-grounded external proposal without network access."
+                    .to_owned(),
+            },
+            Capability {
                 id: "job.match".to_owned(),
                 status: CapabilityStatus::Planned,
                 summary: "Compare normalized resume and job evidence conservatively.".to_owned(),
@@ -92,7 +96,7 @@ mod tests {
     }
 
     #[test]
-    fn discovery_and_resume_evaluation_are_available() {
+    fn discovery_and_resume_operations_are_available() {
         let capabilities = capabilities();
         let available_ids = capabilities
             .capabilities
@@ -101,7 +105,15 @@ mod tests {
             .map(|capability| capability.id.as_str())
             .collect::<Vec<_>>();
 
-        assert_eq!(available_ids, vec!["core.capabilities", "resume.evaluate"]);
+        assert_eq!(
+            available_ids,
+            vec![
+                "core.capabilities",
+                "resume.evaluate",
+                "resume.normalize",
+                "resume.enrich",
+            ]
+        );
     }
 
     #[test]

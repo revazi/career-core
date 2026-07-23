@@ -1,0 +1,606 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/revazi/career-core/main/schemas/resume-normalization-v1.schema.json",
+  "title": "career-core resume normalization v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "policy_version",
+    "core_version",
+    "document_id",
+    "deterministic_document",
+    "confidence",
+    "field_statuses",
+    "metadata",
+    "warnings",
+    "enrichment_request"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "career.resume_normalization.v1"
+    },
+    "policy_version": {
+      "const": "resume_normalization_v1"
+    },
+    "core_version": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "document_id": {
+      "type": ["string", "null"],
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "deterministic_document": {
+      "$ref": "#/$defs/normalizedDocument"
+    },
+    "confidence": {
+      "$ref": "#/$defs/confidence"
+    },
+    "field_statuses": {
+      "type": "array",
+      "minItems": 7,
+      "maxItems": 7,
+      "items": {
+        "$ref": "#/$defs/fieldStatus"
+      }
+    },
+    "metadata": {
+      "$ref": "#/$defs/metadata"
+    },
+    "warnings": {
+      "type": "array",
+      "maxItems": 6,
+      "items": {
+        "$ref": "#/$defs/warning"
+      }
+    },
+    "enrichment_request": {
+      "$ref": "#/$defs/enrichmentRequest"
+    }
+  },
+  "$defs": {
+    "section": {
+      "enum": ["summary", "experience", "education", "skills", "projects", "certifications"]
+    },
+    "coreSection": {
+      "enum": ["summary", "experience", "education", "skills"]
+    },
+    "field": {
+      "enum": ["contact", "summary", "experience", "education", "skills", "projects", "certifications"]
+    },
+    "sourceSpan": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["start_line", "end_line", "excerpt", "transformation"],
+      "properties": {
+        "start_line": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2000
+        },
+        "end_line": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2000
+        },
+        "excerpt": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160
+        },
+        "transformation": {
+          "enum": [
+            "verbatim",
+            "whitespace_joined",
+            "delimiter_split",
+            "conservative_fallback",
+            "external_source_grounded_proposal"
+          ]
+        }
+      }
+    },
+    "groundedField": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/groundedText"
+        },
+        {
+          "properties": {
+            "value": {
+              "maxLength": 300
+            }
+          }
+        }
+      ]
+    },
+    "groundedSummary": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/groundedText"
+        },
+        {
+          "properties": {
+            "value": {
+              "maxLength": 2000
+            }
+          }
+        }
+      ]
+    },
+    "groundedRawText": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/groundedText"
+        },
+        {
+          "properties": {
+            "value": {
+              "maxLength": 4000
+            }
+          }
+        }
+      ]
+    },
+    "groundedBullet": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/groundedText"
+        },
+        {
+          "properties": {
+            "value": {
+              "maxLength": 1000
+            }
+          }
+        }
+      ]
+    },
+    "groundedDescription": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/groundedText"
+        },
+        {
+          "properties": {
+            "value": {
+              "maxLength": 2000
+            }
+          }
+        }
+      ]
+    },
+    "groundedText": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["value", "source"],
+      "properties": {
+        "value": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source": {
+          "$ref": "#/$defs/sourceSpan"
+        }
+      }
+    },
+    "contact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "email", "phone", "links"],
+      "properties": {
+        "name": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/groundedField"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "email": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/groundedField"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "phone": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/groundedField"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "links": {
+          "type": "array",
+          "maxItems": 10,
+          "items": {
+            "$ref": "#/$defs/groundedField"
+          }
+        }
+      }
+    },
+    "experienceEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["raw_text", "job_title", "company", "date_range", "bullets"],
+      "properties": {
+        "raw_text": {
+          "$ref": "#/$defs/groundedRawText"
+        },
+        "job_title": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/groundedField"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "company": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/groundedField"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "date_range": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/groundedField"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "bullets": {
+          "type": "array",
+          "maxItems": 20,
+          "items": {
+            "$ref": "#/$defs/groundedBullet"
+          }
+        }
+      }
+    },
+    "educationEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["raw_text", "institution", "degree", "date_range"],
+      "properties": {
+        "raw_text": {
+          "$ref": "#/$defs/groundedRawText"
+        },
+        "institution": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/groundedField"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "degree": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/groundedField"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "date_range": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/groundedField"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "projectEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["raw_text", "name", "description"],
+      "properties": {
+        "raw_text": {
+          "$ref": "#/$defs/groundedRawText"
+        },
+        "name": {
+          "$ref": "#/$defs/groundedField"
+        },
+        "description": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/groundedDescription"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "certificationEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["raw_text", "name", "issuer"],
+      "properties": {
+        "raw_text": {
+          "$ref": "#/$defs/groundedRawText"
+        },
+        "name": {
+          "$ref": "#/$defs/groundedField"
+        },
+        "issuer": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/groundedField"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "normalizedDocument": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["contact", "summary", "experience", "education", "skills", "projects", "certifications"],
+      "properties": {
+        "contact": {
+          "$ref": "#/$defs/contact"
+        },
+        "summary": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/groundedSummary"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "experience": {
+          "type": "array",
+          "maxItems": 15,
+          "items": {
+            "$ref": "#/$defs/experienceEntry"
+          }
+        },
+        "education": {
+          "type": "array",
+          "maxItems": 10,
+          "items": {
+            "$ref": "#/$defs/educationEntry"
+          }
+        },
+        "skills": {
+          "type": "array",
+          "maxItems": 50,
+          "items": {
+            "$ref": "#/$defs/groundedField"
+          }
+        },
+        "projects": {
+          "type": "array",
+          "maxItems": 15,
+          "items": {
+            "$ref": "#/$defs/projectEntry"
+          }
+        },
+        "certifications": {
+          "type": "array",
+          "maxItems": 15,
+          "items": {
+            "$ref": "#/$defs/certificationEntry"
+          }
+        }
+      }
+    },
+    "signal": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["signal", "score", "max_score", "evidence"],
+      "properties": {
+        "signal": {
+          "enum": ["extraction_quality", "section_coverage", "contact_completeness", "experience_completeness", "skills_completeness"]
+        },
+        "score": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 25
+        },
+        "max_score": {
+          "type": "integer",
+          "minimum": 10,
+          "maximum": 25
+        },
+        "evidence": {
+          "type": "array",
+          "maxItems": 5,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          }
+        }
+      }
+    },
+    "confidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["label", "score", "max_score", "signals"],
+      "properties": {
+        "label": {
+          "enum": ["unknown", "low", "medium", "high"]
+        },
+        "score": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "max_score": {
+          "const": 100
+        },
+        "signals": {
+          "type": "array",
+          "minItems": 5,
+          "maxItems": 5,
+          "items": {
+            "$ref": "#/$defs/signal"
+          }
+        }
+      }
+    },
+    "fieldStatus": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["field", "status"],
+      "properties": {
+        "field": {
+          "$ref": "#/$defs/field"
+        },
+        "status": {
+          "enum": ["detected", "likely_missing", "not_detected"]
+        }
+      }
+    },
+    "sectionMetadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["section", "status", "header_source", "content_line_count"],
+      "properties": {
+        "section": {
+          "$ref": "#/$defs/section"
+        },
+        "status": {
+          "enum": ["detected_with_content", "detected_without_content", "not_detected"]
+        },
+        "header_source": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/sourceSpan"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "content_line_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2000
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sections", "detected_sections", "missing_expected_sections", "fallbacks_applied", "output_truncated"],
+      "properties": {
+        "sections": {
+          "type": "array",
+          "minItems": 6,
+          "maxItems": 6,
+          "items": {
+            "$ref": "#/$defs/sectionMetadata"
+          }
+        },
+        "detected_sections": {
+          "type": "array",
+          "maxItems": 6,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/section"
+          }
+        },
+        "missing_expected_sections": {
+          "type": "array",
+          "maxItems": 4,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/coreSection"
+          }
+        },
+        "fallbacks_applied": {
+          "type": "array",
+          "maxItems": 3,
+          "uniqueItems": true,
+          "items": {
+            "enum": ["experience_from_date_ranges", "skills_from_comma_separated_lines", "education_from_degree_phrases"]
+          }
+        },
+        "output_truncated": {
+          "type": "boolean"
+        }
+      }
+    },
+    "warning": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "message", "related_fields"],
+      "properties": {
+        "code": {
+          "enum": ["no_recognized_section_headers", "expected_section_headers_not_detected", "detected_section_headers_without_content", "conservative_fallback_applied", "parse_confidence_provisional", "output_truncated"]
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 400
+        },
+        "related_fields": {
+          "type": "array",
+          "maxItems": 7,
+          "items": {
+            "$ref": "#/$defs/field"
+          }
+        }
+      }
+    },
+    "enrichmentRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "reason", "target_sections", "proposal_schema_version"],
+      "properties": {
+        "status": {
+          "enum": ["eligible", "not_eligible"]
+        },
+        "reason": {
+          "enum": ["low_confidence_with_missing_core_fields", "deterministic_parse_confidence_not_low", "no_missing_core_fields"]
+        },
+        "target_sections": {
+          "type": "array",
+          "maxItems": 4,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/coreSection"
+          }
+        },
+        "proposal_schema_version": {
+          "const": "career.resume_enrichment_proposal.v1"
+        }
+      }
+    }
+  }
+}

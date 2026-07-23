@@ -14,9 +14,9 @@ Source is offered under `MIT OR Apache-2.0`. Package manifests and source distri
 
 A documented JSON CLI is the universal coding-agent interface. Agent Skills documentation teaches agents to call it. MCP, editor extensions, and provider-specific integrations are deferred until a concrete consumer cannot use the CLI.
 
-## D-004 — Deterministic core, optional interpretation outside
+## D-004 — Deterministic core, provider-neutral assisted boundary
 
-The core has no LLM client and no hidden AI behavior. A host may interpret core evidence, but it cannot silently replace authoritative scores or evidence.
+The core has no LLM client, API-key handling, provider dependency, hidden prompt, or network behavior. It may emit a bounded enrichment request and validate an explicit external proposal as untrusted data. A host may interpret core evidence or submit source-grounded assistance, but assisted fields cannot silently replace the deterministic baseline, authoritative scores, confidence, or evidence.
 
 ## D-005 — Django is reference, not dependency
 
@@ -37,3 +37,7 @@ Do not add UniFFI, XCFramework packaging, Swift code, or Apple build automation 
 ## D-009 — No publishing without explicit approval
 
 Creating GitHub releases, publishing crates, uploading binaries, and changing repository visibility require explicit maintainer approval.
+
+## D-010 — Hosts orchestrate optional external enrichment
+
+An agent or application may automatically attempt external normalization enrichment only after the user enables it, an eligible core request exists, and a provider is configured. The host owns consent, keys, prompts, provider calls, timeouts, and failure isolation. The core owns target selection, proposal contracts, source-grounding validation, conservative empty-field merging, provenance, and deterministic-score isolation. Provider failure always leaves the local deterministic result usable.

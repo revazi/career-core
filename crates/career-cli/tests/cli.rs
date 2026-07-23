@@ -9,6 +9,12 @@ fn fixture_path(name: &str) -> PathBuf {
         .join(name)
 }
 
+fn phase2_fixture_path(name: &str) -> PathBuf {
+    PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("../../fixtures/resume/phase2")
+        .join(name)
+}
+
 #[test]
 fn capabilities_default_to_valid_json() {
     let output = Command::new(env!("CARGO_BIN_EXE_career"))
@@ -25,6 +31,10 @@ fn capabilities_default_to_valid_json() {
     assert_eq!(value["performs_network_requests"], false);
     assert_eq!(value["capabilities"][1]["id"], "resume.evaluate");
     assert_eq!(value["capabilities"][1]["status"], "available");
+    assert_eq!(value["capabilities"][2]["id"], "resume.normalize");
+    assert_eq!(value["capabilities"][2]["status"], "available");
+    assert_eq!(value["capabilities"][3]["id"], "resume.enrich");
+    assert_eq!(value["capabilities"][3]["status"], "available");
 }
 
 #[test]
@@ -38,6 +48,8 @@ fn capabilities_support_human_readable_output() {
     let stdout = String::from_utf8(output.stdout).expect("stdout should contain UTF-8");
     assert!(stdout.contains("career-core"));
     assert!(stdout.contains("resume.evaluate [available]"));
+    assert!(stdout.contains("resume.normalize [available]"));
+    assert!(stdout.contains("resume.enrich [available]"));
 }
 
 #[test]
@@ -112,6 +124,160 @@ fn resume_evaluation_accepts_stdin_and_text_output() {
     assert!(stdout.contains("Resume section-coverage evaluation: 100/100"));
     assert!(stdout.contains("Summary: detected with content"));
     assert!(stdout.contains("not a complete resume-quality or ATS score"));
+}
+
+#[test]
+fn resume_normalization_matches_reviewed_golden_json() {
+    for fixture in ["complete-normalization", "messy-unlabeled"] {
+        let output = Command::new(env!("CARGO_BIN_EXE_career"))
+            .args([
+                "resume",
+                "normalize",
+                "--input",
+                phase2_fixture_path(&format!("{fixture}.input.json"))
+                    .to_str()
+                    .expect("fixture path should be UTF-8"),
+            ])
+            .output()
+            .expect("career binary should run");
+
+        assert!(
+            output.status.success(),
+            "fixture {fixture} should normalize"
+        );
+        assert!(output.stderr.is_empty());
+        let expected = fs::read(phase2_fixture_path(&format!("{fixture}.expected.json")))
+            .expect("expected fixture should be readable");
+        assert_eq!(output.stdout, expected, "fixture {fixture} changed");
+    }
+}
+
+#[test]
+fn resume_normalization_accepts_stdin_and_text_output() {
+    let input = fs::read(phase2_fixture_path("messy-unlabeled.input.json"))
+        .expect("input fixture should be readable");
+    let mut child = Command::new(env!("CARGO_BIN_EXE_career"))
+        .args(["resume", "normalize", "--input", "-", "--format", "text"])
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .expect("career binary should start");
+    child
+        .stdin
+        .take()
+        .expect("stdin should be piped")
+        .write_all(&input)
+        .expect("fixture should be written");
+    let output = child
+        .wait_with_output()
+        .expect("career binary should finish");
+
+    assert!(output.status.success());
+    assert!(output.stderr.is_empty());
+    let stdout = String::from_utf8(output.stdout).expect("stdout should contain UTF-8");
+    assert!(stdout.contains("Resume normalization: low confidence (32/100)"));
+    assert!(stdout.contains("External enrichment: eligible"));
+    assert!(stdout.contains("targets: Summary, Experience, Skills"));
+}
+
+#[test]
+fn resume_enrichment_matches_reviewed_golden_and_text_output() {
+    let input_path = phase2_fixture_path("messy-unlabeled.enrichment-input.json");
+    let output = Command::new(env!("CARGO_BIN_EXE_career"))
+        .args([
+            "resume",
+            "enrich",
+            "--input",
+            input_path.to_str().expect("fixture path should be UTF-8"),
+        ])
+        .output()
+        .expect("career binary should run");
+    assert!(output.status.success());
+    assert!(output.stderr.is_empty());
+    let expected = fs::read(phase2_fixture_path(
+        "messy-unlabeled.enrichment-expected.json",
+    ))
+    .expect("expected fixture should be readable");
+    assert_eq!(output.stdout, expected);
+
+    let text = Command::new(env!("CARGO_BIN_EXE_career"))
+        .args([
+            "resume",
+            "enrich",
+            "--input",
+            input_path.to_str().expect("fixture path should be UTF-8"),
+            "--format",
+            "text",
+        ])
+        .output()
+        .expect("career binary should run");
+    assert!(text.status.success());
+    let stdout = String::from_utf8(text.stdout).expect("stdout should contain UTF-8");
+    assert!(stdout.contains("Resume external enrichment: applied"));
+    assert!(stdout.contains("Summary: external source-grounded proposal"));
+    assert!(stdout.contains("Deterministic confidence preserved: low (32/100)"));
+}
+
+#[test]
+fn enrichment_proposal_rejects_unknown_json_fields() {
+    let input = fs::read_to_string(phase2_fixture_path("messy-unlabeled.enrichment-input.json"))
+        .expect("input fixture should be readable")
+        .replace("\"summary\":", "\"unexpected\": true, \"summary\":");
+    let mut child = Command::new(env!("CARGO_BIN_EXE_career"))
+        .args(["resume", "enrich", "--input", "-"])
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .expect("career binary should start");
+    child
+        .stdin
+        .take()
+        .expect("stdin should be piped")
+        .write_all(input.as_bytes())
+        .expect("input should be written");
+    let output = child
+        .wait_with_output()
+        .expect("career binary should finish");
+
+    assert_eq!(output.status.code(), Some(4));
+    assert!(output.stdout.is_empty());
+    let error: serde_json::Value =
+        serde_json::from_slice(&output.stderr).expect("stderr should contain JSON");
+    assert_eq!(error["code"], "invalid_json");
+    assert!(String::from_utf8_lossy(&output.stderr).contains("career.resume_enrichment_input.v1"));
+}
+
+#[test]
+fn unsupported_enrichment_value_returns_bounded_core_error() {
+    let input = fs::read_to_string(phase2_fixture_path("messy-unlabeled.enrichment-input.json"))
+        .expect("input fixture should be readable")
+        .replace("\"Python\"", "\"Unsupported Secret Skill\"");
+    let mut child = Command::new(env!("CARGO_BIN_EXE_career"))
+        .args(["resume", "enrich", "--input", "-"])
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .expect("career binary should start");
+    child
+        .stdin
+        .take()
+        .expect("stdin should be piped")
+        .write_all(input.as_bytes())
+        .expect("input should be written");
+    let output = child
+        .wait_with_output()
+        .expect("career binary should finish");
+
+    assert_eq!(output.status.code(), Some(5));
+    assert!(output.stdout.is_empty());
+    let error: serde_json::Value =
+        serde_json::from_slice(&output.stderr).expect("stderr should contain JSON");
+    assert_eq!(error["code"], "enrichment_value_not_grounded");
+    assert_eq!(error["field_path"], "proposal.skills[0]");
+    assert!(!String::from_utf8_lossy(&output.stderr).contains("Unsupported Secret Skill"));
 }
 
 #[test]

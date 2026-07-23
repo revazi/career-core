@@ -1,0 +1,445 @@
+{
+  "schema_version": "career.resume_enrichment_result.v1",
+  "policy_version": "resume_normalization_enrichment_v1",
+  "core_version": "0.1.0",
+  "baseline": {
+    "schema_version": "career.resume_normalization.v1",
+    "policy_version": "resume_normalization_v1",
+    "core_version": "0.1.0",
+    "document_id": "synthetic-messy-v1",
+    "deterministic_document": {
+      "contact": {
+        "name": {
+          "value": "Morgan Lee",
+          "source": {
+            "start_line": 1,
+            "end_line": 1,
+            "excerpt": "Morgan Lee",
+            "transformation": "verbatim"
+          }
+        },
+        "email": {
+          "value": "morgan.lee@example.com",
+          "source": {
+            "start_line": 2,
+            "end_line": 2,
+            "excerpt": "morgan.lee@example.com",
+            "transformation": "verbatim"
+          }
+        },
+        "phone": null,
+        "links": []
+      },
+      "summary": null,
+      "experience": [],
+      "education": [
+        {
+          "raw_text": {
+            "value": "Bachelor of Science in Computer Science\nExample University\n2016 - 2020",
+            "source": {
+              "start_line": 8,
+              "end_line": 10,
+              "excerpt": "Bachelor of Science in Computer Science\nExample University\n2016 - 2020",
+              "transformation": "conservative_fallback"
+            }
+          },
+          "institution": {
+            "value": "Example University",
+            "source": {
+              "start_line": 9,
+              "end_line": 9,
+              "excerpt": "Example University",
+              "transformation": "conservative_fallback"
+            }
+          },
+          "degree": {
+            "value": "Bachelor of Science in Computer Science",
+            "source": {
+              "start_line": 8,
+              "end_line": 8,
+              "excerpt": "Bachelor of Science in Computer Science",
+              "transformation": "conservative_fallback"
+            }
+          },
+          "date_range": {
+            "value": "2016 - 2020",
+            "source": {
+              "start_line": 10,
+              "end_line": 10,
+              "excerpt": "2016 - 2020",
+              "transformation": "conservative_fallback"
+            }
+          }
+        }
+      ],
+      "skills": [],
+      "projects": [],
+      "certifications": []
+    },
+    "confidence": {
+      "label": "low",
+      "score": 32,
+      "max_score": 100,
+      "signals": [
+        {
+          "signal": "extraction_quality",
+          "score": 21,
+          "max_score": 25,
+          "evidence": [
+            "character_count=398",
+            "non_empty_line_count=10",
+            "readable_character_percent=100"
+          ]
+        },
+        {
+          "signal": "section_coverage",
+          "score": 0,
+          "max_score": 25,
+          "evidence": [
+            "detected_expected_section_count=0",
+            "expected_section_count=4"
+          ]
+        },
+        {
+          "signal": "contact_completeness",
+          "score": 11,
+          "max_score": 15,
+          "evidence": [
+            "has_name=true",
+            "has_email=true",
+            "has_phone_or_link=false"
+          ]
+        },
+        {
+          "signal": "experience_completeness",
+          "score": 0,
+          "max_score": 25,
+          "evidence": [
+            "entry_count=0",
+            "has_job_title=false",
+            "has_company=false",
+            "has_date_range=false",
+            "has_detail=false"
+          ]
+        },
+        {
+          "signal": "skills_completeness",
+          "score": 0,
+          "max_score": 10,
+          "evidence": [
+            "skill_count=0"
+          ]
+        }
+      ]
+    },
+    "field_statuses": [
+      {
+        "field": "contact",
+        "status": "detected"
+      },
+      {
+        "field": "summary",
+        "status": "not_detected"
+      },
+      {
+        "field": "experience",
+        "status": "not_detected"
+      },
+      {
+        "field": "education",
+        "status": "detected"
+      },
+      {
+        "field": "skills",
+        "status": "not_detected"
+      },
+      {
+        "field": "projects",
+        "status": "not_detected"
+      },
+      {
+        "field": "certifications",
+        "status": "not_detected"
+      }
+    ],
+    "metadata": {
+      "sections": [
+        {
+          "section": "summary",
+          "status": "not_detected",
+          "header_source": null,
+          "content_line_count": 0
+        },
+        {
+          "section": "experience",
+          "status": "not_detected",
+          "header_source": null,
+          "content_line_count": 0
+        },
+        {
+          "section": "education",
+          "status": "not_detected",
+          "header_source": null,
+          "content_line_count": 0
+        },
+        {
+          "section": "skills",
+          "status": "not_detected",
+          "header_source": null,
+          "content_line_count": 0
+        },
+        {
+          "section": "projects",
+          "status": "not_detected",
+          "header_source": null,
+          "content_line_count": 0
+        },
+        {
+          "section": "certifications",
+          "status": "not_detected",
+          "header_source": null,
+          "content_line_count": 0
+        }
+      ],
+      "detected_sections": [],
+      "missing_expected_sections": [
+        "summary",
+        "experience",
+        "education",
+        "skills"
+      ],
+      "fallbacks_applied": [
+        "education_from_degree_phrases"
+      ],
+      "output_truncated": false
+    },
+    "warnings": [
+      {
+        "code": "no_recognized_section_headers",
+        "message": "No recognized section headers were detected; conservative fallback parsing may still recover source-grounded fields.",
+        "related_fields": [
+          "summary",
+          "experience",
+          "education",
+          "skills"
+        ]
+      },
+      {
+        "code": "conservative_fallback_applied",
+        "message": "Conservative deterministic fallback heuristics recovered fields; review their source spans before relying on them.",
+        "related_fields": [
+          "education"
+        ]
+      },
+      {
+        "code": "parse_confidence_provisional",
+        "message": "Resume parsing confidence is provisional; fields reported as not detected must not be presented as confirmed absent.",
+        "related_fields": [
+          "summary",
+          "experience",
+          "skills",
+          "projects",
+          "certifications"
+        ]
+      }
+    ],
+    "enrichment_request": {
+      "status": "eligible",
+      "reason": "low_confidence_with_missing_core_fields",
+      "target_sections": [
+        "summary",
+        "experience",
+        "skills"
+      ],
+      "proposal_schema_version": "career.resume_enrichment_proposal.v1"
+    }
+  },
+  "assisted_document": {
+    "contact": {
+      "name": {
+        "value": "Morgan Lee",
+        "source": {
+          "start_line": 1,
+          "end_line": 1,
+          "excerpt": "Morgan Lee",
+          "transformation": "verbatim"
+        }
+      },
+      "email": {
+        "value": "morgan.lee@example.com",
+        "source": {
+          "start_line": 2,
+          "end_line": 2,
+          "excerpt": "morgan.lee@example.com",
+          "transformation": "verbatim"
+        }
+      },
+      "phone": null,
+      "links": []
+    },
+    "summary": {
+      "value": "Backend engineer focused on reliable APIs and platform stability.",
+      "source": {
+        "start_line": 3,
+        "end_line": 3,
+        "excerpt": "Backend engineer focused on reliable APIs and platform stability.",
+        "transformation": "external_source_grounded_proposal"
+      }
+    },
+    "experience": [
+      {
+        "raw_text": {
+          "value": "Platform Engineer at Acme Corp since 2021\nDelivered internal APIs used by support and operations teams.\nReduced deployment errors by 30 percent through release automation.",
+          "source": {
+            "start_line": 4,
+            "end_line": 6,
+            "excerpt": "Platform Engineer at Acme Corp since 2021\nDelivered internal APIs used by support and operations teams.\nReduced deployment errors by 30 percent through release ",
+            "transformation": "external_source_grounded_proposal"
+          }
+        },
+        "job_title": {
+          "value": "Platform Engineer",
+          "source": {
+            "start_line": 4,
+            "end_line": 4,
+            "excerpt": "Platform Engineer",
+            "transformation": "external_source_grounded_proposal"
+          }
+        },
+        "company": {
+          "value": "Acme Corp",
+          "source": {
+            "start_line": 4,
+            "end_line": 4,
+            "excerpt": "Acme Corp",
+            "transformation": "external_source_grounded_proposal"
+          }
+        },
+        "date_range": null,
+        "bullets": [
+          {
+            "value": "Delivered internal APIs used by support and operations teams.",
+            "source": {
+              "start_line": 5,
+              "end_line": 5,
+              "excerpt": "Delivered internal APIs used by support and operations teams.",
+              "transformation": "external_source_grounded_proposal"
+            }
+          },
+          {
+            "value": "Reduced deployment errors by 30 percent through release automation.",
+            "source": {
+              "start_line": 6,
+              "end_line": 6,
+              "excerpt": "Reduced deployment errors by 30 percent through release automation.",
+              "transformation": "external_source_grounded_proposal"
+            }
+          }
+        ]
+      }
+    ],
+    "education": [
+      {
+        "raw_text": {
+          "value": "Bachelor of Science in Computer Science\nExample University\n2016 - 2020",
+          "source": {
+            "start_line": 8,
+            "end_line": 10,
+            "excerpt": "Bachelor of Science in Computer Science\nExample University\n2016 - 2020",
+            "transformation": "conservative_fallback"
+          }
+        },
+        "institution": {
+          "value": "Example University",
+          "source": {
+            "start_line": 9,
+            "end_line": 9,
+            "excerpt": "Example University",
+            "transformation": "conservative_fallback"
+          }
+        },
+        "degree": {
+          "value": "Bachelor of Science in Computer Science",
+          "source": {
+            "start_line": 8,
+            "end_line": 8,
+            "excerpt": "Bachelor of Science in Computer Science",
+            "transformation": "conservative_fallback"
+          }
+        },
+        "date_range": {
+          "value": "2016 - 2020",
+          "source": {
+            "start_line": 10,
+            "end_line": 10,
+            "excerpt": "2016 - 2020",
+            "transformation": "conservative_fallback"
+          }
+        }
+      }
+    ],
+    "skills": [
+      {
+        "value": "Python",
+        "source": {
+          "start_line": 7,
+          "end_line": 7,
+          "excerpt": "Python",
+          "transformation": "external_source_grounded_proposal"
+        }
+      },
+      {
+        "value": "Django",
+        "source": {
+          "start_line": 7,
+          "end_line": 7,
+          "excerpt": "Django",
+          "transformation": "external_source_grounded_proposal"
+        }
+      }
+    ],
+    "projects": [],
+    "certifications": []
+  },
+  "merge": {
+    "status": "applied",
+    "target_sections": [
+      "summary",
+      "experience",
+      "skills"
+    ],
+    "applied_fields": [
+      "summary",
+      "experience",
+      "skills"
+    ],
+    "field_provenance": [
+      {
+        "field": "summary",
+        "source": "external_source_grounded_proposal"
+      },
+      {
+        "field": "experience",
+        "source": "external_source_grounded_proposal"
+      },
+      {
+        "field": "education",
+        "source": "deterministic"
+      },
+      {
+        "field": "skills",
+        "source": "external_source_grounded_proposal"
+      }
+    ]
+  },
+  "warnings": [
+    {
+      "code": "assisted_fields_non_authoritative",
+      "message": "Externally proposed fields are source-grounded assistance and must not replace the deterministic baseline used for authoritative scoring."
+    },
+    {
+      "code": "deterministic_confidence_preserved",
+      "message": "Parser confidence and field-status evidence remain those of the deterministic normalization."
+    }
+  ]
+}

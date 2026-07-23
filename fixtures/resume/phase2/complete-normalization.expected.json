@@ -1,0 +1,440 @@
+{
+  "schema_version": "career.resume_normalization.v1",
+  "policy_version": "resume_normalization_v1",
+  "core_version": "0.1.0",
+  "document_id": "synthetic-complete-v1",
+  "deterministic_document": {
+    "contact": {
+      "name": {
+        "value": "Morgan Lee",
+        "source": {
+          "start_line": 1,
+          "end_line": 1,
+          "excerpt": "Morgan Lee",
+          "transformation": "verbatim"
+        }
+      },
+      "email": {
+        "value": "morgan.lee@example.com",
+        "source": {
+          "start_line": 2,
+          "end_line": 2,
+          "excerpt": "morgan.lee@example.com",
+          "transformation": "verbatim"
+        }
+      },
+      "phone": {
+        "value": "+1 555 010 0200",
+        "source": {
+          "start_line": 3,
+          "end_line": 3,
+          "excerpt": "+1 555 010 0200",
+          "transformation": "verbatim"
+        }
+      },
+      "links": [
+        {
+          "value": "https://example.com/morgan",
+          "source": {
+            "start_line": 4,
+            "end_line": 4,
+            "excerpt": "https://example.com/morgan",
+            "transformation": "verbatim"
+          }
+        }
+      ]
+    },
+    "summary": {
+      "value": "Backend engineer building reliable local services.",
+      "source": {
+        "start_line": 6,
+        "end_line": 6,
+        "excerpt": "Backend engineer building reliable local services.",
+        "transformation": "whitespace_joined"
+      }
+    },
+    "experience": [
+      {
+        "raw_text": {
+          "value": "Platform Engineer at Acme Corp\n2021 - Present\n- Built reliable APIs for internal teams.\n- Reduced deployment failures by 30 percent.",
+          "source": {
+            "start_line": 8,
+            "end_line": 11,
+            "excerpt": "Platform Engineer at Acme Corp\n2021 - Present\n- Built reliable APIs for internal teams.\n- Reduced deployment failures by 30 percent.",
+            "transformation": "verbatim"
+          }
+        },
+        "job_title": {
+          "value": "Platform Engineer",
+          "source": {
+            "start_line": 8,
+            "end_line": 8,
+            "excerpt": "Platform Engineer",
+            "transformation": "verbatim"
+          }
+        },
+        "company": {
+          "value": "Acme Corp",
+          "source": {
+            "start_line": 8,
+            "end_line": 8,
+            "excerpt": "Acme Corp",
+            "transformation": "verbatim"
+          }
+        },
+        "date_range": {
+          "value": "2021 - Present",
+          "source": {
+            "start_line": 9,
+            "end_line": 9,
+            "excerpt": "2021 - Present",
+            "transformation": "verbatim"
+          }
+        },
+        "bullets": [
+          {
+            "value": "Built reliable APIs for internal teams.",
+            "source": {
+              "start_line": 10,
+              "end_line": 10,
+              "excerpt": "Built reliable APIs for internal teams.",
+              "transformation": "verbatim"
+            }
+          },
+          {
+            "value": "Reduced deployment failures by 30 percent.",
+            "source": {
+              "start_line": 11,
+              "end_line": 11,
+              "excerpt": "Reduced deployment failures by 30 percent.",
+              "transformation": "verbatim"
+            }
+          }
+        ]
+      }
+    ],
+    "education": [
+      {
+        "raw_text": {
+          "value": "Bachelor of Science in Computer Science, Example University\n2016 - 2020",
+          "source": {
+            "start_line": 13,
+            "end_line": 14,
+            "excerpt": "Bachelor of Science in Computer Science, Example University\n2016 - 2020",
+            "transformation": "verbatim"
+          }
+        },
+        "institution": {
+          "value": "Example University",
+          "source": {
+            "start_line": 13,
+            "end_line": 13,
+            "excerpt": "Example University",
+            "transformation": "verbatim"
+          }
+        },
+        "degree": {
+          "value": "Bachelor of Science in Computer Science",
+          "source": {
+            "start_line": 13,
+            "end_line": 13,
+            "excerpt": "Bachelor of Science in Computer Science",
+            "transformation": "verbatim"
+          }
+        },
+        "date_range": {
+          "value": "2016 - 2020",
+          "source": {
+            "start_line": 14,
+            "end_line": 14,
+            "excerpt": "2016 - 2020",
+            "transformation": "verbatim"
+          }
+        }
+      }
+    ],
+    "skills": [
+      {
+        "value": "Rust",
+        "source": {
+          "start_line": 16,
+          "end_line": 16,
+          "excerpt": "Rust",
+          "transformation": "delimiter_split"
+        }
+      },
+      {
+        "value": "PostgreSQL",
+        "source": {
+          "start_line": 16,
+          "end_line": 16,
+          "excerpt": "PostgreSQL",
+          "transformation": "delimiter_split"
+        }
+      },
+      {
+        "value": "Docker",
+        "source": {
+          "start_line": 16,
+          "end_line": 16,
+          "excerpt": "Docker",
+          "transformation": "delimiter_split"
+        }
+      },
+      {
+        "value": "Testing",
+        "source": {
+          "start_line": 16,
+          "end_line": 16,
+          "excerpt": "Testing",
+          "transformation": "delimiter_split"
+        }
+      },
+      {
+        "value": "Git",
+        "source": {
+          "start_line": 16,
+          "end_line": 16,
+          "excerpt": "Git",
+          "transformation": "delimiter_split"
+        }
+      }
+    ],
+    "projects": [
+      {
+        "raw_text": {
+          "value": "Local Career Tool\nBuilt a private deterministic analysis workflow.",
+          "source": {
+            "start_line": 18,
+            "end_line": 19,
+            "excerpt": "Local Career Tool\nBuilt a private deterministic analysis workflow.",
+            "transformation": "verbatim"
+          }
+        },
+        "name": {
+          "value": "Local Career Tool",
+          "source": {
+            "start_line": 18,
+            "end_line": 18,
+            "excerpt": "Local Career Tool",
+            "transformation": "verbatim"
+          }
+        },
+        "description": {
+          "value": "Built a private deterministic analysis workflow.",
+          "source": {
+            "start_line": 19,
+            "end_line": 19,
+            "excerpt": "Built a private deterministic analysis workflow.",
+            "transformation": "whitespace_joined"
+          }
+        }
+      }
+    ],
+    "certifications": [
+      {
+        "raw_text": {
+          "value": "Cloud Engineering Certificate\nExample Institute",
+          "source": {
+            "start_line": 21,
+            "end_line": 22,
+            "excerpt": "Cloud Engineering Certificate\nExample Institute",
+            "transformation": "verbatim"
+          }
+        },
+        "name": {
+          "value": "Cloud Engineering Certificate",
+          "source": {
+            "start_line": 21,
+            "end_line": 21,
+            "excerpt": "Cloud Engineering Certificate",
+            "transformation": "verbatim"
+          }
+        },
+        "issuer": {
+          "value": "Example Institute",
+          "source": {
+            "start_line": 22,
+            "end_line": 22,
+            "excerpt": "Example Institute",
+            "transformation": "verbatim"
+          }
+        }
+      }
+    ]
+  },
+  "confidence": {
+    "label": "high",
+    "score": 97,
+    "max_score": 100,
+    "signals": [
+      {
+        "signal": "extraction_quality",
+        "score": 22,
+        "max_score": 25,
+        "evidence": [
+          "character_count=546",
+          "non_empty_line_count=22",
+          "readable_character_percent=100"
+        ]
+      },
+      {
+        "signal": "section_coverage",
+        "score": 25,
+        "max_score": 25,
+        "evidence": [
+          "detected_expected_section_count=4",
+          "expected_section_count=4"
+        ]
+      },
+      {
+        "signal": "contact_completeness",
+        "score": 15,
+        "max_score": 15,
+        "evidence": [
+          "has_name=true",
+          "has_email=true",
+          "has_phone_or_link=true"
+        ]
+      },
+      {
+        "signal": "experience_completeness",
+        "score": 25,
+        "max_score": 25,
+        "evidence": [
+          "entry_count=1",
+          "has_job_title=true",
+          "has_company=true",
+          "has_date_range=true",
+          "has_detail=true"
+        ]
+      },
+      {
+        "signal": "skills_completeness",
+        "score": 10,
+        "max_score": 10,
+        "evidence": [
+          "skill_count=5"
+        ]
+      }
+    ]
+  },
+  "field_statuses": [
+    {
+      "field": "contact",
+      "status": "detected"
+    },
+    {
+      "field": "summary",
+      "status": "detected"
+    },
+    {
+      "field": "experience",
+      "status": "detected"
+    },
+    {
+      "field": "education",
+      "status": "detected"
+    },
+    {
+      "field": "skills",
+      "status": "detected"
+    },
+    {
+      "field": "projects",
+      "status": "detected"
+    },
+    {
+      "field": "certifications",
+      "status": "detected"
+    }
+  ],
+  "metadata": {
+    "sections": [
+      {
+        "section": "summary",
+        "status": "detected_with_content",
+        "header_source": {
+          "start_line": 5,
+          "end_line": 5,
+          "excerpt": "SUMMARY",
+          "transformation": "verbatim"
+        },
+        "content_line_count": 1
+      },
+      {
+        "section": "experience",
+        "status": "detected_with_content",
+        "header_source": {
+          "start_line": 7,
+          "end_line": 7,
+          "excerpt": "EXPERIENCE",
+          "transformation": "verbatim"
+        },
+        "content_line_count": 4
+      },
+      {
+        "section": "education",
+        "status": "detected_with_content",
+        "header_source": {
+          "start_line": 12,
+          "end_line": 12,
+          "excerpt": "EDUCATION",
+          "transformation": "verbatim"
+        },
+        "content_line_count": 2
+      },
+      {
+        "section": "skills",
+        "status": "detected_with_content",
+        "header_source": {
+          "start_line": 15,
+          "end_line": 15,
+          "excerpt": "SKILLS",
+          "transformation": "verbatim"
+        },
+        "content_line_count": 1
+      },
+      {
+        "section": "projects",
+        "status": "detected_with_content",
+        "header_source": {
+          "start_line": 17,
+          "end_line": 17,
+          "excerpt": "PROJECTS",
+          "transformation": "verbatim"
+        },
+        "content_line_count": 2
+      },
+      {
+        "section": "certifications",
+        "status": "detected_with_content",
+        "header_source": {
+          "start_line": 20,
+          "end_line": 20,
+          "excerpt": "CERTIFICATIONS",
+          "transformation": "verbatim"
+        },
+        "content_line_count": 2
+      }
+    ],
+    "detected_sections": [
+      "summary",
+      "experience",
+      "education",
+      "skills",
+      "projects",
+      "certifications"
+    ],
+    "missing_expected_sections": [],
+    "fallbacks_applied": [],
+    "output_truncated": false
+  },
+  "warnings": [],
+  "enrichment_request": {
+    "status": "not_eligible",
+    "reason": "deterministic_parse_confidence_not_low",
+    "target_sections": [],
+    "proposal_schema_version": "career.resume_enrichment_proposal.v1"
+  }
+}

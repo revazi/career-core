@@ -33,7 +33,6 @@ Before a parity task, verify versions against `../resume-ai/docs/current-phase.m
 Primary source:
 
 - `accounts/services/resume_normalization.py`
-- `accounts/services/resume_parsing.py`
 - `accounts/services/resume_extraction.py` only for understanding boundaries; file extraction remains outside core
 
 Tests and fixtures:
@@ -48,7 +47,7 @@ Exclude from the core:
 - fallback prompts/provider handling
 - Django model persistence
 
-The deterministic pre-LLM result and confidence metadata are relevant. A fallback fixture may still be useful as adversarial source text, but expected LLM output is not.
+The deterministic pre-LLM result and confidence metadata are relevant. Provider-neutral bounds, source-grounding validation, and conservative merge behavior from `resume_normalization_fallback_validation.py` and `normalization_fallback_merge.py` may be adapted for explicit untrusted proposal input, but they must preserve a separate deterministic baseline and cannot enter authoritative scoring. Fallback fixtures may be adapted only with synthetic provenance.
 
 ## Resume evaluation
 

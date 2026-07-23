@@ -1,0 +1,133 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/revazi/career-core/main/schemas/resume-enrichment-proposal-v1.schema.json",
+  "title": "career-core resume enrichment proposal v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "summary", "experience", "education", "skills"],
+  "properties": {
+    "schema_version": {
+      "const": "career.resume_enrichment_proposal.v1"
+    },
+    "summary": {
+      "type": "string",
+      "maxLength": 2000,
+      "description": "Empty or copied from the source resume text."
+    },
+    "experience": {
+      "type": "array",
+      "maxItems": 15,
+      "items": {
+        "$ref": "#/$defs/experienceProposal"
+      }
+    },
+    "education": {
+      "type": "array",
+      "maxItems": 10,
+      "items": {
+        "$ref": "#/$defs/educationProposal"
+      }
+    },
+    "skills": {
+      "type": "array",
+      "maxItems": 50,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 300
+      }
+    }
+  },
+  "$defs": {
+    "experienceProposal": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["raw_text", "job_title", "company", "date_range", "bullets"],
+      "properties": {
+        "raw_text": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4000
+        },
+        "job_title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 300
+        },
+        "company": {
+          "type": "string",
+          "maxLength": 300
+        },
+        "date_range": {
+          "type": "string",
+          "maxLength": 300
+        },
+        "bullets": {
+          "type": "array",
+          "maxItems": 20,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1000
+          }
+        }
+      },
+      "anyOf": [
+        {
+          "properties": {
+            "company": {
+              "minLength": 1
+            }
+          }
+        },
+        {
+          "properties": {
+            "date_range": {
+              "minLength": 1
+            }
+          }
+        }
+      ]
+    },
+    "educationProposal": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["raw_text", "institution", "degree", "date_range"],
+      "properties": {
+        "raw_text": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4000
+        },
+        "institution": {
+          "type": "string",
+          "maxLength": 300
+        },
+        "degree": {
+          "type": "string",
+          "maxLength": 300
+        },
+        "date_range": {
+          "type": "string",
+          "maxLength": 300
+        }
+      },
+      "anyOf": [
+        {
+          "properties": {
+            "institution": {
+              "minLength": 1
+            }
+          }
+        },
+        {
+          "properties": {
+            "degree": {
+              "minLength": 1
+            }
+          }
+        }
+      ]
+    }
+  }
+}

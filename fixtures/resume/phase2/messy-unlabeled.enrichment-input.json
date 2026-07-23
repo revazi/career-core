@@ -1,0 +1,31 @@
+{
+  "schema_version": "career.resume_enrichment_input.v1",
+  "resume": {
+    "schema_version": "career.resume_input.v1",
+    "text": "Morgan Lee\nmorgan.lee@example.com\nBackend engineer focused on reliable APIs and platform stability.\nPlatform Engineer at Acme Corp since 2021\nDelivered internal APIs used by support and operations teams.\nReduced deployment errors by 30 percent through release automation.\nComfortable with Python and Django for backend services\nBachelor of Science in Computer Science\nExample University\n2016 - 2020",
+    "metadata": {
+      "document_id": "synthetic-messy-v1"
+    }
+  },
+  "proposal": {
+    "schema_version": "career.resume_enrichment_proposal.v1",
+    "summary": "Backend engineer focused on reliable APIs and platform stability.",
+    "experience": [
+      {
+        "raw_text": "Platform Engineer at Acme Corp since 2021\nDelivered internal APIs used by support and operations teams.\nReduced deployment errors by 30 percent through release automation.",
+        "job_title": "Platform Engineer",
+        "company": "Acme Corp",
+        "date_range": "",
+        "bullets": [
+          "Delivered internal APIs used by support and operations teams.",
+          "Reduced deployment errors by 30 percent through release automation."
+        ]
+      }
+    ],
+    "education": [],
+    "skills": [
+      "Python",
+      "Django"
+    ]
+  }
+}

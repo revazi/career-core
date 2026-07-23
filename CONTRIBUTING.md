@@ -4,7 +4,7 @@ Thank you for helping build `career-core`.
 
 ## Scope
 
-The project is a deterministic, local-first Rust library. Keep LLM calls, UI, persistence, remote fetching, billing, and platform-specific behavior outside the core package.
+The project is a deterministic, local-first Rust library. Keep LLM/provider calls, API keys, prompts, UI, persistence, remote fetching, billing, and platform-specific behavior outside the core package. Provider-neutral external proposals are untrusted input and must preserve the deterministic baseline.
 
 Read [`AGENTS.md`](AGENTS.md) and the active phase in [`.agents/current-phase.md`](.agents/current-phase.md) before making changes.
 
@@ -27,6 +27,10 @@ cargo build --workspace --all-features --locked
 cargo run --quiet -p career-cli -- capabilities
 cargo run --quiet -p career-cli -- resume evaluate \
   --input fixtures/resume/phase1/complete-sections.input.json
+cargo run --quiet -p career-cli -- resume normalize \
+  --input fixtures/resume/phase2/complete-normalization.input.json
+cargo run --quiet -p career-cli -- resume enrich \
+  --input fixtures/resume/phase2/messy-unlabeled.enrichment-input.json
 git diff --check
 ```
 

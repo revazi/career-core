@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/revazi/career-core/main/schemas/resume-enrichment-input-v1.schema.json",
+  "title": "career-core resume enrichment input v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "resume", "proposal"],
+  "properties": {
+    "schema_version": {
+      "const": "career.resume_enrichment_input.v1"
+    },
+    "resume": {
+      "$ref": "resume-input-v1.schema.json"
+    },
+    "proposal": {
+      "$ref": "resume-enrichment-proposal-v1.schema.json"
+    }
+  }
+}
