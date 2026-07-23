@@ -1,0 +1,34 @@
+[package]
+name = "career-core"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.85"
+description = "Deterministic, explainable career-document analysis core"
+repository = "https://github.com/revazi/career-core"
+license = "MIT OR Apache-2.0"
+readme = "README.md"
+keywords = ["career", "resume", "job-search", "matching"]
+categories = ["command-line-utilities"]
+
+[workspace]
+members = ["crates/career-cli"]
+resolver = "2"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.85"
+repository = "https://github.com/revazi/career-core"
+license = "MIT OR Apache-2.0"
+
+[workspace.dependencies]
+career-core = { path = "." }
+clap = { version = "4.5", features = ["derive"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+[dependencies]
+serde.workspace = true
+
+[dev-dependencies]
+serde_json.workspace = true

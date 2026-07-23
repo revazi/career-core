@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/revazi/career-core/schemas/capabilities-v1.schema.json",
+  "title": "career-core capabilities v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "core_version",
+    "deterministic",
+    "performs_network_requests",
+    "capabilities"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "career.capabilities.v1"
+    },
+    "core_version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "deterministic": {
+      "const": true
+    },
+    "performs_network_requests": {
+      "const": false
+    },
+    "capabilities": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "status", "summary"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "enum": ["available", "planned"]
+          },
+          "summary": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    }
+  }
+}

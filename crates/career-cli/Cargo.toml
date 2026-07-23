@@ -1,0 +1,18 @@
+[package]
+name = "career-cli"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+license.workspace = true
+description = "Agent-friendly command-line interface for career-core"
+publish = false
+
+[[bin]]
+name = "career"
+path = "src/main.rs"
+
+[dependencies]
+career-core.workspace = true
+clap.workspace = true
+serde_json.workspace = true
