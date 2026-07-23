@@ -6,7 +6,7 @@
 
 ## Status
 
-Implementation is complete locally; final clean-clone verification, GitHub Actions, and review are pending. Phase 3 has not started.
+Implementation and clean-clone verification are complete locally; GitHub Actions and review are pending. Phase 3 has not started.
 
 ## Implemented
 
@@ -49,14 +49,29 @@ Provider execution, prompts, Django persistence, and score coupling were not por
 
 ## Verification completed locally
 
-- formatting, workspace Clippy with warnings denied, and workspace tests pass during implementation
-- 47 Rust tests currently pass across library, CLI, integration, and public-contract suites
+- `cargo fmt --all --check`
+- `cargo clippy --workspace --all-targets --all-features -- -D warnings`
+- `cargo test --workspace --all-features --locked` — 47 tests passed
+- `cargo build --workspace --all-features --locked`
+- rustdoc with warnings denied
+- capability JSON and text smoke checks
 - Phase 1 evaluation goldens remain unchanged
-- Phase 2 deterministic and assisted CLI goldens match byte-for-byte
-- all schema files parse as JSON and pass Draft 2020-12 metaschema validation
-- normalization, proposal, enrichment-input, enrichment-result, and representative error documents validate with `check-jsonschema`
+- Phase 2 deterministic and assisted JSON/text CLI checks pass
+- deterministic normalization and enrichment goldens match byte-for-byte
+- enrichment `baseline` exactly equals the independent deterministic messy-resume golden
+- all schemas pass Draft 2020-12 metaschema validation
+- input, normalization, proposal, enrichment-input, enrichment-result, and representative error documents validate with `check-jsonschema`
+- all six Rust section alias sets exactly match `resume_normalization_v7`
+- clean-clone formatting, Clippy, 47-test, locked-build, and all three CLI golden checks
+- regex dependency family declares Rust 1.65 MSRV and permissive MIT/Apache/Unlicense-compatible licensing
+- all relative Markdown links resolve
+- README JSON and CI YAML parse
+- Agent Skill metadata and size checks pass
+- credential-pattern scan reports no findings
+- Fallow changed-code and security checks report no findings; Fallow does not currently analyze Rust source for health metrics
+- `git diff --check`
 
-Final locked build, rustdoc, clean-clone, security, link, diff, and GitHub Actions verification remain pending.
+GitHub Actions, including the Rust 1.85 job, remains pending until the branch is pushed.
 
 ## Explicitly unavailable
 
