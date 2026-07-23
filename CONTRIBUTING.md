@@ -33,6 +33,8 @@ cargo run --quiet -p career-cli -- resume normalize \
   --input fixtures/resume/phase2/complete-normalization.input.json
 cargo run --quiet -p career-cli -- resume enrich \
   --input fixtures/resume/phase2/messy-unlabeled.enrichment-input.json
+cargo run --quiet -p career-cli -- job normalize \
+  --input fixtures/job/phase4a/complete-normalization.input.json
 git diff --check
 ```
 

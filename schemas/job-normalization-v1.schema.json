@@ -1,0 +1,395 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/revazi/career-core/main/schemas/job-normalization-v1.schema.json",
+  "title": "career-core deterministic job-description normalization v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "policy_version",
+    "reference_policy_version",
+    "core_version",
+    "document_id",
+    "deterministic_document",
+    "confidence",
+    "field_statuses",
+    "metadata",
+    "warnings"
+  ],
+  "properties": {
+    "schema_version": { "const": "career.job_normalization.v1" },
+    "policy_version": { "const": "job_normalization_v1" },
+    "reference_policy_version": { "const": "job_description_normalization_v6" },
+    "core_version": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "document_id": {
+      "type": ["string", "null"],
+      "maxLength": 128
+    },
+    "deterministic_document": { "$ref": "#/$defs/document" },
+    "confidence": { "$ref": "#/$defs/confidence" },
+    "field_statuses": {
+      "type": "array",
+      "minItems": 11,
+      "maxItems": 11,
+      "prefixItems": [
+        { "$ref": "#/$defs/titleStatus" },
+        { "$ref": "#/$defs/companyStatus" },
+        { "$ref": "#/$defs/requiredSkillsStatus" },
+        { "$ref": "#/$defs/preferredSkillsStatus" },
+        { "$ref": "#/$defs/requiredQualificationsStatus" },
+        { "$ref": "#/$defs/preferredQualificationsStatus" },
+        { "$ref": "#/$defs/senioritySignalsStatus" },
+        { "$ref": "#/$defs/experienceRequirementsStatus" },
+        { "$ref": "#/$defs/educationRequirementsStatus" },
+        { "$ref": "#/$defs/certificationRequirementsStatus" },
+        { "$ref": "#/$defs/responsibilitiesStatus" }
+      ],
+      "items": false
+    },
+    "metadata": { "$ref": "#/$defs/metadata" },
+    "warnings": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 5,
+      "prefixItems": [
+        {
+          "allOf": [
+            { "$ref": "#/$defs/warning" },
+            { "properties": { "code": { "const": "limited_normalization_scope" } } }
+          ]
+        }
+      ],
+      "items": { "$ref": "#/$defs/warning" }
+    }
+  },
+  "$defs": {
+    "field": {
+      "enum": [
+        "title",
+        "company",
+        "required_skills",
+        "preferred_skills",
+        "required_qualifications",
+        "preferred_qualifications",
+        "seniority_signals",
+        "experience_requirements",
+        "education_requirements",
+        "certification_requirements",
+        "responsibilities"
+      ]
+    },
+    "sourceSpan": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["start_line", "end_line", "excerpt", "transformation"],
+      "properties": {
+        "start_line": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2000
+        },
+        "end_line": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2000
+        },
+        "excerpt": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160
+        },
+        "transformation": {
+          "enum": [
+            "verbatim",
+            "list_item_cleaned",
+            "label_prefix_removed",
+            "delimiter_split",
+            "normalized_case"
+          ]
+        }
+      }
+    },
+    "groundedText": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["value", "source"],
+      "properties": {
+        "value": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000
+        },
+        "source": { "$ref": "#/$defs/sourceSpan" }
+      }
+    },
+    "nullableGroundedText": {
+      "anyOf": [
+        { "type": "null" },
+        { "$ref": "#/$defs/groundedText" }
+      ]
+    },
+    "skillList": {
+      "type": "array",
+      "maxItems": 50,
+      "items": { "$ref": "#/$defs/groundedText" }
+    },
+    "qualificationList": {
+      "type": "array",
+      "maxItems": 50,
+      "items": { "$ref": "#/$defs/groundedText" }
+    },
+    "requirementList": {
+      "type": "array",
+      "maxItems": 50,
+      "items": { "$ref": "#/$defs/groundedText" }
+    },
+    "document": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "title",
+        "company",
+        "required_skills",
+        "preferred_skills",
+        "required_qualifications",
+        "preferred_qualifications",
+        "seniority_signals",
+        "experience_requirements",
+        "education_requirements",
+        "certification_requirements",
+        "responsibilities"
+      ],
+      "properties": {
+        "title": { "$ref": "#/$defs/nullableGroundedText" },
+        "company": { "$ref": "#/$defs/nullableGroundedText" },
+        "required_skills": { "$ref": "#/$defs/skillList" },
+        "preferred_skills": { "$ref": "#/$defs/skillList" },
+        "required_qualifications": { "$ref": "#/$defs/qualificationList" },
+        "preferred_qualifications": { "$ref": "#/$defs/qualificationList" },
+        "seniority_signals": {
+          "type": "array",
+          "maxItems": 20,
+          "items": { "$ref": "#/$defs/groundedText" }
+        },
+        "experience_requirements": { "$ref": "#/$defs/requirementList" },
+        "education_requirements": { "$ref": "#/$defs/requirementList" },
+        "certification_requirements": { "$ref": "#/$defs/requirementList" },
+        "responsibilities": {
+          "type": "array",
+          "maxItems": 50,
+          "items": { "$ref": "#/$defs/groundedText" }
+        }
+      }
+    },
+    "section": {
+      "enum": ["required", "preferred", "responsibilities", "other"]
+    },
+    "matchedSection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["section", "header_source"],
+      "properties": {
+        "section": { "$ref": "#/$defs/section" },
+        "header_source": { "$ref": "#/$defs/sourceSpan" }
+      }
+    },
+    "unmatchedLine": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["line_number", "excerpt"],
+      "properties": {
+        "line_number": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2000
+        },
+        "excerpt": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "matched_sections",
+        "unmatched_lines",
+        "unmatched_line_count",
+        "unmatched_lines_truncated",
+        "output_truncated"
+      ],
+      "properties": {
+        "matched_sections": {
+          "type": "array",
+          "maxItems": 2000,
+          "items": { "$ref": "#/$defs/matchedSection" }
+        },
+        "unmatched_lines": {
+          "type": "array",
+          "maxItems": 10,
+          "items": { "$ref": "#/$defs/unmatchedLine" }
+        },
+        "unmatched_line_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2000
+        },
+        "unmatched_lines_truncated": { "type": "boolean" },
+        "output_truncated": { "type": "boolean" }
+      }
+    },
+    "signalKind": {
+      "enum": [
+        "text_quality",
+        "title_detection",
+        "skills_detection",
+        "responsibilities_detection",
+        "requirement_detection",
+        "structure_quality"
+      ]
+    },
+    "signal": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["signal", "score", "max_score", "evidence"],
+      "properties": {
+        "signal": { "$ref": "#/$defs/signalKind" },
+        "score": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 30
+        },
+        "max_score": {
+          "enum": [10, 15, 20, 30]
+        },
+        "evidence": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 3,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        }
+      }
+    },
+    "confidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["label", "score", "max_score", "signals"],
+      "properties": {
+        "label": { "enum": ["unknown", "low", "medium", "high"] },
+        "score": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "max_score": { "const": 100 },
+        "signals": {
+          "type": "array",
+          "minItems": 6,
+          "maxItems": 6,
+          "prefixItems": [
+            { "$ref": "#/$defs/textQualitySignal" },
+            { "$ref": "#/$defs/titleDetectionSignal" },
+            { "$ref": "#/$defs/skillsDetectionSignal" },
+            { "$ref": "#/$defs/responsibilitiesDetectionSignal" },
+            { "$ref": "#/$defs/requirementDetectionSignal" },
+            { "$ref": "#/$defs/structureQualitySignal" }
+          ],
+          "items": false
+        }
+      }
+    },
+    "textQualitySignal": {
+      "allOf": [
+        { "$ref": "#/$defs/signal" },
+        { "properties": { "signal": { "const": "text_quality" }, "max_score": { "const": 15 } } }
+      ]
+    },
+    "titleDetectionSignal": {
+      "allOf": [
+        { "$ref": "#/$defs/signal" },
+        { "properties": { "signal": { "const": "title_detection" }, "max_score": { "const": 15 } } }
+      ]
+    },
+    "skillsDetectionSignal": {
+      "allOf": [
+        { "$ref": "#/$defs/signal" },
+        { "properties": { "signal": { "const": "skills_detection" }, "max_score": { "const": 30 } } }
+      ]
+    },
+    "responsibilitiesDetectionSignal": {
+      "allOf": [
+        { "$ref": "#/$defs/signal" },
+        { "properties": { "signal": { "const": "responsibilities_detection" }, "max_score": { "const": 20 } } }
+      ]
+    },
+    "requirementDetectionSignal": {
+      "allOf": [
+        { "$ref": "#/$defs/signal" },
+        { "properties": { "signal": { "const": "requirement_detection" }, "max_score": { "const": 10 } } }
+      ]
+    },
+    "structureQualitySignal": {
+      "allOf": [
+        { "$ref": "#/$defs/signal" },
+        { "properties": { "signal": { "const": "structure_quality" }, "max_score": { "const": 10 } } }
+      ]
+    },
+    "status": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["field", "status"],
+      "properties": {
+        "field": { "$ref": "#/$defs/field" },
+        "status": { "enum": ["detected", "not_detected"] }
+      }
+    },
+    "titleStatus": { "allOf": [{ "$ref": "#/$defs/status" }, { "properties": { "field": { "const": "title" } } }] },
+    "companyStatus": { "allOf": [{ "$ref": "#/$defs/status" }, { "properties": { "field": { "const": "company" } } }] },
+    "requiredSkillsStatus": { "allOf": [{ "$ref": "#/$defs/status" }, { "properties": { "field": { "const": "required_skills" } } }] },
+    "preferredSkillsStatus": { "allOf": [{ "$ref": "#/$defs/status" }, { "properties": { "field": { "const": "preferred_skills" } } }] },
+    "requiredQualificationsStatus": { "allOf": [{ "$ref": "#/$defs/status" }, { "properties": { "field": { "const": "required_qualifications" } } }] },
+    "preferredQualificationsStatus": { "allOf": [{ "$ref": "#/$defs/status" }, { "properties": { "field": { "const": "preferred_qualifications" } } }] },
+    "senioritySignalsStatus": { "allOf": [{ "$ref": "#/$defs/status" }, { "properties": { "field": { "const": "seniority_signals" } } }] },
+    "experienceRequirementsStatus": { "allOf": [{ "$ref": "#/$defs/status" }, { "properties": { "field": { "const": "experience_requirements" } } }] },
+    "educationRequirementsStatus": { "allOf": [{ "$ref": "#/$defs/status" }, { "properties": { "field": { "const": "education_requirements" } } }] },
+    "certificationRequirementsStatus": { "allOf": [{ "$ref": "#/$defs/status" }, { "properties": { "field": { "const": "certification_requirements" } } }] },
+    "responsibilitiesStatus": { "allOf": [{ "$ref": "#/$defs/status" }, { "properties": { "field": { "const": "responsibilities" } } }] },
+    "warning": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "message", "related_fields"],
+      "properties": {
+        "code": {
+          "enum": [
+            "limited_normalization_scope",
+            "no_recognized_section_headers",
+            "unclassified_lines_present",
+            "parse_confidence_provisional",
+            "output_truncated"
+          ]
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "related_fields": {
+          "type": "array",
+          "maxItems": 11,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/field" }
+        }
+      }
+    }
+  }
+}

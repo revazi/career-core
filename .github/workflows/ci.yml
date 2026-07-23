@@ -88,6 +88,13 @@ jobs:
           assert result['baseline'] == baseline
           PY
 
+          cargo run --quiet --locked -p career-cli -- \
+            job normalize \
+            --input fixtures/job/phase4a/complete-normalization.input.json \
+            > /tmp/job-normalization.json
+          python3 -m json.tool /tmp/job-normalization.json > /dev/null
+          cmp /tmp/job-normalization.json fixtures/job/phase4a/complete-normalization.expected.json
+
           for schema in schemas/*.schema.json; do
             python3 -m json.tool "$schema" > /dev/null
           done

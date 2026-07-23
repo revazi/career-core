@@ -1,0 +1,189 @@
+{
+  "schema_version": "career.job_normalization.v1",
+  "policy_version": "job_normalization_v1",
+  "reference_policy_version": "job_description_normalization_v6",
+  "core_version": "0.1.0",
+  "document_id": "synthetic-job-prose-v1",
+  "deterministic_document": {
+    "title": {
+      "value": "We are seeking a platform engineer to strengthen reliable services across our product organization. Candidates must bring hands-on Python and Django expertise for production backend services. Experience with AWS would be a plus for this team. In this role you will build reliable APIs for customer workflows. You will also improve deployment safety and collaborate with product teams. We provide flexible benefits and support a collaborative company culture.",
+      "source": {
+        "start_line": 1,
+        "end_line": 1,
+        "excerpt": "We are seeking a platform engineer to strengthen reliable services across our product organization. Candidates must bring hands-on Python and Django expertise f",
+        "transformation": "verbatim"
+      }
+    },
+    "company": null,
+    "required_skills": [],
+    "preferred_skills": [],
+    "required_qualifications": [],
+    "preferred_qualifications": [],
+    "seniority_signals": [],
+    "experience_requirements": [],
+    "education_requirements": [],
+    "certification_requirements": [],
+    "responsibilities": []
+  },
+  "confidence": {
+    "label": "low",
+    "score": 14,
+    "max_score": 100,
+    "signals": [
+      {
+        "signal": "text_quality",
+        "score": 11,
+        "max_score": 15,
+        "evidence": [
+          "character_count=458",
+          "non_empty_line_count=1",
+          "readable_character_per_mille=1000"
+        ]
+      },
+      {
+        "signal": "title_detection",
+        "score": 0,
+        "max_score": 15,
+        "evidence": [
+          "title_present=true",
+          "title_word_count=68",
+          "title_plausible=false"
+        ]
+      },
+      {
+        "signal": "skills_detection",
+        "score": 0,
+        "max_score": 30,
+        "evidence": [
+          "detected_skill_count=0"
+        ]
+      },
+      {
+        "signal": "responsibilities_detection",
+        "score": 0,
+        "max_score": 20,
+        "evidence": [
+          "detected_responsibility_count=0"
+        ]
+      },
+      {
+        "signal": "requirement_detection",
+        "score": 0,
+        "max_score": 10,
+        "evidence": [
+          "detected_groups="
+        ]
+      },
+      {
+        "signal": "structure_quality",
+        "score": 3,
+        "max_score": 10,
+        "evidence": [
+          "classified_line_per_mille=1000",
+          "matched_section_count=0",
+          "long_line_per_mille=1000"
+        ]
+      }
+    ]
+  },
+  "field_statuses": [
+    {
+      "field": "title",
+      "status": "detected"
+    },
+    {
+      "field": "company",
+      "status": "not_detected"
+    },
+    {
+      "field": "required_skills",
+      "status": "not_detected"
+    },
+    {
+      "field": "preferred_skills",
+      "status": "not_detected"
+    },
+    {
+      "field": "required_qualifications",
+      "status": "not_detected"
+    },
+    {
+      "field": "preferred_qualifications",
+      "status": "not_detected"
+    },
+    {
+      "field": "seniority_signals",
+      "status": "not_detected"
+    },
+    {
+      "field": "experience_requirements",
+      "status": "not_detected"
+    },
+    {
+      "field": "education_requirements",
+      "status": "not_detected"
+    },
+    {
+      "field": "certification_requirements",
+      "status": "not_detected"
+    },
+    {
+      "field": "responsibilities",
+      "status": "not_detected"
+    }
+  ],
+  "metadata": {
+    "matched_sections": [],
+    "unmatched_lines": [],
+    "unmatched_line_count": 0,
+    "unmatched_lines_truncated": false,
+    "output_truncated": false
+  },
+  "warnings": [
+    {
+      "code": "limited_normalization_scope",
+      "message": "Job-description fields are deterministic text classifications; a field reported as not detected is not proof that the requirement is absent.",
+      "related_fields": [
+        "title",
+        "company",
+        "required_skills",
+        "preferred_skills",
+        "required_qualifications",
+        "preferred_qualifications",
+        "seniority_signals",
+        "experience_requirements",
+        "education_requirements",
+        "certification_requirements",
+        "responsibilities"
+      ]
+    },
+    {
+      "code": "no_recognized_section_headers",
+      "message": "No recognized job-description section headers were detected; inline classifiers may still recover bounded fields.",
+      "related_fields": [
+        "required_skills",
+        "preferred_skills",
+        "required_qualifications",
+        "preferred_qualifications",
+        "responsibilities"
+      ]
+    },
+    {
+      "code": "parse_confidence_provisional",
+      "message": "Job-description parsing confidence is provisional; downstream matching must not turn unverified fields into confirmed requirements or gaps.",
+      "related_fields": [
+        "title",
+        "company",
+        "required_skills",
+        "preferred_skills",
+        "required_qualifications",
+        "preferred_qualifications",
+        "seniority_signals",
+        "experience_requirements",
+        "education_requirements",
+        "certification_requirements",
+        "responsibilities"
+      ]
+    }
+  ]
+}

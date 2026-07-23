@@ -4,7 +4,7 @@
 
 The project is intentionally **not an AI service**. The core performs no network requests and has no LLM dependency. Native applications, command-line tools, and coding-agent integrations can use its versioned evidence and scoring contracts. An opted-in host may submit an external source-grounded proposal for deterministic validation, but provider calls remain outside the authoritative core.
 
-> **Status:** Phase 3. Capability discovery, bounded section evaluation, deterministic normalization, provider-neutral assisted normalization, and full explainable resume-readiness analysis are available. Job matching remains planned.
+> **Status:** Phase 4A. Resume evaluation/normalization/analysis and deterministic job-description normalization are available. Resume-to-job matching remains planned.
 
 ## Goals
 
@@ -86,6 +86,11 @@ JSON is the default output:
       "id": "resume.enrich",
       "status": "available",
       "summary": "Validate and conservatively merge an explicit source-grounded external proposal without network access."
+    },
+    {
+      "id": "job.normalize",
+      "status": "available",
+      "summary": "Normalize bounded job-description text into source-grounded deterministic facts and confidence."
     },
     {
       "id": "job.match",
@@ -171,6 +176,19 @@ cargo run --quiet -p career-cli -- \
 
 The enrichment result preserves the complete deterministic `baseline` and exposes accepted values only in `assisted_document`. Assisted fields never replace deterministic confidence or authoritative scoring input. See [`docs/contracts/resume-normalization-v1.md`](docs/contracts/resume-normalization-v1.md) for contracts, limits, grounding rules, host orchestration, provenance, and intentional Django differences.
 
+## Normalize job descriptions
+
+Normalize caller-supplied vacancy text without fetching a URL:
+
+```bash
+cargo run --quiet -p career-cli -- \
+  job normalize --input fixtures/job/phase4a/complete-normalization.input.json
+```
+
+`career.job_normalization.v1` returns source-grounded required/preferred skills and qualifications, responsibilities, seniority, experience, education, and certification signals; six-signal parse confidence; field statuses; matched/unmatched metadata; and bounded warnings.
+
+A field reported as `not_detected` is not confirmed absent. Low-confidence output must remain provisional, and job matching is not yet available. See [`docs/contracts/job-normalization-v1.md`](docs/contracts/job-normalization-v1.md) for exact aliases, classification rules, limits, confidence, provenance, and intentional reference differences.
+
 ## Reference implementation
 
 The sibling Django repository at `../resume-ai` is a read-only behavioral reference during the port. It contains mature deterministic normalization, scoring, confidence, matching, fixtures, and regression tests. `career-core` must not import it, execute it at runtime, or claim parity until Rust golden tests prove the behavior.
@@ -184,7 +202,7 @@ The detailed, gated roadmap lives in [`.agents/phases.md`](.agents/phases.md). T
 1. versioned contracts and a minimal resume-evaluation vertical slice
 2. deterministic resume normalization and provider-neutral assisted validation
 3. explainable resume scoring parity and general ATS-readiness analysis
-4. job-description normalization and conservative matching
+4. job-description normalization, followed by conservative matching
 5. hardened CLI and coding-agent distribution
 6. Swift bindings for a later SwiftUI application
 7. optional adapters only when concrete consumers require them

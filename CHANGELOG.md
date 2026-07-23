@@ -23,3 +23,5 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Phase 2 schemas and synthetic clean, messy, assisted, Unicode, sparse, and adversarial regression coverage.
 - Versioned `career.resume_analysis.v1` with 18 deterministic checks, six weighted categories, bounded evidence, confidence-aware score floors, provisional findings, and check-derived actions.
 - `career resume analyze` with preserved Phase 1 behavior, JSON/text output, selected `deterministic_v2` scoring parity, and explicit proprietary-ATS/layout limitations.
+- Versioned `career.job_input.v1` and `career.job_normalization.v1` contracts with source-grounded required/preferred fields, responsibilities, explicit requirement signals, confidence, metadata, statuses, and warnings.
+- `career job normalize` with file/stdin input, JSON/text output, bounded synthetic fixtures, and selected deterministic `job_description_normalization_v6` fixture parity.

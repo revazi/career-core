@@ -3,8 +3,10 @@
 
 use serde::{Deserialize, Serialize};
 
+mod job;
 mod resume;
 
+pub use job::*;
 pub use resume::*;
 
 /// Version of the machine-readable capability document.
@@ -78,6 +80,12 @@ pub fn capabilities() -> Capabilities {
                     .to_owned(),
             },
             Capability {
+                id: "job.normalize".to_owned(),
+                status: CapabilityStatus::Available,
+                summary: "Normalize bounded job-description text into source-grounded deterministic facts and confidence."
+                    .to_owned(),
+            },
+            Capability {
                 id: "job.match".to_owned(),
                 status: CapabilityStatus::Planned,
                 summary: "Compare normalized resume and job evidence conservatively.".to_owned(),
@@ -102,7 +110,7 @@ mod tests {
     }
 
     #[test]
-    fn discovery_and_resume_operations_are_available() {
+    fn discovery_and_document_operations_are_available() {
         let capabilities = capabilities();
         let available_ids = capabilities
             .capabilities
@@ -119,6 +127,7 @@ mod tests {
                 "resume.analyze",
                 "resume.normalize",
                 "resume.enrich",
+                "job.normalize",
             ]
         );
     }

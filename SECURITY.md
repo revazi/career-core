@@ -22,5 +22,7 @@ The core library processes untrusted career-document text and structured data lo
 - preserve deterministic output when assisted validation fails
 - score only the deterministic normalization baseline and never assisted proposal values
 - label parser uncertainty and general ATS-readiness limitations without claiming proprietary ranking behavior
+- treat job fields not detected by lexical classification as unverified rather than confirmed absent
+- require caller-supplied job text and never fetch vacancy URLs from the core
 
 The CLI may read only paths explicitly supplied by the caller and never makes a provider call. Hosts that send resumes to an external model must obtain user consent, keep API keys outside core contracts and logs, bound provider context, isolate failures, and label accepted values as assisted.

@@ -45,3 +45,7 @@ An agent or application may automatically attempt external normalization enrichm
 ## D-011 — Full analysis is additive and baseline-only
 
 `career.resume_evaluation.v1` and `career resume evaluate` retain their Phase 1 section-coverage semantics. Full deterministic readiness scoring is exposed separately as `career.resume_analysis.v1` and `career resume analyze`. Analysis reruns `resume_normalization_v1` from the original input and cannot accept assisted documents, so external proposals never alter authoritative checks, confidence, evidence, or scores.
+
+## D-012 — Phase 4 stabilizes job normalization before matching
+
+Phase 4A exposes bounded `career.job_input.v1`, `career.job_normalization.v1`, and `career job normalize` without matching, URL fetching, or provider fallback. Phase 4B may consume the reviewed deterministic job-normalization contract only after 4A merges. `job.match` remains planned until its independent scoring, equivalence, evidence, uncertainty, and recommendation gates pass.

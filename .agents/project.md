@@ -43,6 +43,7 @@ The existing Django project at `../resume-ai` remains an independent application
 - **warning**: uncertainty or limitation that a consumer must not hide
 - **section evaluation**: the preserved Phase 1 core-header coverage operation
 - **resume analysis**: the full deterministic readiness checks, category scores, evidence, findings, actions, and limitations
+- **job normalization**: source-grounded lexical classification of caller-supplied job-description text with explicit confidence and uncertainty
 - **match**: deterministic comparison between normalized resume and job evidence
 - **capability**: a versioned operation advertised as available or planned
 - **adapter**: CLI, Swift binding, or other boundary depending on the core
