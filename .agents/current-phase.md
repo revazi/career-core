@@ -1,12 +1,12 @@
 # Current phase
 
-## Active phase
+## Most recently completed phase
 
 **Phase 3 — Explainable resume evaluation parity**
 
 ## Status
 
-Implementation and clean-clone verification are complete on `feature/resume-evaluation-parity-v1`. GitHub Actions and review are pending. Phase 4 has not started.
+Complete. Phase 4 has not started.
 
 ## Implemented so far
 
@@ -65,8 +65,7 @@ Intentional differences:
 - Fallow changed-code and security checks report no findings; Fallow does not currently analyze Rust source for health metrics
 - `git diff --check`
 - clean-clone formatting, Clippy, 61-test, locked-build, rustdoc, capabilities, and all four CLI golden checks pass
-
-GitHub Actions, including Rust 1.85 compatibility, remains pending until the branch is pushed.
+- GitHub Actions PR run `30005243174` — passed, including Rust 1.85 compatibility, 61 tests, locked build, and all CLI golden checks
 
 ## Explicitly unavailable
 
