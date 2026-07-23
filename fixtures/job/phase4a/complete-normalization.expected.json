@@ -1,0 +1,377 @@
+{
+  "schema_version": "career.job_normalization.v1",
+  "policy_version": "job_normalization_v1",
+  "reference_policy_version": "job_description_normalization_v6",
+  "core_version": "0.1.0",
+  "document_id": "synthetic-job-complete-v1",
+  "deterministic_document": {
+    "title": {
+      "value": "Senior Backend Engineer",
+      "source": {
+        "start_line": 1,
+        "end_line": 1,
+        "excerpt": "Senior Backend Engineer",
+        "transformation": "verbatim"
+      }
+    },
+    "company": {
+      "value": "Acme",
+      "source": {
+        "start_line": 2,
+        "end_line": 2,
+        "excerpt": "Company: Acme",
+        "transformation": "label_prefix_removed"
+      }
+    },
+    "required_skills": [
+      {
+        "value": "Python",
+        "source": {
+          "start_line": 9,
+          "end_line": 9,
+          "excerpt": "- Python, Django, PostgreSQL, REST APIs",
+          "transformation": "delimiter_split"
+        }
+      },
+      {
+        "value": "Django",
+        "source": {
+          "start_line": 9,
+          "end_line": 9,
+          "excerpt": "- Python, Django, PostgreSQL, REST APIs",
+          "transformation": "delimiter_split"
+        }
+      },
+      {
+        "value": "PostgreSQL",
+        "source": {
+          "start_line": 9,
+          "end_line": 9,
+          "excerpt": "- Python, Django, PostgreSQL, REST APIs",
+          "transformation": "delimiter_split"
+        }
+      },
+      {
+        "value": "REST APIs",
+        "source": {
+          "start_line": 9,
+          "end_line": 9,
+          "excerpt": "- Python, Django, PostgreSQL, REST APIs",
+          "transformation": "delimiter_split"
+        }
+      }
+    ],
+    "preferred_skills": [
+      {
+        "value": "AWS",
+        "source": {
+          "start_line": 13,
+          "end_line": 13,
+          "excerpt": "- AWS, Docker, Kubernetes",
+          "transformation": "delimiter_split"
+        }
+      },
+      {
+        "value": "Docker",
+        "source": {
+          "start_line": 13,
+          "end_line": 13,
+          "excerpt": "- AWS, Docker, Kubernetes",
+          "transformation": "delimiter_split"
+        }
+      },
+      {
+        "value": "Kubernetes",
+        "source": {
+          "start_line": 13,
+          "end_line": 13,
+          "excerpt": "- AWS, Docker, Kubernetes",
+          "transformation": "delimiter_split"
+        }
+      }
+    ],
+    "required_qualifications": [
+      {
+        "value": "5+ years of backend engineering experience",
+        "source": {
+          "start_line": 10,
+          "end_line": 10,
+          "excerpt": "- 5+ years of backend engineering experience",
+          "transformation": "list_item_cleaned"
+        }
+      },
+      {
+        "value": "Bachelor's degree in Computer Science",
+        "source": {
+          "start_line": 11,
+          "end_line": 11,
+          "excerpt": "- Bachelor's degree in Computer Science",
+          "transformation": "list_item_cleaned"
+        }
+      }
+    ],
+    "preferred_qualifications": [
+      {
+        "value": "AWS certification is a plus",
+        "source": {
+          "start_line": 14,
+          "end_line": 14,
+          "excerpt": "- AWS certification is a plus",
+          "transformation": "list_item_cleaned"
+        }
+      }
+    ],
+    "seniority_signals": [
+      {
+        "value": "senior",
+        "source": {
+          "start_line": 1,
+          "end_line": 1,
+          "excerpt": "Senior Backend Engineer",
+          "transformation": "normalized_case"
+        }
+      },
+      {
+        "value": "lead",
+        "source": {
+          "start_line": 5,
+          "end_line": 5,
+          "excerpt": "- Lead backend architecture decisions",
+          "transformation": "normalized_case"
+        }
+      }
+    ],
+    "experience_requirements": [
+      {
+        "value": "- 5+ years of backend engineering experience",
+        "source": {
+          "start_line": 10,
+          "end_line": 10,
+          "excerpt": "- 5+ years of backend engineering experience",
+          "transformation": "verbatim"
+        }
+      }
+    ],
+    "education_requirements": [
+      {
+        "value": "- Bachelor's degree in Computer Science",
+        "source": {
+          "start_line": 11,
+          "end_line": 11,
+          "excerpt": "- Bachelor's degree in Computer Science",
+          "transformation": "verbatim"
+        }
+      }
+    ],
+    "certification_requirements": [
+      {
+        "value": "- AWS certification is a plus",
+        "source": {
+          "start_line": 14,
+          "end_line": 14,
+          "excerpt": "- AWS certification is a plus",
+          "transformation": "verbatim"
+        }
+      }
+    ],
+    "responsibilities": [
+      {
+        "value": "Design reliable customer-facing APIs",
+        "source": {
+          "start_line": 4,
+          "end_line": 4,
+          "excerpt": "- Design reliable customer-facing APIs",
+          "transformation": "list_item_cleaned"
+        }
+      },
+      {
+        "value": "Lead backend architecture decisions",
+        "source": {
+          "start_line": 5,
+          "end_line": 5,
+          "excerpt": "- Lead backend architecture decisions",
+          "transformation": "list_item_cleaned"
+        }
+      },
+      {
+        "value": "Improve platform performance and observability",
+        "source": {
+          "start_line": 6,
+          "end_line": 6,
+          "excerpt": "- Improve platform performance and observability",
+          "transformation": "list_item_cleaned"
+        }
+      },
+      {
+        "value": "Partner with product and engineering teams",
+        "source": {
+          "start_line": 7,
+          "end_line": 7,
+          "excerpt": "- Partner with product and engineering teams",
+          "transformation": "list_item_cleaned"
+        }
+      }
+    ]
+  },
+  "confidence": {
+    "label": "high",
+    "score": 100,
+    "max_score": 100,
+    "signals": [
+      {
+        "signal": "text_quality",
+        "score": 15,
+        "max_score": 15,
+        "evidence": [
+          "character_count=436",
+          "non_empty_line_count=14",
+          "readable_character_per_mille=1000"
+        ]
+      },
+      {
+        "signal": "title_detection",
+        "score": 15,
+        "max_score": 15,
+        "evidence": [
+          "title_present=true",
+          "title_word_count=3",
+          "title_plausible=true"
+        ]
+      },
+      {
+        "signal": "skills_detection",
+        "score": 30,
+        "max_score": 30,
+        "evidence": [
+          "detected_skill_count=7"
+        ]
+      },
+      {
+        "signal": "responsibilities_detection",
+        "score": 20,
+        "max_score": 20,
+        "evidence": [
+          "detected_responsibility_count=4"
+        ]
+      },
+      {
+        "signal": "requirement_detection",
+        "score": 10,
+        "max_score": 10,
+        "evidence": [
+          "detected_groups=seniority,experience,education,certification,qualification"
+        ]
+      },
+      {
+        "signal": "structure_quality",
+        "score": 10,
+        "max_score": 10,
+        "evidence": [
+          "classified_line_per_mille=1000",
+          "matched_section_count=3",
+          "long_line_per_mille=0"
+        ]
+      }
+    ]
+  },
+  "field_statuses": [
+    {
+      "field": "title",
+      "status": "detected"
+    },
+    {
+      "field": "company",
+      "status": "detected"
+    },
+    {
+      "field": "required_skills",
+      "status": "detected"
+    },
+    {
+      "field": "preferred_skills",
+      "status": "detected"
+    },
+    {
+      "field": "required_qualifications",
+      "status": "detected"
+    },
+    {
+      "field": "preferred_qualifications",
+      "status": "detected"
+    },
+    {
+      "field": "seniority_signals",
+      "status": "detected"
+    },
+    {
+      "field": "experience_requirements",
+      "status": "detected"
+    },
+    {
+      "field": "education_requirements",
+      "status": "detected"
+    },
+    {
+      "field": "certification_requirements",
+      "status": "detected"
+    },
+    {
+      "field": "responsibilities",
+      "status": "detected"
+    }
+  ],
+  "metadata": {
+    "matched_sections": [
+      {
+        "section": "responsibilities",
+        "header_source": {
+          "start_line": 3,
+          "end_line": 3,
+          "excerpt": "Responsibilities",
+          "transformation": "verbatim"
+        }
+      },
+      {
+        "section": "required",
+        "header_source": {
+          "start_line": 8,
+          "end_line": 8,
+          "excerpt": "Requirements",
+          "transformation": "verbatim"
+        }
+      },
+      {
+        "section": "preferred",
+        "header_source": {
+          "start_line": 12,
+          "end_line": 12,
+          "excerpt": "Preferred Skills",
+          "transformation": "verbatim"
+        }
+      }
+    ],
+    "unmatched_lines": [],
+    "unmatched_line_count": 0,
+    "unmatched_lines_truncated": false,
+    "output_truncated": false
+  },
+  "warnings": [
+    {
+      "code": "limited_normalization_scope",
+      "message": "Job-description fields are deterministic text classifications; a field reported as not detected is not proof that the requirement is absent.",
+      "related_fields": [
+        "title",
+        "company",
+        "required_skills",
+        "preferred_skills",
+        "required_qualifications",
+        "preferred_qualifications",
+        "seniority_signals",
+        "experience_requirements",
+        "education_requirements",
+        "certification_requirements",
+        "responsibilities"
+      ]
+    }
+  ]
+}

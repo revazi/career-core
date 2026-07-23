@@ -106,6 +106,24 @@ The agent then submits one `career.resume_enrichment_input.v1` envelope to `resu
 
 `resume enrich` performs no model call. It returns the unchanged deterministic normalization under `baseline` and accepted values under `assisted_document`. Authoritative scores must consume the baseline. `resume analyze` enforces this by accepting only the original resume input and independently rerunning deterministic normalization. If the external model or validation fails, the agent must continue with the deterministic normalization rather than treating the operation as failed.
 
+## Available Phase 4A operation
+
+```bash
+career job normalize --input <path|-> [--format json|text]
+```
+
+Input is `career.job_input.v1`; output is `career.job_normalization.v1`. The command accepts plain text only and never fetches the source URL.
+
+Agents must:
+
+- treat `required` and `preferred` classifications as deterministic lexical extraction, not semantic certainty
+- preserve parse-confidence and unclassified-line warnings
+- treat every `not_detected` field as unverified rather than confirmed absent
+- cite source spans when presenting extracted requirements
+- avoid invoking `job.match`, which remains planned
+
+Provider fallback and external-proposal job enrichment are not part of Phase 4A.
+
 ## Distribution stages
 
 1. source checkout via `cargo run`

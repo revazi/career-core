@@ -1,0 +1,156 @@
+{
+  "reference_policy_version": "job_description_normalization_v6",
+  "comparison_basis": "identical_source_text",
+  "fixtures": [
+    {
+      "name": "complete-normalization",
+      "document": {
+        "title": "Senior Backend Engineer",
+        "company": "Acme",
+        "required_skills": [
+          "Python",
+          "Django",
+          "PostgreSQL",
+          "REST APIs"
+        ],
+        "preferred_skills": [
+          "AWS",
+          "Docker",
+          "Kubernetes"
+        ],
+        "required_qualifications": [
+          "5+ years of backend engineering experience",
+          "Bachelor's degree in Computer Science"
+        ],
+        "preferred_qualifications": [
+          "AWS certification is a plus"
+        ],
+        "seniority_signals": [
+          "senior",
+          "lead"
+        ],
+        "experience_requirements": [
+          "- 5+ years of backend engineering experience"
+        ],
+        "education_requirements": [
+          "- Bachelor's degree in Computer Science"
+        ],
+        "certification_requirements": [
+          "- AWS certification is a plus"
+        ],
+        "responsibilities": [
+          "Design reliable customer-facing APIs",
+          "Lead backend architecture decisions",
+          "Improve platform performance and observability",
+          "Partner with product and engineering teams"
+        ]
+      },
+      "metadata": {
+        "matched_sections": [
+          {
+            "section": "responsibilities",
+            "header": "Responsibilities",
+            "line_number": 3
+          },
+          {
+            "section": "required",
+            "header": "Requirements",
+            "line_number": 8
+          },
+          {
+            "section": "preferred",
+            "header": "Preferred Skills",
+            "line_number": 12
+          }
+        ],
+        "unmatched_lines": [],
+        "unmatched_line_count": 0,
+        "unmatched_lines_truncated": false
+      },
+      "confidence": {
+        "label": "high",
+        "score": 100,
+        "max_score": 100,
+        "signal_scores": {
+          "text_quality": {
+            "score": 15,
+            "max_score": 15
+          },
+          "title_detection": {
+            "score": 15,
+            "max_score": 15
+          },
+          "skills_detection": {
+            "score": 30,
+            "max_score": 30
+          },
+          "responsibilities_detection": {
+            "score": 20,
+            "max_score": 20
+          },
+          "requirement_detection": {
+            "score": 10,
+            "max_score": 10
+          },
+          "structure_quality": {
+            "score": 10,
+            "max_score": 10
+          }
+        }
+      }
+    },
+    {
+      "name": "prose-heavy",
+      "document": {
+        "title": "We are seeking a platform engineer to strengthen reliable services across our product organization. Candidates must bring hands-on Python and Django expertise for production backend services. Experience with AWS would be a plus for this team. In this role you will build reliable APIs for customer workflows. You will also improve deployment safety and collaborate with product teams. We provide flexible benefits and support a collaborative company culture.",
+        "company": "",
+        "required_skills": [],
+        "preferred_skills": [],
+        "required_qualifications": [],
+        "preferred_qualifications": [],
+        "seniority_signals": [],
+        "experience_requirements": [],
+        "education_requirements": [],
+        "certification_requirements": [],
+        "responsibilities": []
+      },
+      "metadata": {
+        "matched_sections": [],
+        "unmatched_lines": [],
+        "unmatched_line_count": 0,
+        "unmatched_lines_truncated": false
+      },
+      "confidence": {
+        "label": "low",
+        "score": 14,
+        "max_score": 100,
+        "signal_scores": {
+          "text_quality": {
+            "score": 11,
+            "max_score": 15
+          },
+          "title_detection": {
+            "score": 0,
+            "max_score": 15
+          },
+          "skills_detection": {
+            "score": 0,
+            "max_score": 30
+          },
+          "responsibilities_detection": {
+            "score": 0,
+            "max_score": 20
+          },
+          "requirement_detection": {
+            "score": 0,
+            "max_score": 10
+          },
+          "structure_quality": {
+            "score": 3,
+            "max_score": 10
+          }
+        }
+      }
+    }
+  ]
+}

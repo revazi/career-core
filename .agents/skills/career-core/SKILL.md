@@ -26,7 +26,7 @@ From this repository:
 cargo run --quiet -p career-cli -- capabilities
 ```
 
-JSON is the default. Invoke only entries whose `status` is `available`. `core.capabilities`, `resume.evaluate`, `resume.analyze`, `resume.normalize`, and provider-neutral `resume.enrich` are available; job matching remains planned.
+JSON is the default. Invoke only entries whose `status` is `available`. `core.capabilities`, `resume.evaluate`, `resume.analyze`, `resume.normalize`, provider-neutral `resume.enrich`, and `job.normalize` are available; job matching remains planned.
 
 For human-readable discovery:
 
@@ -81,6 +81,16 @@ career resume enrich --input /path/to/enrichment-input.json
 Populate only the reported target sections and copy every non-empty value from source text. Do not infer or paraphrase. If generation or validation fails, retain the deterministic normalization.
 
 `resume enrich` does not call a model. Its result preserves the authoritative deterministic normalization under `baseline`; `assisted_document` must remain clearly labeled and must not replace deterministic confidence, evidence, or scoring input.
+
+## Normalize job descriptions
+
+Provide `career.job_input.v1` containing caller-supplied plain text, then run:
+
+```bash
+career job normalize --input /path/to/job-input.json
+```
+
+Use source-grounded required/preferred fields, confidence, statuses, metadata, and warnings exactly as returned. `not_detected` never confirms absence, especially when confidence is low. Do not fetch URLs implicitly, infer semantic requirements, or call the planned `job.match` operation.
 
 ## Rules
 

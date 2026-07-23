@@ -1,0 +1,7 @@
+{
+  "schema_version": "career.job_input.v1",
+  "text": "Senior Backend Engineer\nCompany: Acme\nResponsibilities\n- Design reliable customer-facing APIs\n- Lead backend architecture decisions\n- Improve platform performance and observability\n- Partner with product and engineering teams\nRequirements\n- Python, Django, PostgreSQL, REST APIs\n- 5+ years of backend engineering experience\n- Bachelor's degree in Computer Science\nPreferred Skills\n- AWS, Docker, Kubernetes\n- AWS certification is a plus",
+  "metadata": {
+    "document_id": "synthetic-job-complete-v1"
+  }
+}

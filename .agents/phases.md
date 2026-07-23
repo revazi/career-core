@@ -174,18 +174,47 @@ Port the mature deterministic resume checks and aggregation policy without frame
 
 Compare normalized resume and job evidence deterministically and conservatively.
 
-### Scope
+### Phase 4A sub-gate — Job-description normalization
+
+Scope:
 
 - bounded `JobInputV1` and normalized job contract
-- explicit required/preferred skills, qualifications, responsibilities, and seniority signals
-- job parse confidence and uncertainty warnings
+- explicit required/preferred skills and qualifications
+- responsibilities plus seniority, experience, education, and certification signals
+- source spans, field statuses, matched/unmatched metadata, and stable ordering
+- six-signal job parse confidence and uncertainty warnings
+- `career job normalize` JSON/text CLI command
+- clean, prose-heavy, sparse, Unicode, prompt-like, and adversarial fixtures
+
+Out of scope for 4A:
+
+- resume-to-job comparison or score categories
+- skill equivalence or recommendation logic
+- provider fallback or external-proposal job enrichment
+- fetching vacancy URLs
+
+Acceptance for 4A:
+
+- every non-empty normalized value is source-grounded
+- explicit sections and inline classifications remain conservative and inspectable
+- noise/company/benefit prose cannot create false requirements
+- low-confidence fields are unverified rather than confirmed absent
+- output lists, diagnostics, evidence, and input are bounded
+- selected deterministic fixtures prove declared `job_description_normalization_v6` parity or document differences
+
+### Phase 4B sub-gate — Conservative matching
+
+Begin only after 4A is reviewed and merged.
+
+Scope:
+
 - deterministic category scores, strengths, gaps, and evidence
 - exact/alias matching and reviewed same-technology equivalence only
 - bounded recommendation policy derived from deterministic gates
-- `career job normalize` and `career job match` JSON CLI commands
+- `career job match` JSON CLI command
 - tricky fixtures for close-but-non-equivalent skills, vague jobs, and weak resumes
 
-### Out of scope
+Out of scope for all Phase 4 work:
 
 - fetching vacancy URLs
 - embeddings, fuzzy semantic similarity, or LLM equivalence
@@ -193,11 +222,11 @@ Compare normalized resume and job evidence deterministically and conservatively.
 - application tracking/persistence
 - cover-letter generation
 
-### Required reference
+Required reference:
 
 - job normalization, scoring, skill-equivalence, recommendation, prompt-context, and fixture files listed in `reference-map.md`
 
-### Acceptance
+Acceptance for 4B and Phase 4 completion:
 
 - no adjacent technology is treated as equivalent without explicit policy
 - vague/low-confidence job requirements do not become invented hard gaps

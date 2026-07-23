@@ -242,8 +242,14 @@ impl fmt::Display for ResumeEvaluationErrorV1 {
 
 impl Error for ResumeEvaluationErrorV1 {}
 
-/// Operation-neutral alias retained alongside the original Phase 1 Rust type name.
-pub type ResumeErrorCodeV1 = ResumeEvaluationErrorCodeV1;
+/// Domain-neutral alias retained alongside the original Phase 1 Rust type name.
+pub type CareerErrorCodeV1 = ResumeEvaluationErrorCodeV1;
 
-/// Operation-neutral alias for the shared `career.error.v1` resume failure contract.
-pub type ResumeErrorV1 = ResumeEvaluationErrorV1;
+/// Domain-neutral alias for the shared `career.error.v1` failure contract.
+pub type CareerErrorV1 = ResumeEvaluationErrorV1;
+
+/// Resume-oriented compatibility alias for the shared error-code contract.
+pub type ResumeErrorCodeV1 = CareerErrorCodeV1;
+
+/// Resume-oriented compatibility alias for the shared error document.
+pub type ResumeErrorV1 = CareerErrorV1;

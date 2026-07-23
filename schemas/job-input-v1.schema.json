@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/revazi/career-core/main/schemas/job-input-v1.schema.json",
+  "title": "career-core job-description input v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "text"],
+  "properties": {
+    "schema_version": {
+      "const": "career.job_input.v1"
+    },
+    "text": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 50000,
+      "description": "Plain job-description text supplied by the caller. Whitespace-only text is rejected by the core."
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "document_id": {
+          "type": ["string", "null"],
+          "minLength": 1,
+          "maxLength": 128
+        }
+      }
+    }
+  }
+}

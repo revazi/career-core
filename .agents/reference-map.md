@@ -83,6 +83,8 @@ Tests and fixtures:
 - `accounts/test_fixtures/normalization/prose_heavy_job_description.txt`
 - relevant service tests
 
+Phase 4A ports deterministic `job_description_normalization_v6` section aliases, lexical classifiers, noise exclusion, metadata, and six-signal confidence policy. Rust adds source spans, typed statuses/warnings, physical line numbers, and explicit bounds. Matching and provider fallback remain separate gates.
+
 Exclude:
 
 - job-description LLM fallback execution and prompt code

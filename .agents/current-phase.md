@@ -1,82 +1,83 @@
 # Current phase
 
-## Most recently completed phase
+## Most recently completed sub-phase
 
-**Phase 3 — Explainable resume evaluation parity**
+**Phase 4A — Deterministic job-description normalization**
 
 ## Status
 
-Complete. Phase 4 has not started.
+Complete. Phase 4B matching has not started.
+
+## Approved scope
+
+- bounded `career.job_input.v1`
+- source-grounded `career.job_normalization.v1`
+- title and company candidates
+- required/preferred skills and qualifications
+- responsibilities and explicit seniority, experience, education, and certification signals
+- exact whole-line section aliases and conservative inline classification
+- noise exclusion, stable de-duplication, and bounded matched/unmatched metadata
+- six-signal job parse confidence and provisional warnings
+- canonical field statuses where `not_detected` never confirms absence
+- `career job normalize --input <path|-> --format json|text`
+- public schemas, synthetic fixtures, reference projection, docs, agent guidance, and CI goldens
+
+## Explicitly out of scope
+
+- `career job match` or any resume-to-job score
+- skill equivalence or recommendation logic
+- URL fetching or company research
+- provider fallback, prompts, API keys, or external-proposal job enrichment
+- persistence, application tracking, or cover letters
+- Swift bindings, SwiftUI, MCP, or provider-specific adapters
+
+## Reference scope
+
+The selected deterministic reference is `job_description_normalization_v6` from:
+
+- `../resume-ai/accounts/services/job_description_schema.py`
+- `../resume-ai/accounts/services/job_description_normalization.py`
+- job normalization classes in `../resume-ai/accounts/test_services.py`
+- `../resume-ai/accounts/test_fixtures/normalization/prose_heavy_job_description.txt`
+- deterministic fixture assertions in `../resume-ai/accounts/test_normalization_fixtures.py`
+
+Provider fallback execution, fallback merge, Django models/API fields, URL fetching, and matching are excluded.
 
 ## Implemented so far
 
-- Preserved `career.resume_evaluation.v1` and `career resume evaluate` as the unchanged Phase 1 section-coverage operation.
-- Added additive `career.resume_analysis.v1`, `resume_analysis_v1`, and `career resume analyze` contracts.
-- Full analysis independently runs `resume_normalization_v1` and scores only `deterministic_document`.
-- Added all 18 `deterministic_v2` scoring rules in canonical order.
-- Added six integer category scores with weights 20/25/20/15/10/10.
-- Added deterministic round-half-to-even category and weighted overall aggregation.
-- Added raw and adjusted check scores, pass states, conclusive/inconclusive outcomes, and field detection statuses.
-- Added the fixed low/unknown-confidence missing-data floor of 50 while preserving raw scores.
-- Added bounded source/metric/confidence/status evidence for every check.
-- Added confirmed/provisional strengths and weaknesses plus check-derived bounded improvement actions.
-- Added mandatory general-ATS and visual-layout limitations.
-- Added synthetic complete and messy golden fixtures with explicit reference provenance.
-- Added public schema, contract documentation, CLI JSON/text behavior, and agent guidance.
-
-## Compatibility and reference scope
-
-The selected reference is Django `deterministic_v2` from:
-
-- `../resume-ai/accounts/services/resume_scoring.py`
-- `../resume-ai/accounts/services/resume_analysis_response.py`
-- `../resume-ai/accounts/services/resume_analysis_preview.py`
-- `ResumeScoringServiceTests` in `../resume-ai/accounts/test_services.py`
-- deterministic normalization fixture coverage in `../resume-ai/accounts/test_normalization_fixtures.py`
-
-For the complete and messy fixtures, all 18 check scores, pass states, detection statuses, explanations, six category scores, and overall score match the reference when supplied equivalent normalized facts.
-
-Intentional differences:
-
-- Rust scores only its independently reproducible deterministic normalization baseline.
-- Django LLM-merged normalization values are not an authoritative Rust scoring input.
-- Rust adds source spans, raw scores, explicit outcomes, basis check IDs, provisional strength labels, and deterministic actions.
-- Django persistence IDs, timestamps, credits, model calls, and API envelopes are excluded.
-- End-to-end raw-text parity is limited by documented normalization-policy differences.
+- Added typed job input, normalized document, source span, confidence, status, metadata, warning, and error aliases.
+- Ported all required, preferred, responsibility, and noise section aliases.
+- Ported deterministic skill, qualification, responsibility, seniority, experience, education, and certification classification.
+- Ported matched/unmatched metadata and all six confidence signals with integer ratio evidence.
+- Added list/input limits, stable output ordering, source provenance, truncation metadata, and conservative warnings.
+- Added the `career job normalize` JSON/text CLI path.
+- Added complete and prose-heavy synthetic goldens plus a compact Django reference projection.
+- Added public schemas, contract tests, selected parity tests, and user/agent documentation.
 
 ## Verification completed locally
 
 - `cargo fmt --all --check`
 - `cargo clippy --workspace --all-targets --all-features -- -D warnings`
-- `cargo test --workspace --all-features --locked` — 61 tests passed
+- `cargo test --workspace --all-features --locked` — 79 tests passed
 - `cargo build --workspace --all-features --locked`
 - rustdoc with warnings denied
-- capability JSON/text checks expose `resume.analyze` as available
-- Phase 1 evaluation and all Phase 2 normalization/enrichment goldens remain byte-equivalent
-- complete and messy Phase 3 JSON goldens match byte-for-byte; text output retains provisional and ATS-limit warnings
+- capability JSON/text checks expose `job.normalize` as available and retain `job.match` as planned
+- all prior resume JSON goldens remain byte-equivalent
+- complete and prose-heavy job JSON goldens match byte-for-byte; job text output preserves provisional warnings
 - all schemas pass Draft 2020-12 metaschema validation
-- Phase 3 inputs and outputs validate with `check-jsonschema`; representative earlier contracts remain valid
-- compact reference projection regenerated by executing Django `deterministic_v2` and matched byte-for-byte
-- public-contract tests compare every reference check score, pass state, detection status, explanation, category score, and overall score
-- score, evidence, finding, action, warning, Unicode, prompt-like, unknown/low-confidence, explicit-empty, truncation, and adversarial bounds pass
+- job inputs/outputs and representative resume outputs validate with `check-jsonschema`
+- all four section alias sets exactly match `job_description_normalization_v6`
+- the compact reference projection regenerates byte-for-byte from the Django normalizer
+- every selected normalized field, matched/unmatched metadata record, confidence label/score, and six signal scores matches the reference
+- high/medium/low confidence, sections, inline requirements, noise exclusion, Unicode, physical spans, prompt-like text, unmatched diagnostics, limits, and typed errors are covered
 - dependency tree contains no network, provider, TLS, async-runtime, or telemetry stack
-- relative Markdown links, README JSON, CI YAML, and Agent Skill checks pass
+- relative Markdown links, README capability JSON, CI YAML, and Agent Skill checks pass
 - credential-pattern scan reports no findings
 - Fallow changed-code and security checks report no findings; Fallow does not currently analyze Rust source for health metrics
 - `git diff --check`
-- clean-clone formatting, Clippy, 61-test, locked-build, rustdoc, capabilities, and all four CLI golden checks pass
-- GitHub Actions PR run `30005243174` — passed, including Rust 1.85 compatibility, 61 tests, locked build, and all CLI golden checks
+- clean-clone formatting, Clippy, 79-test, locked-build, rustdoc, capabilities, all resume goldens, and the job-normalization golden pass
+- GitHub Actions PR run `30008565537` — passed, including Rust 1.85 compatibility, 79 tests, locked build, and all CLI golden checks
 
-## Explicitly unavailable
+## Next sub-phase after approval
 
-- proprietary ATS ranking or employer-specific prediction
-- visual PDF/DOCX layout inspection, conversion, or OCR
-- LLM interpretation or automatic resume rewriting
-- job-description normalization and resume-to-job matching
-- provider clients, prompts, model calls, or API-key handling
-- Swift bindings and SwiftUI host orchestration
-- MCP or provider-specific adapters
-
-## Next phase after approval
-
-Phase 4 will add bounded job-description normalization and conservative resume-to-job matching. Do not begin Phase 4 until Phase 3 is fully verified, reviewed, merged, and explicitly approved.
+Phase 4B will add conservative deterministic matching only after Phase 4A is fully verified, reviewed, merged, and explicitly approved.
