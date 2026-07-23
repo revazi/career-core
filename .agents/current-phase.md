@@ -1,12 +1,12 @@
 # Current phase
 
-## Active phase
+## Most recently completed phase
 
 **Phase 2 — Deterministic resume normalization and provider-neutral assisted boundary**
 
 ## Status
 
-Implementation and clean-clone verification are complete locally; GitHub Actions and review are pending. Phase 3 has not started.
+Complete. Phase 3 has not started.
 
 ## Implemented
 
@@ -70,8 +70,7 @@ Provider execution, prompts, Django persistence, and score coupling were not por
 - credential-pattern scan reports no findings
 - Fallow changed-code and security checks report no findings; Fallow does not currently analyze Rust source for health metrics
 - `git diff --check`
-
-GitHub Actions, including the Rust 1.85 job, remains pending until the branch is pushed.
+- GitHub Actions PR run `30002160729` — passed, including Rust 1.85 compatibility, 47 tests, locked build, and all CLI golden checks
 
 ## Explicitly unavailable
 
