@@ -1,6 +1,6 @@
 ---
 name: career-core
-description: Discovers and invokes the local career-core deterministic resume CLI, including source-grounded normalization, explainable readiness analysis, and optional external-proposal validation. Use when evaluating supported career documents, inspecting evidence, or building local integrations.
+description: Discovers and invokes the local career-core deterministic CLI for source-grounded normalization, resume readiness analysis, conservative resume-to-job matching, and optional external-proposal validation. Use when evaluating supported career documents, inspecting evidence, or building local integrations.
 license: MIT OR Apache-2.0
 compatibility: Requires an installed `career` binary or a career-core source checkout with Rust 1.85+.
 metadata:
@@ -26,7 +26,7 @@ From this repository:
 cargo run --quiet -p career-cli -- capabilities
 ```
 
-JSON is the default. Invoke only entries whose `status` is `available`. `core.capabilities`, `resume.evaluate`, `resume.analyze`, `resume.normalize`, provider-neutral `resume.enrich`, and `job.normalize` are available; job matching remains planned.
+JSON is the default. Invoke only entries whose `status` is `available`. `core.capabilities`, `resume.evaluate`, `resume.analyze`, `resume.normalize`, provider-neutral `resume.enrich`, `job.normalize`, and `job.match` are available.
 
 For human-readable discovery:
 
@@ -90,7 +90,21 @@ Provide `career.job_input.v1` containing caller-supplied plain text, then run:
 career job normalize --input /path/to/job-input.json
 ```
 
-Use source-grounded required/preferred fields, confidence, statuses, metadata, and warnings exactly as returned. `not_detected` never confirms absence, especially when confidence is low. Do not fetch URLs implicitly, infer semantic requirements, or call the planned `job.match` operation.
+Use source-grounded required/preferred fields, confidence, statuses, metadata, and warnings exactly as returned. `not_detected` never confirms absence, especially when confidence is low. Do not fetch URLs implicitly or infer semantic requirements.
+
+## Match a resume to a job
+
+Provide `career.job_match_input.v1` containing original `career.resume_input.v1` and `career.job_input.v1` values:
+
+```bash
+career job match --input /path/to/match-input.json
+```
+
+Matching independently reruns both deterministic normalizers. It cannot consume `assisted_document` values. Distinguish `raw_score` from confidence-bounded `score`; preserve `confirmed_match`, `partial_match`, `likely_missing`, and `unverified` statuses. Cite source spans when present.
+
+Only `normalized_exact` and reviewed `conservative_alias` skill matches are authoritative. Never substitute adjacent technologies. Low/unknown normalization or truncation makes missing/partial evidence unverified, suppresses broad inferred gaps, bounds categories to 50–75, and prevents `apply_now`.
+
+Recommendation labels are deterministic workflow gates, not hiring predictions. Review generic `unassessed_required_qualifications` rather than inventing support or absence.
 
 ## Rules
 

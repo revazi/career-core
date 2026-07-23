@@ -1,83 +1,99 @@
 # Current phase
 
-## Most recently completed sub-phase
+## Active sub-phase
 
-**Phase 4A — Deterministic job-description normalization**
+**Phase 4B — Conservative deterministic matching**
 
 ## Status
 
-Complete. Phase 4B matching has not started.
+Implementation and full local verification are complete on `feature/job-matching-v1`. Clean-clone verification, GitHub Actions, and review are pending. Phase 5 distribution work has not started.
 
 ## Approved scope
 
-- bounded `career.job_input.v1`
-- source-grounded `career.job_normalization.v1`
-- title and company candidates
-- required/preferred skills and qualifications
-- responsibilities and explicit seniority, experience, education, and certification signals
-- exact whole-line section aliases and conservative inline classification
-- noise exclusion, stable de-duplication, and bounded matched/unmatched metadata
-- six-signal job parse confidence and provisional warnings
-- canonical field statuses where `not_detected` never confirms absence
-- `career job normalize --input <path|-> --format json|text`
-- public schemas, synthetic fixtures, reference projection, docs, agent guidance, and CI goldens
+- bounded `career.job_match_input.v1` containing original resume and job inputs
+- baseline-only `career.job_match.v1`
+- six deterministic categories with fixed 30/25/15/10/10/10 weights
+- integer round-half-to-even aggregation
+- normalized exact and reviewed same-technology skill equivalence only
+- confidence-aware raw/published scores and missing-item statuses
+- bounded source/derived evidence, strengths, gaps, and metrics
+- deterministic recommendation thresholds and blocker gates
+- `career job match --input <path|-> --format json|text`
+- public schemas, synthetic risky fixtures, reference projection, docs, agent guidance, and CI goldens
 
 ## Explicitly out of scope
 
-- `career job match` or any resume-to-job score
-- skill equivalence or recommendation logic
-- URL fetching or company research
-- provider fallback, prompts, API keys, or external-proposal job enrichment
-- persistence, application tracking, or cover letters
-- Swift bindings, SwiftUI, MCP, or provider-specific adapters
+- vacancy URL fetching or company research
+- embeddings, fuzzy similarity, transferable-skill inference, or LLM equivalence
+- provider calls, prompts, API keys, interpretation, merge, fallback, caching, or observability
+- accepting assisted or caller-supplied normalized documents as scoring input
+- persistence, application tracking, cover letters, or resume mutation
+- Swift bindings, SwiftUI, MCP, release binaries, or package-manager distribution
 
 ## Reference scope
 
-The selected deterministic reference is `job_description_normalization_v6` from:
+Reference policies verified against `../resume-ai/docs/current-phase.md`:
 
-- `../resume-ai/accounts/services/job_description_schema.py`
-- `../resume-ai/accounts/services/job_description_normalization.py`
-- job normalization classes in `../resume-ai/accounts/test_services.py`
-- `../resume-ai/accounts/test_fixtures/normalization/prose_heavy_job_description.txt`
-- deterministic fixture assertions in `../resume-ai/accounts/test_normalization_fixtures.py`
+- `job_match_deterministic_v2`
+- `conservative_skill_equivalence_v1`
+- `job_match_recommendation_safety_v1`
 
-Provider fallback execution, fallback merge, Django models/API fields, URL fetching, and matching are excluded.
+Primary read-only sources:
+
+- `accounts/services/job_match_scoring.py`
+- `accounts/services/job_match_skill_equivalence.py`
+- `accounts/services/job_match_recommendation.py`
+- `accounts/services/job_match_prompt_context.py` for bounds only
+- `accounts/services/job_match_response.py` for evidence-shape ideas only
+- `accounts/test_job_match_skill_equivalence.py`
+- `accounts/test_job_match_recommendation.py`
+- `accounts/test_job_match_fixtures.py`
+- `accounts/test_fixtures/job_match/`
+- matching-focused tests in `accounts/test_services.py`
+
+LLM interpretation, validation, provider fallback, merge, prompts, cache, observability, Django models/APIs, credits, and persistence are excluded.
 
 ## Implemented so far
 
-- Added typed job input, normalized document, source span, confidence, status, metadata, warning, and error aliases.
-- Ported all required, preferred, responsibility, and noise section aliases.
-- Ported deterministic skill, qualification, responsibility, seniority, experience, education, and certification classification.
-- Ported matched/unmatched metadata and all six confidence signals with integer ratio evidence.
-- Added list/input limits, stable output ordering, source provenance, truncation metadata, and conservative warnings.
-- Added the `career job normalize` JSON/text CLI path.
-- Added complete and prose-heavy synthetic goldens plus a compact Django reference projection.
-- Added public schemas, contract tests, selected parity tests, and user/agent documentation.
+- Added typed match input, category, item, metric, confidence, finding, recommendation, warning, and result contracts.
+- Matching independently reruns `resume_normalization_v1` and `job_normalization_v1`; assisted documents cannot enter scores.
+- Ported all six reference category rules and fixed weights with integer half-even rounding.
+- Added exact normalized skill matching plus all reviewed conservative alias groups and explicit version handling.
+- Added complete-word domain signals to avoid Django substring false positives such as `ui` inside `building` or `requirements`.
+- Added canonical skill aliases to domain and keyword membership without fuzzy expansion.
+- Added uncertainty bounds of 50–75 for low/unknown resume or job confidence and normalization truncation.
+- Added stable confirmed, partial, likely-missing, and unverified item statuses.
+- Added bounded top strengths/gaps and suppression of broad inferred gaps for uncertain jobs.
+- Added deterministic recommendation thresholds, a conservative 50-point apply-after core floor, and required-skill/core-evidence/unassessed-qualification blockers.
+- Added `career job match` JSON/text CLI paths, a bounded 1,048,576-byte composite envelope, and marked `job.match` available.
+- Added strict input/output schemas, complete/vague full goldens, and compact alias/adjacent/weak regression projections.
+- Added an executed Django reference projection for the complete fixture and explicit intentional differences.
+- Added focused core, CLI, schema, parity, determinism, safety, limits, and privacy tests.
 
 ## Verification completed locally
 
 - `cargo fmt --all --check`
 - `cargo clippy --workspace --all-targets --all-features -- -D warnings`
-- `cargo test --workspace --all-features --locked` — 79 tests passed
+- `cargo test --workspace --all-features --locked` — 103 tests passed
 - `cargo build --workspace --all-features --locked`
 - rustdoc with warnings denied
-- capability JSON/text checks expose `job.normalize` as available and retain `job.match` as planned
-- all prior resume JSON goldens remain byte-equivalent
-- complete and prose-heavy job JSON goldens match byte-for-byte; job text output preserves provisional warnings
+- capability JSON/text checks expose `job.match` as available
+- all prior resume and job-normalization JSON goldens remain byte-equivalent
+- complete and vague job-match JSON goldens remain byte-equivalent; three compact risky projections pass; vague-job text output is provisional and suppresses top gaps
 - all schemas pass Draft 2020-12 metaschema validation
-- job inputs/outputs and representative resume outputs validate with `check-jsonschema`
-- all four section alias sets exactly match `job_description_normalization_v6`
-- the compact reference projection regenerates byte-for-byte from the Django normalizer
-- every selected normalized field, matched/unmatched metadata record, confidence label/score, and six signal scores matches the reference
-- high/medium/low confidence, sections, inline requirements, noise exclusion, Unicode, physical spans, prompt-like text, unmatched diagnostics, limits, and typed errors are covered
+- all five match inputs, both full match outputs, and representative prior outputs pass `check-jsonschema`
+- selected complete fixture matches the executed Django projection for all six raw/category scores, overall score, weights, exact skill details, experience metrics, seniority, keywords, and education/certification signals
+- the compact reference projection regenerates byte-for-byte from the Django scorer
+- all 17 equivalence groups and 43 aliases exactly match `conservative_skill_equivalence_v1`
+- exact aliases, explicit versions, close non-equivalents, vague jobs, weak resumes, partial core evidence, unassessed qualifications, Unicode, prompt-like text, limits, and nested typed errors are covered
 - dependency tree contains no network, provider, TLS, async-runtime, or telemetry stack
 - relative Markdown links, README capability JSON, CI YAML, and Agent Skill checks pass
 - credential-pattern scan reports no findings
 - Fallow changed-code and security checks report no findings; Fallow does not currently analyze Rust source for health metrics
 - `git diff --check`
-- clean-clone formatting, Clippy, 79-test, locked-build, rustdoc, capabilities, all resume goldens, and the job-normalization golden pass
-- GitHub Actions PR run `30008565537` — passed, including Rust 1.85 compatibility, 79 tests, locked build, and all CLI golden checks
 
-## Next sub-phase after approval
+Clean-clone verification and GitHub Actions, including Rust 1.85 compatibility, remain pending.
 
-Phase 4B will add conservative deterministic matching only after Phase 4A is fully verified, reviewed, merged, and explicitly approved.
+## Next phase after approval
+
+Phase 5 will harden agent-facing CLI/distribution only after Phase 4B is fully verified, reviewed, merged, and separately approved.

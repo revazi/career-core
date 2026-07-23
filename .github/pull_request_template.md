@@ -24,6 +24,7 @@ List exact commands and results.
 - [ ] `cargo run --quiet -p career-cli -- resume normalize --input fixtures/resume/phase2/complete-normalization.input.json`
 - [ ] `cargo run --quiet -p career-cli -- resume enrich --input fixtures/resume/phase2/messy-unlabeled.enrichment-input.json`
 - [ ] `cargo run --quiet -p career-cli -- job normalize --input fixtures/job/phase4a/complete-normalization.input.json`
+- [ ] `cargo run --quiet -p career-cli -- job match --input fixtures/job/phase4b/complete-match.input.json`
 - [ ] `git diff --check`
 
 ## Security and privacy

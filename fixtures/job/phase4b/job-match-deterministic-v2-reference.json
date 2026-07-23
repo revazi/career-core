@@ -1,0 +1,185 @@
+{
+  "reference_policy_version": "job_match_deterministic_v2",
+  "comparison_basis": "equivalent_normalized_facts_from_identical_source_text",
+  "intentional_differences": [
+    {
+      "id": "domain_signal_token_boundaries",
+      "reference_extra_signal": "frontend",
+      "reason": "The Django substring rule reads ui inside building and requirements; Rust requires a complete normalized phrase and excludes that false signal. The selected category score remains equal because the false signal occurs on both sides of the reference comparison."
+    }
+  ],
+  "scoring_weights": {
+    "skills_match": 30,
+    "experience_match": 25,
+    "seniority_fit": 15,
+    "domain_fit": 10,
+    "keyword_alignment": 10,
+    "education_fit": 10
+  },
+  "overall_score": 96,
+  "category_scores": {
+    "skills_match": 100,
+    "experience_match": 100,
+    "seniority_fit": 100,
+    "domain_fit": 100,
+    "keyword_alignment": 65,
+    "education_fit": 100
+  },
+  "raw_scores": {
+    "skills_match": 100,
+    "experience_match": 100,
+    "seniority_fit": 100,
+    "domain_fit": 100,
+    "keyword_alignment": 65,
+    "education_fit": 100
+  },
+  "skill_matches": {
+    "required": {
+      "matched": [
+        {
+          "job_skill": "Python",
+          "resume_skill": "Python",
+          "match_type": "normalized_exact"
+        },
+        {
+          "job_skill": "Django",
+          "resume_skill": "Django",
+          "match_type": "normalized_exact"
+        },
+        {
+          "job_skill": "PostgreSQL",
+          "resume_skill": "PostgreSQL",
+          "match_type": "normalized_exact"
+        },
+        {
+          "job_skill": "REST APIs",
+          "resume_skill": "REST APIs",
+          "match_type": "normalized_exact"
+        }
+      ],
+      "missing": []
+    },
+    "preferred": {
+      "matched": [
+        {
+          "job_skill": "AWS",
+          "resume_skill": "AWS",
+          "match_type": "normalized_exact"
+        },
+        {
+          "job_skill": "Docker",
+          "resume_skill": "Docker",
+          "match_type": "normalized_exact"
+        },
+        {
+          "job_skill": "Kubernetes",
+          "resume_skill": "Kubernetes",
+          "match_type": "normalized_exact"
+        },
+        {
+          "job_skill": "Git",
+          "resume_skill": "Git",
+          "match_type": "normalized_exact"
+        }
+      ],
+      "missing": []
+    }
+  },
+  "experience": {
+    "required_years": 5,
+    "estimated_resume_years": 6,
+    "has_experience_entries": true,
+    "dated_experience_entries": 1
+  },
+  "seniority": {
+    "job_seniority_signals": [
+      "senior"
+    ],
+    "resume_seniority_signals": [
+      "senior"
+    ]
+  },
+  "domain": {
+    "resume_domains": [
+      "backend",
+      "frontend",
+      "data",
+      "devops_cloud"
+    ],
+    "job_domains": [
+      "backend",
+      "frontend",
+      "data",
+      "devops_cloud"
+    ],
+    "matched_domains": [
+      "backend",
+      "data",
+      "devops_cloud",
+      "frontend"
+    ],
+    "missing_domains": []
+  },
+  "keywords": {
+    "job_keywords": [
+      "backend",
+      "apis",
+      "design",
+      "reliable",
+      "customer",
+      "facing",
+      "improve",
+      "cloud",
+      "platform",
+      "performance",
+      "maintain",
+      "services",
+      "python",
+      "django",
+      "postgresql",
+      "rest",
+      "aws",
+      "docker",
+      "kubernetes",
+      "git"
+    ],
+    "matched_keywords": [
+      "backend",
+      "apis",
+      "reliable",
+      "cloud",
+      "services",
+      "python",
+      "django",
+      "postgresql",
+      "rest",
+      "aws",
+      "docker",
+      "kubernetes",
+      "git"
+    ],
+    "missing_keywords": [
+      "design",
+      "customer",
+      "facing",
+      "improve",
+      "platform",
+      "performance",
+      "maintain"
+    ]
+  },
+  "education": {
+    "resume_degrees": [
+      "bachelor's",
+      "degree"
+    ],
+    "required_degrees": [
+      "bachelor's",
+      "degree"
+    ],
+    "resume_certifications": [
+      "aws certified"
+    ],
+    "required_certifications": []
+  }
+}

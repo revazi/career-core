@@ -1,0 +1,43 @@
+{
+  "alias_match": {
+    "overall_score": 90,
+    "category_scores": {
+      "skills_match": 100,
+      "experience_match": 100,
+      "seniority_fit": 50,
+      "domain_fit": 100,
+      "keyword_alignment": 70,
+      "education_fit": 100
+    },
+    "required_alias_matches": 5,
+    "required_skill_gaps": 0,
+    "recommendation": "apply_after_small_edits"
+  },
+  "close_non_equivalent": {
+    "overall_score": 62,
+    "category_scores": {
+      "skills_match": 0,
+      "experience_match": 100,
+      "seniority_fit": 100,
+      "domain_fit": 100,
+      "keyword_alignment": 15,
+      "education_fit": 100
+    },
+    "required_alias_matches": 0,
+    "required_skill_gaps": 7,
+    "recommendation": "improve_first"
+  },
+  "weak_resume_narrow_job": {
+    "overall_score": 12,
+    "category_scores": {
+      "skills_match": 0,
+      "experience_match": 14,
+      "seniority_fit": 30,
+      "domain_fit": 33,
+      "keyword_alignment": 5,
+      "education_fit": 0
+    },
+    "required_skill_gaps": 5,
+    "recommendation": "improve_first"
+  }
+}

@@ -4,7 +4,7 @@
 
 The project is intentionally **not an AI service**. The core performs no network requests and has no LLM dependency. Native applications, command-line tools, and coding-agent integrations can use its versioned evidence and scoring contracts. An opted-in host may submit an external source-grounded proposal for deterministic validation, but provider calls remain outside the authoritative core.
 
-> **Status:** Phase 4A. Resume evaluation/normalization/analysis and deterministic job-description normalization are available. Resume-to-job matching remains planned.
+> **Status:** Phase 4 complete. Resume evaluation, normalization, analysis, deterministic job normalization, and conservative resume-to-job matching are available.
 
 ## Goals
 
@@ -94,8 +94,8 @@ JSON is the default output:
     },
     {
       "id": "job.match",
-      "status": "planned",
-      "summary": "Compare normalized resume and job evidence conservatively."
+      "status": "available",
+      "summary": "Match deterministic resume and job baselines with conservative equivalence and confidence-aware evidence."
     }
   ]
 }
@@ -187,7 +187,20 @@ cargo run --quiet -p career-cli -- \
 
 `career.job_normalization.v1` returns source-grounded required/preferred skills and qualifications, responsibilities, seniority, experience, education, and certification signals; six-signal parse confidence; field statuses; matched/unmatched metadata; and bounded warnings.
 
-A field reported as `not_detected` is not confirmed absent. Low-confidence output must remain provisional, and job matching is not yet available. See [`docs/contracts/job-normalization-v1.md`](docs/contracts/job-normalization-v1.md) for exact aliases, classification rules, limits, confidence, provenance, and intentional reference differences.
+A field reported as `not_detected` is not confirmed absent. Low-confidence output must remain provisional. See [`docs/contracts/job-normalization-v1.md`](docs/contracts/job-normalization-v1.md) for exact aliases, classification rules, limits, confidence, provenance, and intentional reference differences.
+
+## Match a resume to a job
+
+Match original resume and job-description inputs through independently reproduced deterministic normalization baselines:
+
+```bash
+cargo run --quiet -p career-cli -- \
+  job match --input fixtures/job/phase4b/complete-match.input.json
+```
+
+`career.job_match.v1` reports six bounded categories, raw and confidence-adjusted scores, exact or reviewed same-technology skill matches, source/derived evidence, confirmed strengths, partial/likely/unverified gaps, and a deterministically gated recommendation.
+
+Low/unknown normalization bounds every category to 50–75, suppresses broad inferred gaps, and makes guidance provisional. Related technologies such as Kubernetes/Docker, PostgreSQL/MySQL, React/Angular, AWS/Azure, and Django/Flask remain non-equivalent. Matching never consumes assisted resume fields, invokes a provider, fetches a URL, or predicts a hiring outcome. See [`docs/contracts/job-match-v1.md`](docs/contracts/job-match-v1.md) for the full scoring, equivalence, confidence, evidence, recommendation, bounds, and reference-parity policy.
 
 ## Reference implementation
 

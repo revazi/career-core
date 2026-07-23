@@ -10,7 +10,7 @@ Invoke it with:
 career job normalize --input <path|-> [--format json|text]
 ```
 
-The operation accepts caller-supplied plain text only. It does not fetch vacancy URLs, open documents, call a provider, apply an external proposal, or perform resume-to-job matching. `job.match` remains planned.
+The operation accepts caller-supplied plain text only. It does not fetch vacancy URLs, open documents, call a provider, apply an external proposal, or perform resume-to-job matching. Matching is exposed separately through `career.job_match.v1`.
 
 ## Input
 
@@ -185,7 +185,7 @@ Intentional differences:
 - Rust rejects empty input rather than returning an unknown empty document.
 - Rust removes `At ` company prefixes case-insensitively; Django's intended check is case-insensitive but its replacement is case-sensitive.
 - Provider fallback, fallback merge, persistence, API fields, and notes are excluded.
-- No job-matching parity is claimed in Phase 4A.
+- Phase 4A normalization parity does not by itself establish job-matching parity; matching has a separate contract and reference matrix.
 
 This establishes selected deterministic fixture parity, not provider, API, or matching parity.
 

@@ -114,6 +114,8 @@ High-risk fixtures to preserve semantically:
 - `weak_resume_narrow_job.json`
 - `overbroad_tailoring_suggestions.json` for output-boundary behavior
 
+Phase 4B ports all six `job_match_deterministic_v2` category rules and weights, direct deterministic use of the reviewed alias map, confidence bounds, and recommendation thresholds. Rust additionally handles uncertain resume parsing/truncation, complete-word domain signals, canonical alias keyword membership, deterministic-only recommendations, source spans, and core/unassessed-evidence blockers. These differences must remain explicit in `docs/contracts/job-match-v1.md` and the reference fixture.
+
 Exclude:
 
 - LLM interpretation, validation, fallback, merge, cache, and observability implementation

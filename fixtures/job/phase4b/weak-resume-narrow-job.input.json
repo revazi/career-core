@@ -1,0 +1,17 @@
+{
+  "schema_version": "career.job_match_input.v1",
+  "resume": {
+    "schema_version": "career.resume_input.v1",
+    "text": "Casey Morgan\ncasey.morgan@example.com\nSUMMARY\nJunior frontend developer seeking a first backend opportunity.\nEXPERIENCE\nJunior Frontend Intern at Example Studio\n2023 - 2024\n- Updated static website styles.\nEDUCATION\nWeb development bootcamp, Example School\n2022 - 2023\nSKILLS\nHTML, CSS, Git\nPROJECTS\nPortfolio Website\nDeveloped a small static site.",
+    "metadata": {
+      "document_id": "synthetic-match-resume-weak-v1"
+    }
+  },
+  "job": {
+    "schema_version": "career.job_input.v1",
+    "text": "Senior Platform Backend Engineer\nCompany: Narrow Systems Co\nResponsibilities\n- Own a reliable platform\n- Design backend architecture\n- Mentor engineers\nRequirements\n- Python, Django, Kubernetes, AWS, PostgreSQL\n- 7 years of backend experience\n- Bachelor's degree",
+    "metadata": {
+      "document_id": "synthetic-match-job-narrow-v1"
+    }
+  }
+}

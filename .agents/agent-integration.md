@@ -106,7 +106,7 @@ The agent then submits one `career.resume_enrichment_input.v1` envelope to `resu
 
 `resume enrich` performs no model call. It returns the unchanged deterministic normalization under `baseline` and accepted values under `assisted_document`. Authoritative scores must consume the baseline. `resume analyze` enforces this by accepting only the original resume input and independently rerunning deterministic normalization. If the external model or validation fails, the agent must continue with the deterministic normalization rather than treating the operation as failed.
 
-## Available Phase 4A operation
+## Available Phase 4 operations
 
 ```bash
 career job normalize --input <path|-> [--format json|text]
@@ -120,9 +120,29 @@ Agents must:
 - preserve parse-confidence and unclassified-line warnings
 - treat every `not_detected` field as unverified rather than confirmed absent
 - cite source spans when presenting extracted requirements
-- avoid invoking `job.match`, which remains planned
 
-Provider fallback and external-proposal job enrichment are not part of Phase 4A.
+Provider fallback and external-proposal job enrichment are not part of Phase 4.
+
+Match one original resume input and one original job input:
+
+```bash
+career job match --input <path|-> [--format json|text]
+```
+
+Input is `career.job_match_input.v1`; output is `career.job_match.v1`. Matching independently reruns both deterministic normalizers and cannot consume assisted documents.
+
+Agents must:
+
+- distinguish each category's `raw_score` from confidence-bounded `score`
+- treat `partial`, `likely_missing`, and especially `unverified` as different evidence states
+- cite job/resume source spans when present and retain null spans for derived domain/keyword signals
+- accept only `normalized_exact` or `conservative_alias` skill matches returned by the core
+- never substitute adjacent technologies or repair a conservative false negative with guesswork
+- preserve mandatory scope warnings and provisional recommendation status
+- treat `apply_now`, `apply_after_small_edits`, and `improve_first` as bounded workflow guidance, never a hiring prediction
+- review `unassessed_required_qualifications` rather than converting them into inferred gaps
+
+Low/unknown normalization or truncation bounds all category scores to 50–75, marks missing/partial evidence unverified, suppresses broad inferred top gaps, and prevents `apply_now`. Provider interpretation, URL fetching, company research, persistence, and automatic resume rewriting remain outside this command.
 
 ## Distribution stages
 

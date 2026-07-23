@@ -7,17 +7,20 @@ use std::process::ExitCode;
 
 use career_core::{
     Capabilities, CapabilityStatus, CareerErrorV1, ERROR_SCHEMA_VERSION, JobFieldDetectionStatusV1,
-    JobInputV1, JobNormalizationV1, JobParseConfidenceLabelV1, ResumeAnalysisCategoryV1,
-    ResumeAnalysisFindingStatusV1, ResumeAnalysisV1, ResumeDetectionStatusV1,
-    ResumeEnrichmentInputV1, ResumeEnrichmentMergeStatusV1, ResumeEnrichmentResultV1,
-    ResumeEvaluationV1, ResumeFieldDetectionStatusV1, ResumeInputV1, ResumeNormalizationV1,
+    JobInputV1, JobMatchCategoryV1, JobMatchFindingStatusV1, JobMatchInputV1,
+    JobMatchRecommendationLabelV1, JobMatchRecommendationStatusV1, JobMatchV1, JobNormalizationV1,
+    JobParseConfidenceLabelV1, ResumeAnalysisCategoryV1, ResumeAnalysisFindingStatusV1,
+    ResumeAnalysisV1, ResumeDetectionStatusV1, ResumeEnrichmentInputV1,
+    ResumeEnrichmentMergeStatusV1, ResumeEnrichmentResultV1, ResumeEvaluationV1,
+    ResumeFieldDetectionStatusV1, ResumeInputV1, ResumeNormalizationV1,
     ResumeParseConfidenceLabelV1, analyze_resume, apply_resume_enrichment, capabilities,
-    evaluate_resume, normalize_job, normalize_resume,
+    evaluate_resume, match_job, normalize_job, normalize_resume,
 };
 use clap::{Parser, Subcommand, ValueEnum, error::ErrorKind};
 use serde_json::json;
 
 const MAX_CLI_INPUT_BYTES: usize = 262_144;
+const MAX_CLI_JOB_MATCH_INPUT_BYTES: usize = 1_048_576;
 const EXIT_INPUT_IO: u8 = 3;
 const EXIT_INVALID_JSON: u8 = 4;
 const EXIT_INVALID_INPUT: u8 = 5;
@@ -47,7 +50,7 @@ enum Command {
         #[command(subcommand)]
         command: ResumeCommand,
     },
-    /// Normalize job-description input.
+    /// Normalize job-description input or match it against resume input.
     Job {
         #[command(subcommand)]
         command: JobCommand,
@@ -105,6 +108,15 @@ enum JobCommand {
         #[arg(long, value_enum, default_value_t = OutputFormat::Json)]
         format: OutputFormat,
     },
+    /// Match deterministic resume and job-description normalization baselines.
+    Match {
+        /// Read career.job_match_input.v1 JSON from this path, or use `-` for stdin.
+        #[arg(long)]
+        input: PathBuf,
+        /// Select machine-readable JSON or concise human-readable text.
+        #[arg(long, value_enum, default_value_t = OutputFormat::Json)]
+        format: OutputFormat,
+    },
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, ValueEnum)]
@@ -143,11 +155,11 @@ impl CliFailure {
         }
     }
 
-    fn cli_input_too_large(actual_bytes: usize) -> Self {
+    fn cli_input_too_large(actual_bytes: usize, maximum_bytes: usize) -> Self {
         Self::Adapter {
             code: "cli_input_too_large",
             message: format!(
-                "CLI input must contain at most {MAX_CLI_INPUT_BYTES} bytes; received more than that limit ({actual_bytes} bytes read)."
+                "CLI input must contain at most {maximum_bytes} bytes; received more than that limit ({actual_bytes} bytes read)."
             ),
             field_path: Some("input"),
             exit_code: EXIT_INPUT_IO,
@@ -282,7 +294,7 @@ impl Cli {
                 | ResumeCommand::Enrich { format, .. } => *format,
             },
             Command::Job { command } => match command {
-                JobCommand::Normalize { format, .. } => *format,
+                JobCommand::Normalize { format, .. } | JobCommand::Match { format, .. } => *format,
             },
         }
     }
@@ -363,6 +375,23 @@ fn run(
                 OutputFormat::Text => write_job_normalization_text(output, &normalization),
             }
         }
+        Command::Job {
+            command: JobCommand::Match { input, format },
+        } => {
+            let input_bytes = read_input_with_limit(
+                &input,
+                standard_input,
+                "job-match",
+                MAX_CLI_JOB_MATCH_INPUT_BYTES,
+            )?;
+            let match_input = serde_json::from_slice::<JobMatchInputV1>(&input_bytes)
+                .map_err(|error| CliFailure::invalid_json(&error, "career.job_match_input.v1"))?;
+            let result = match_job(&match_input).map_err(CliFailure::Core)?;
+            match format {
+                OutputFormat::Json => write_json(output, &result),
+                OutputFormat::Text => write_job_match_text(output, &result),
+            }
+        }
     }
 }
 
@@ -371,27 +400,37 @@ fn read_input(
     standard_input: &mut impl Read,
     document_kind: &'static str,
 ) -> Result<Vec<u8>, CliFailure> {
+    read_input_with_limit(path, standard_input, document_kind, MAX_CLI_INPUT_BYTES)
+}
+
+fn read_input_with_limit(
+    path: &PathBuf,
+    standard_input: &mut impl Read,
+    document_kind: &'static str,
+    maximum_bytes: usize,
+) -> Result<Vec<u8>, CliFailure> {
     if path.as_os_str() == "-" {
-        read_bounded(standard_input, document_kind)
+        read_bounded(standard_input, document_kind, maximum_bytes)
     } else {
         let mut file =
             File::open(path).map_err(|_| CliFailure::input_read_failed(document_kind))?;
-        read_bounded(&mut file, document_kind)
+        read_bounded(&mut file, document_kind, maximum_bytes)
     }
 }
 
 fn read_bounded(
     reader: &mut impl Read,
     document_kind: &'static str,
+    maximum_bytes: usize,
 ) -> Result<Vec<u8>, CliFailure> {
     let mut bytes = Vec::new();
     reader
-        .take((MAX_CLI_INPUT_BYTES + 1) as u64)
+        .take((maximum_bytes + 1) as u64)
         .read_to_end(&mut bytes)
         .map_err(|_| CliFailure::input_read_failed(document_kind))?;
 
-    if bytes.len() > MAX_CLI_INPUT_BYTES {
-        return Err(CliFailure::cli_input_too_large(bytes.len()));
+    if bytes.len() > maximum_bytes {
+        return Err(CliFailure::cli_input_too_large(bytes.len(), maximum_bytes));
     }
 
     Ok(bytes)
@@ -469,6 +508,84 @@ fn write_job_normalization_text(
             .map_err(|_| CliFailure::output_failure())?;
     }
     Ok(())
+}
+
+fn write_job_match_text(output: &mut impl Write, result: &JobMatchV1) -> Result<(), CliFailure> {
+    writeln!(
+        output,
+        "Deterministic resume-to-job match: {}/100",
+        result.overall_score
+    )
+    .map_err(|_| CliFailure::output_failure())?;
+    writeln!(
+        output,
+        "Normalization confidence: resume {}; job {}; uncertain: {}",
+        parse_confidence_label(result.confidence_context.resume_parse_confidence.label),
+        job_confidence_label(result.confidence_context.job_parse_confidence.label),
+        result.confidence_context.is_uncertain
+    )
+    .map_err(|_| CliFailure::output_failure())?;
+    writeln!(output, "Categories:").map_err(|_| CliFailure::output_failure())?;
+    for category in JobMatchCategoryV1::ALL {
+        writeln!(
+            output,
+            "  - {}: {}/100",
+            job_match_category_label(category),
+            result.category_scores.get(category)
+        )
+        .map_err(|_| CliFailure::output_failure())?;
+    }
+    if !result.top_strengths.is_empty() {
+        writeln!(output, "Top strengths:").map_err(|_| CliFailure::output_failure())?;
+        for strength in &result.top_strengths {
+            writeln!(output, "  - {}: {}", strength.item, strength.reason)
+                .map_err(|_| CliFailure::output_failure())?;
+        }
+    }
+    if !result.top_gaps.is_empty() {
+        writeln!(output, "Top gaps:").map_err(|_| CliFailure::output_failure())?;
+        for gap in &result.top_gaps {
+            let status = match gap.status {
+                JobMatchFindingStatusV1::Confirmed => "confirmed",
+                JobMatchFindingStatusV1::Partial => "partial",
+                JobMatchFindingStatusV1::LikelyMissing => "likely missing",
+                JobMatchFindingStatusV1::Unverified => "unverified",
+            };
+            writeln!(output, "  - {} [{status}]: {}", gap.item, gap.reason)
+                .map_err(|_| CliFailure::output_failure())?;
+        }
+    }
+    let recommendation = match result.recommendation.label {
+        JobMatchRecommendationLabelV1::ImproveFirst => "improve first",
+        JobMatchRecommendationLabelV1::ApplyAfterSmallEdits => "apply after small edits",
+        JobMatchRecommendationLabelV1::ApplyNow => "apply now",
+    };
+    let status = match result.recommendation.status {
+        JobMatchRecommendationStatusV1::Deterministic => "deterministic",
+        JobMatchRecommendationStatusV1::Provisional => "provisional",
+    };
+    writeln!(
+        output,
+        "Recommendation: {recommendation} [{status}] — {}",
+        result.recommendation.reason
+    )
+    .map_err(|_| CliFailure::output_failure())?;
+    for warning in &result.warnings {
+        writeln!(output, "Warning: {}", warning.message)
+            .map_err(|_| CliFailure::output_failure())?;
+    }
+    Ok(())
+}
+
+fn job_match_category_label(category: JobMatchCategoryV1) -> &'static str {
+    match category {
+        JobMatchCategoryV1::SkillsMatch => "Skills match",
+        JobMatchCategoryV1::ExperienceMatch => "Experience match",
+        JobMatchCategoryV1::SeniorityFit => "Seniority fit",
+        JobMatchCategoryV1::DomainFit => "Domain fit",
+        JobMatchCategoryV1::KeywordAlignment => "Keyword alignment",
+        JobMatchCategoryV1::EducationFit => "Education fit",
+    }
 }
 
 fn job_confidence_label(label: JobParseConfidenceLabelV1) -> &'static str {
@@ -684,7 +801,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn text_output_identifies_available_and_planned_features() {
+    fn text_output_identifies_available_features() {
         let mut output = Vec::new();
         write_capabilities_text(&mut output, &capabilities()).expect("text output should render");
         let output = String::from_utf8(output).expect("output should be UTF-8");
@@ -695,7 +812,7 @@ mod tests {
         assert!(output.contains("resume.normalize [available]"));
         assert!(output.contains("resume.enrich [available]"));
         assert!(output.contains("job.normalize [available]"));
-        assert!(output.contains("job.match [planned]"));
+        assert!(output.contains("job.match [available]"));
         assert!(output.contains("network requests: false"));
     }
 }

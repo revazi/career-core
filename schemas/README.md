@@ -21,6 +21,8 @@ Current schemas:
 - `resume-enrichment-result-v1.schema.json` — preserved deterministic baseline plus separate assisted document and merge provenance
 - `job-input-v1.schema.json` — bounded plain-text job-description input
 - `job-normalization-v1.schema.json` — deterministic source-grounded job fields, confidence, metadata, statuses, and warnings
+- `job-match-input-v1.schema.json` — original resume plus job-description input envelope
+- `job-match-v1.schema.json` — conservative deterministic scores, evidence, confidence, strengths, gaps, and recommendation gates
 - `error-v1.schema.json` — machine-readable core and CLI failures
 
-Composite analysis and enrichment schemas reference sibling schema files. Offline validators should resolve them from this directory; for `check-jsonschema`, pass `--base-uri "file://$(pwd)/schemas/"` from the repository root.
+Composite analysis, enrichment, and matching schemas reference sibling schema files. Offline validators should resolve them from this directory; for `check-jsonschema`, pass `--base-uri "file://$(pwd)/schemas/"` from the repository root.

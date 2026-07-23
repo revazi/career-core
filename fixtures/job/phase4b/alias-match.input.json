@@ -1,0 +1,17 @@
+{
+  "schema_version": "career.job_match_input.v1",
+  "resume": {
+    "schema_version": "career.resume_input.v1",
+    "text": "Taylor Chen\ntaylor.chen@example.com\nSUMMARY\nBackend engineer working with cloud services and web systems.\nEXPERIENCE\nBackend Engineer at Example Cloud\n2017 - 2024\n- Developed reliable services in production.\nEDUCATION\nBachelor's degree, Example University\n2012 - 2016\nSKILLS\nAmazon Web Services, Postgres, NodeJS, ReactJS, Go, Git",
+    "metadata": {
+      "document_id": "synthetic-match-resume-alias-v1"
+    }
+  },
+  "job": {
+    "schema_version": "career.job_input.v1",
+    "text": "Backend Engineer\nCompany: Example Cloud\nResponsibilities\n- Develop reliable services\n- Maintain web systems\n- Improve cloud operations\nRequirements\n- AWS, PostgreSQL, Node.js, React, Golang\n- 5 years of engineering experience\n- Bachelor's degree\nPreferred Skills\n- Git",
+    "metadata": {
+      "document_id": "synthetic-match-job-alias-v1"
+    }
+  }
+}

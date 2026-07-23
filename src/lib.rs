@@ -87,8 +87,9 @@ pub fn capabilities() -> Capabilities {
             },
             Capability {
                 id: "job.match".to_owned(),
-                status: CapabilityStatus::Planned,
-                summary: "Compare normalized resume and job evidence conservatively.".to_owned(),
+                status: CapabilityStatus::Available,
+                summary: "Match deterministic resume and job baselines with conservative equivalence and confidence-aware evidence."
+                    .to_owned(),
             },
         ],
     }
@@ -128,6 +129,7 @@ mod tests {
                 "resume.normalize",
                 "resume.enrich",
                 "job.normalize",
+                "job.match",
             ]
         );
     }

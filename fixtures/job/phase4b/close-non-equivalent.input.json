@@ -1,0 +1,17 @@
+{
+  "schema_version": "career.job_match_input.v1",
+  "resume": {
+    "schema_version": "career.resume_input.v1",
+    "text": "Alex Rivera\nalex.rivera@example.com\nSUMMARY\nSenior engineer using adjacent web and cloud technologies.\nEXPERIENCE\nSenior Software Engineer at Example Labs\n2018 - 2024\n- Developed and operated web services.\nEDUCATION\nBachelor's degree, Example University\n2013 - 2017\nSKILLS\nDocker, MySQL, Angular, Azure, Flask, JavaScript, CloudFormation",
+    "metadata": {
+      "document_id": "synthetic-match-resume-adjacent-v1"
+    }
+  },
+  "job": {
+    "schema_version": "career.job_input.v1",
+    "text": "Platform Engineer\nCompany: Example Platform Co\nResponsibilities\n- Design platform services\n- Maintain reliable infrastructure\n- Improve service delivery\nRequirements\n- Kubernetes, PostgreSQL, React, AWS, Django, Java, Terraform\n- 5 years of engineering experience\n- Bachelor's degree",
+    "metadata": {
+      "document_id": "synthetic-match-job-adjacent-v1"
+    }
+  }
+}

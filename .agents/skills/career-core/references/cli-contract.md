@@ -71,9 +71,21 @@ career job normalize --input <path|-> [--format json|text]
 
 Input follows `schemas/job-input-v1.schema.json`; JSON output follows `schemas/job-normalization-v1.schema.json`. The operation accepts plain text, makes no network request, and does not fetch a vacancy URL.
 
-The result includes source-grounded required/preferred skills and qualifications, responsibilities, explicit seniority/experience/education/certification signals, confidence, field statuses, matched/unmatched metadata, and warnings. `not_detected` is unverified, not confirmed absence. Matching remains planned.
+The result includes source-grounded required/preferred skills and qualifications, responsibilities, explicit seniority/experience/education/certification signals, confidence, field statuses, matched/unmatched metadata, and warnings. `not_detected` is unverified, not confirmed absence.
 
 See `docs/contracts/job-normalization-v1.md` for exact aliases, rules, limits, confidence, and parity scope.
+
+## Deterministic resume-to-job matching
+
+```bash
+career job match --input <path|-> [--format json|text]
+```
+
+Input follows `schemas/job-match-input-v1.schema.json` and nests original resume/job inputs. JSON output follows `schemas/job-match-v1.schema.json`. The operation reruns deterministic normalization and cannot accept assisted documents.
+
+Read category `raw_score`, published `score`, item status, source spans, confidence context, top strengths/gaps, recommendation gates, and warnings together. Only normalized exact and reviewed conservative aliases can satisfy skills. Uncertain normalization bounds scores and marks missing/partial evidence unverified. Recommendation labels are workflow guidance, not hiring predictions.
+
+See `docs/contracts/job-match-v1.md` for category rules, aliases, integer rounding, confidence bounds, evidence/status semantics, recommendation blockers, limits, and parity scope.
 
 ## Machine-process rules
 
@@ -93,7 +105,7 @@ Current nonzero exit statuses:
 | 5 | valid JSON rejected by core input validation |
 | 6 | output write/serialization failure |
 
-Errors use `career.error.v1`. Messages are bounded and do not echo the source document.
+Errors use `career.error.v1`. Messages are bounded and do not echo the source document. Single-document commands read at most 262,144 bytes; the two-document `job match` envelope reads at most 1,048,576 bytes before JSON parsing.
 
 ## Execution from source
 
@@ -104,6 +116,7 @@ cargo run --quiet -p career-cli -- resume analyze --input fixtures/resume/phase3
 cargo run --quiet -p career-cli -- resume normalize --input fixtures/resume/phase2/complete-normalization.input.json
 cargo run --quiet -p career-cli -- resume enrich --input fixtures/resume/phase2/messy-unlabeled.enrichment-input.json
 cargo run --quiet -p career-cli -- job normalize --input fixtures/job/phase4a/complete-normalization.input.json
+cargo run --quiet -p career-cli -- job match --input fixtures/job/phase4b/complete-match.input.json
 ```
 
 The `--quiet` Cargo flag suppresses Cargo status output; it does not alter `career` output.
