@@ -1,12 +1,12 @@
 # Current phase
 
-## Active sub-phase
+## Most recently completed sub-phase
 
 **Phase 4B — Conservative deterministic matching**
 
 ## Status
 
-Implementation and clean-clone verification are complete on `feature/job-matching-v1`. GitHub Actions and review are pending. Phase 5 distribution work has not started.
+Complete. PR review and merge are pending. Phase 5 distribution work has not started.
 
 ## Approved scope
 
@@ -92,8 +92,7 @@ LLM interpretation, validation, provider fallback, merge, prompts, cache, observ
 - Fallow changed-code and security checks report no findings; Fallow does not currently analyze Rust source for health metrics
 - `git diff --check`
 - clean-clone formatting, Clippy, 103-test, locked-build, rustdoc, capabilities, all prior goldens, and complete/vague match goldens pass
-
-GitHub Actions, including Rust 1.85 compatibility, remains pending until the branch is pushed.
+- GitHub Actions PR run `30021879854` — passed, including Rust 1.85 compatibility, 103 tests, locked build, and all CLI golden checks
 
 ## Next phase after approval
 
