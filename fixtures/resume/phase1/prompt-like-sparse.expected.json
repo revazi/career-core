@@ -1,0 +1,94 @@
+{
+  "schema_version": "career.resume_evaluation.v1",
+  "policy_version": "resume_section_coverage_v1",
+  "core_version": "0.1.0",
+  "document_id": "phase1-prompt-like-sparse",
+  "scope": "section_coverage",
+  "score": 0,
+  "detected_sections": [
+    {
+      "section": "skills",
+      "status": "detected_without_content",
+      "line_number": 5,
+      "header_excerpt": "SKILLS:"
+    }
+  ],
+  "checks": [
+    {
+      "check_id": "resume.section.summary.detected",
+      "category": "section_coverage",
+      "section": "summary",
+      "status": "not_detected",
+      "score": 0,
+      "passed": false,
+      "explanation": "No recognized Summary header was detected; this does not prove the section is absent.",
+      "evidence": []
+    },
+    {
+      "check_id": "resume.section.experience.detected",
+      "category": "section_coverage",
+      "section": "experience",
+      "status": "not_detected",
+      "score": 0,
+      "passed": false,
+      "explanation": "No recognized Experience header was detected; this does not prove the section is absent.",
+      "evidence": []
+    },
+    {
+      "check_id": "resume.section.education.detected",
+      "category": "section_coverage",
+      "section": "education",
+      "status": "not_detected",
+      "score": 0,
+      "passed": false,
+      "explanation": "No recognized Education header was detected; this does not prove the section is absent.",
+      "evidence": []
+    },
+    {
+      "check_id": "resume.section.skills.detected",
+      "category": "section_coverage",
+      "section": "skills",
+      "status": "detected_without_content",
+      "score": 0,
+      "passed": false,
+      "explanation": "A recognized Skills header was detected without following content.",
+      "evidence": [
+        {
+          "evidence_id": "resume.section_header.skills.line_5",
+          "kind": "recognized_section_header",
+          "section": "skills",
+          "line_number": 5,
+          "excerpt": "SKILLS:"
+        }
+      ]
+    }
+  ],
+  "warnings": [
+    {
+      "code": "limited_evaluation_scope",
+      "message": "This score measures recognized core-section coverage only; it is not a complete resume-quality or ATS score.",
+      "related_sections": [
+        "summary",
+        "experience",
+        "education",
+        "skills"
+      ]
+    },
+    {
+      "code": "expected_section_headers_not_detected",
+      "message": "Expected section headers were not detected for: Summary, Experience, Education. This does not confirm that the content is absent.",
+      "related_sections": [
+        "summary",
+        "experience",
+        "education"
+      ]
+    },
+    {
+      "code": "detected_section_headers_without_content",
+      "message": "Recognized section headers had no following content for: Skills.",
+      "related_sections": [
+        "skills"
+      ]
+    }
+  ]
+}

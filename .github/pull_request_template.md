@@ -19,6 +19,7 @@ List exact commands and results.
 - [ ] `cargo test --workspace --all-features`
 - [ ] `cargo build --workspace --all-features --locked`
 - [ ] `cargo run --quiet -p career-cli -- capabilities`
+- [ ] `cargo run --quiet -p career-cli -- resume evaluate --input fixtures/resume/phase1/complete-sections.input.json`
 - [ ] `git diff --check`
 
 ## Security and privacy

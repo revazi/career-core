@@ -1,0 +1,199 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/revazi/career-core/schemas/resume-evaluation-v1.schema.json",
+  "title": "career-core resume evaluation v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "policy_version",
+    "core_version",
+    "document_id",
+    "scope",
+    "score",
+    "detected_sections",
+    "checks",
+    "warnings"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "career.resume_evaluation.v1"
+    },
+    "policy_version": {
+      "const": "resume_section_coverage_v1"
+    },
+    "core_version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "document_id": {
+      "type": ["string", "null"],
+      "maxLength": 128
+    },
+    "scope": {
+      "const": "section_coverage"
+    },
+    "score": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 100,
+      "multipleOf": 25
+    },
+    "detected_sections": {
+      "type": "array",
+      "maxItems": 4,
+      "items": {
+        "$ref": "#/$defs/sectionDetection"
+      }
+    },
+    "checks": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "items": {
+        "$ref": "#/$defs/check"
+      }
+    },
+    "warnings": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 3,
+      "items": {
+        "$ref": "#/$defs/warning"
+      }
+    }
+  },
+  "$defs": {
+    "section": {
+      "enum": ["summary", "experience", "education", "skills"]
+    },
+    "detectionStatus": {
+      "enum": ["detected_with_content", "detected_without_content", "not_detected"]
+    },
+    "sectionDetection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["section", "status", "line_number", "header_excerpt"],
+      "properties": {
+        "section": {
+          "$ref": "#/$defs/section"
+        },
+        "status": {
+          "enum": ["detected_with_content", "detected_without_content"]
+        },
+        "line_number": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2000
+        },
+        "header_excerpt": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        }
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["evidence_id", "kind", "section", "line_number", "excerpt"],
+      "properties": {
+        "evidence_id": {
+          "type": "string",
+          "pattern": "^resume\\.section_header\\.(summary|experience|education|skills)\\.line_[1-9][0-9]*$"
+        },
+        "kind": {
+          "const": "recognized_section_header"
+        },
+        "section": {
+          "$ref": "#/$defs/section"
+        },
+        "line_number": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2000
+        },
+        "excerpt": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        }
+      }
+    },
+    "check": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "check_id",
+        "category",
+        "section",
+        "status",
+        "score",
+        "passed",
+        "explanation",
+        "evidence"
+      ],
+      "properties": {
+        "check_id": {
+          "type": "string",
+          "pattern": "^resume\\.section\\.(summary|experience|education|skills)\\.detected$"
+        },
+        "category": {
+          "const": "section_coverage"
+        },
+        "section": {
+          "$ref": "#/$defs/section"
+        },
+        "status": {
+          "$ref": "#/$defs/detectionStatus"
+        },
+        "score": {
+          "enum": [0, 100]
+        },
+        "passed": {
+          "type": "boolean"
+        },
+        "explanation": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 300
+        },
+        "evidence": {
+          "type": "array",
+          "maxItems": 1,
+          "items": {
+            "$ref": "#/$defs/evidence"
+          }
+        }
+      }
+    },
+    "warning": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "message", "related_sections"],
+      "properties": {
+        "code": {
+          "enum": [
+            "limited_evaluation_scope",
+            "no_recognized_section_headers",
+            "expected_section_headers_not_detected",
+            "detected_section_headers_without_content"
+          ]
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "related_sections": {
+          "type": "array",
+          "maxItems": 4,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/section"
+          }
+        }
+      }
+    }
+  }
+}

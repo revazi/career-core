@@ -29,7 +29,7 @@ All machine commands follow these rules as they are introduced:
 - JSON or JSONL results go to stdout.
 - Diagnostics go to stderr.
 - Success exits `0`.
-- Invalid input, unsupported capability, I/O failure, and internal failure use distinct documented nonzero codes before the first stable release.
+- CLI usage exits `2`, input I/O/byte-limit failures exit `3`, invalid JSON exits `4`, core validation exits `5`, and output failures exit `6`.
 - No progress indicators or ANSI escapes appear in machine modes.
 - Input from `-` means stdin where documented.
 - Commands never make implicit network requests.
@@ -59,6 +59,14 @@ The project skill is:
 It follows the Agent Skills standard so Pi and compatible harnesses can discover it. Keep the skill concise and move detailed command contracts into its `references/` directory. Update the skill whenever an available CLI capability changes.
 
 Pi project skills load only after the repository is trusted. Use `/trust`, restart Pi, and run `/reload` after edits.
+
+## Available Phase 1 operation
+
+```bash
+career resume evaluate --input <path|-> [--format json|text]
+```
+
+The input and result contracts are `career.resume_input.v1` and `career.resume_evaluation.v1`. This operation evaluates core-section header coverage only. Agent explanations must retain the limited-scope warning and must not label this score as complete resume quality or ATS compatibility.
 
 ## Distribution stages
 

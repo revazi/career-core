@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/revazi/career-core/schemas/error-v1.schema.json",
+  "title": "career CLI error v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "code", "message", "field_path"],
+  "properties": {
+    "schema_version": {
+      "const": "career.error.v1"
+    },
+    "code": {
+      "enum": [
+        "invalid_arguments",
+        "input_read_failed",
+        "cli_input_too_large",
+        "invalid_json",
+        "output_write_failed",
+        "unsupported_schema_version",
+        "source_text_empty",
+        "source_text_too_large",
+        "source_line_count_exceeded",
+        "source_line_too_long",
+        "document_id_empty",
+        "document_id_too_long"
+      ]
+    },
+    "message": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 500
+    },
+    "field_path": {
+      "type": ["string", "null"],
+      "maxLength": 100
+    }
+  }
+}

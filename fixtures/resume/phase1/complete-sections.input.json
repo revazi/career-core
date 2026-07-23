@@ -1,0 +1,7 @@
+{
+  "schema_version": "career.resume_input.v1",
+  "text": "Jane Example\njane@example.test\n\nEXECUTIVE SUMMARY:\nBackend engineer focused on reliable services.\n\nCAREER HISTORY:\nBackend Engineer, Example Systems\n2022 - Present\n\nACADEMIC HISTORY:\nExample University\n\nKEY SKILLS:\nRust, SQL, Testing",
+  "metadata": {
+    "document_id": "phase1-complete-sections"
+  }
+}

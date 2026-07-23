@@ -1,46 +1,67 @@
 # Current phase
 
-## Most recently completed phase
+## Active phase
 
-**Phase 0 — Repository foundation and agent discovery**
+**Phase 1 — Versioned contracts and first resume vertical slice**
 
 ## Status
 
-Complete locally. Phase 1 has not started.
+Implementation complete locally; awaiting GitHub Actions and review before the phase is marked complete. Phase 2 has not started.
 
-A GitHub remote has not been created, so the committed workflow has not yet run on GitHub Actions. Its equivalent commands pass from a clean local clone.
+The private repository is available at `https://github.com/revazi/career-core`; Phase 0 CI passed on `main` before this phase began.
 
 ## Implemented
 
-- Root Rust package named `career-core`.
-- Workspace CLI package producing the `career` executable.
-- Versioned capability discovery with JSON as the default output.
-- Truthful available/planned capability statuses.
-- `unsafe` forbidden in current production Rust crates.
-- Dual MIT/Apache-2.0 license files and package metadata.
-- Root `AGENTS.md` and detailed `.agents/` phased handbook.
-- Agent Skills-compatible `.agents/skills/career-core/SKILL.md`.
-- Public README, contribution, security, changelog, schema, Dependabot, pull-request, and CI documents.
-- Committed `Cargo.lock` and reproducible locked builds.
+- Bounded `career.resume_input.v1` plain-text input with optional caller document identifier.
+- Typed `career.resume_evaluation.v1` checks, section detections, evidence, warnings, and integer score.
+- Typed `career.error.v1` core validation failures and bounded CLI failures.
+- Documented limits for source characters, lines, line length, metadata, evidence, and CLI JSON bytes.
+- Exact normalized aliases for Summary, Experience, Education, and Skills adapted from `resume_normalization_v7`.
+- Projects and Certifications aliases retained only as conservative content boundaries.
+- Explicit `detected_with_content`, `detected_without_content`, and `not_detected` statuses.
+- `resume_section_coverage_v1` scoring: four equally weighted 0/100 checks and an integer mean.
+- Mandatory warning that the score is section coverage, not complete quality or ATS compatibility.
+- Stable evidence IDs, one-based line numbers, bounded header excerpts, and canonical check ordering.
+- `career resume evaluate --input <path|-> --format json|text` with stdin support.
+- Distinct CLI exit statuses for usage, I/O/byte limits, JSON, core validation, and output failures.
+- Strict unknown-field rejection and no source-payload echo in errors.
+- Synthetic complete and adversarial prompt-like golden fixtures with Django provenance.
+- Public input, output, and error JSON schemas plus a detailed contract document.
+- Updated capability discovery and Agent Skills guidance marking `resume.evaluate` available.
+- CI golden-output/schema smoke checks and Rust 1.85 compatibility check.
 
-## Verification completed
+## Reference scope
+
+Behavior was intentionally adapted from:
+
+- `../resume-ai/accounts/services/resume_normalization.py`
+- `../resume-ai/accounts/test_services.py` (`ResumeSectionAliasTests`)
+- reference version `resume_normalization_v7`
+
+This is a bounded rule port. Full resume normalization and `deterministic_v2` scoring parity have not been evaluated or claimed.
+
+## Verification completed locally
 
 - `cargo fmt --all --check`
 - `cargo clippy --workspace --all-targets --all-features -- -D warnings`
-- `cargo test --workspace --all-features --locked` — 6 tests passed
+- `cargo test --workspace --all-features --locked` — 25 tests passed
 - `cargo build --workspace --all-features --locked`
-- `cargo run --quiet --locked -p career-cli -- capabilities` — valid JSON
-- `cargo run --quiet --locked -p career-cli -- capabilities --format text`
-- clean-clone repetition of formatting, Clippy, tests, build, and JSON smoke checks
-- `cargo install --path crates/career-cli --locked` into an isolated prefix
-- capability schema JSON parsing
-- Agent Skill frontmatter/name/description validation
-- repository credential-pattern scan
+- capability JSON and text smoke checks
+- complete resume-evaluation JSON golden comparison
+- sparse resume-evaluation text smoke check
+- all public schema documents parse as JSON
+- input, golden output, and representative error documents validate with `check-jsonschema`
+- clean-clone formatting, Clippy, 25-test, locked-build, and golden CLI verification
+- Rust core/boundary alias sets exactly match the selected `resume_normalization_v7` reference sets
+- all relative Markdown links resolve
 - `git diff --check`
+
+GitHub Actions remains pending until the feature branch is pushed.
 
 ## Explicitly unavailable
 
-- resume normalization and evaluation
+- full resume normalization and evaluation parity
+- contact, experience-entry, education-entry, or skills-item extraction
 - job-description normalization
 - resume-to-job matching
 - PDF/DOCX ingestion
@@ -48,8 +69,6 @@ A GitHub remote has not been created, so the committed workflow has not yet run 
 - Swift bindings
 - MCP or provider-specific agent adapters
 
-These remain reported as planned, not available.
-
 ## Next phase after approval
 
-Phase 1 will define bounded versioned resume contracts and deliver one small deterministic section-coverage evaluation through the library and JSON CLI. Do not begin Phase 1 until the maintainer explicitly requests it.
+Phase 2 will implement bounded deterministic resume normalization with structured facts, confidence, provenance, and golden fixtures. Do not begin Phase 2 until Phase 1 is marked complete and the maintainer explicitly requests it.
