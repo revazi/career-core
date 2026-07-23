@@ -6,7 +6,7 @@
 
 ## Status
 
-Implementation and full local verification are complete on `feature/job-normalization-v1`. Clean-clone verification, GitHub Actions, and review are pending. Phase 4B matching has not started.
+Implementation and clean-clone verification are complete on `feature/job-normalization-v1`. GitHub Actions and review are pending. Phase 4B matching has not started.
 
 ## Approved scope
 
@@ -75,8 +75,9 @@ Provider fallback execution, fallback merge, Django models/API fields, URL fetch
 - credential-pattern scan reports no findings
 - Fallow changed-code and security checks report no findings; Fallow does not currently analyze Rust source for health metrics
 - `git diff --check`
+- clean-clone formatting, Clippy, 79-test, locked-build, rustdoc, capabilities, all resume goldens, and the job-normalization golden pass
 
-Clean-clone verification and GitHub Actions, including Rust 1.85 compatibility, remain pending.
+GitHub Actions, including Rust 1.85 compatibility, remains pending until the branch is pushed.
 
 ## Next sub-phase after approval
 
