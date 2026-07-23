@@ -6,7 +6,7 @@
 
 ## Status
 
-Implementation and full local verification are complete on `feature/job-matching-v1`. Clean-clone verification, GitHub Actions, and review are pending. Phase 5 distribution work has not started.
+Implementation and clean-clone verification are complete on `feature/job-matching-v1`. GitHub Actions and review are pending. Phase 5 distribution work has not started.
 
 ## Approved scope
 
@@ -91,8 +91,9 @@ LLM interpretation, validation, provider fallback, merge, prompts, cache, observ
 - credential-pattern scan reports no findings
 - Fallow changed-code and security checks report no findings; Fallow does not currently analyze Rust source for health metrics
 - `git diff --check`
+- clean-clone formatting, Clippy, 103-test, locked-build, rustdoc, capabilities, all prior goldens, and complete/vague match goldens pass
 
-Clean-clone verification and GitHub Actions, including Rust 1.85 compatibility, remain pending.
+GitHub Actions, including Rust 1.85 compatibility, remains pending until the branch is pushed.
 
 ## Next phase after approval
 
