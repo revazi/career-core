@@ -25,3 +25,5 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - `career resume analyze` with preserved Phase 1 behavior, JSON/text output, selected `deterministic_v2` scoring parity, and explicit proprietary-ATS/layout limitations.
 - Versioned `career.job_input.v1` and `career.job_normalization.v1` contracts with source-grounded required/preferred fields, responsibilities, explicit requirement signals, confidence, metadata, statuses, and warnings.
 - `career job normalize` with file/stdin input, JSON/text output, bounded synthetic fixtures, and selected deterministic `job_description_normalization_v6` fixture parity.
+- Versioned `career.job_match_input.v1` and `career.job_match.v1` contracts with six weighted categories, source/derived evidence, confidence bounds, strengths, gaps, and deterministic recommendation gates.
+- `career job match` with baseline-only normalization, normalized exact and reviewed same-technology aliases, close-non-equivalent/vague/weak fixtures, and selected `job_match_deterministic_v2` scoring parity.

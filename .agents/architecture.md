@@ -26,18 +26,21 @@ resume_analysis_v1 checks + integer aggregation + bounded evidence
 
 `career.resume_evaluation.v1` remains the separate Phase 1 section-coverage contract. The full policy is exposed additively as `career.resume_analysis.v1`; existing command semantics are not silently replaced.
 
-Job-description work follows the same inward dependency rule:
+Job matching independently reproduces both deterministic baselines:
 
 ```text
-career.job_input.v1
+career.job_match_input.v1
         │
-        ▼
-job_normalization_v1 deterministic source-grounded facts + confidence
+        ├─ career.resume_input.v1 ─► resume_normalization_v1
         │
-        └─ future Phase 4B matching (not available during Phase 4A)
+        └─ career.job_input.v1 ────► job_normalization_v1
+                                          │
+                                          ▼
+                                     job_match_v1
+                              scores + evidence + safe gates
 ```
 
-The core never fetches a vacancy URL. Hosts must provide bounded plain text.
+Caller-supplied normalized or assisted documents cannot enter authoritative matching. The core never fetches a vacancy URL; hosts must provide bounded plain text.
 
 Optional assisted normalization follows a split boundary:
 
@@ -61,7 +64,8 @@ The library accepts bounded typed values and returns typed deterministic results
 - normalize bounded resume and job-description plain text
 - calculate confidence and scoring signals
 - analyze only deterministic normalization baselines with versioned checks and integer aggregation
-- compare explicit evidence
+- compare deterministic resume/job baselines through exact and reviewed conservative equivalence
+- emit bounded confidence-aware strengths, gaps, and recommendation gates
 - emit provider-neutral enrichment eligibility and target contracts
 - validate source-grounded external proposals as untrusted typed input
 - merge accepted proposal values only into eligible empty fields while preserving the baseline

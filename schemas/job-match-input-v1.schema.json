@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/revazi/career-core/main/schemas/job-match-input-v1.schema.json",
+  "title": "career-core job match input v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "resume", "job"],
+  "properties": {
+    "schema_version": {
+      "const": "career.job_match_input.v1"
+    },
+    "resume": {
+      "$ref": "resume-input-v1.schema.json"
+    },
+    "job": {
+      "$ref": "job-input-v1.schema.json"
+    }
+  }
+}

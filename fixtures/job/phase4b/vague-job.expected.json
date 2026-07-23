@@ -1,0 +1,553 @@
+{
+  "schema_version": "career.job_match.v1",
+  "policy_version": "job_match_v1",
+  "reference_policy_version": "job_match_deterministic_v2",
+  "skill_equivalence_policy_version": "conservative_skill_equivalence_v1",
+  "recommendation_policy_version": "job_match_recommendation_v1",
+  "recommendation_reference_policy_version": "job_match_recommendation_safety_v1",
+  "resume_normalization_policy_version": "resume_normalization_v1",
+  "job_normalization_policy_version": "job_normalization_v1",
+  "core_version": "0.1.0",
+  "resume_document_id": "synthetic-match-resume-vague-v1",
+  "job_document_id": "synthetic-match-job-vague-v1",
+  "scoring_weights": {
+    "skills_match": 30,
+    "experience_match": 25,
+    "seniority_fit": 15,
+    "domain_fit": 10,
+    "keyword_alignment": 10,
+    "education_fit": 10
+  },
+  "overall_score": 61,
+  "category_scores": {
+    "skills_match": 50,
+    "experience_match": 75,
+    "seniority_fit": 50,
+    "domain_fit": 75,
+    "keyword_alignment": 50,
+    "education_fit": 75
+  },
+  "category_results": [
+    {
+      "category": "skills_match",
+      "weight": 30,
+      "raw_score": 0,
+      "score": 50,
+      "score_adjusted": true,
+      "explanation": "Matched 0/0 required skills and 0/0 preferred skills using normalized exact or reviewed same-technology aliases. The published score was bounded because normalization confidence is uncertain.",
+      "items": [],
+      "metrics": [
+        {
+          "metric_id": "resume_skill_count",
+          "value": "3"
+        },
+        {
+          "metric_id": "required_skill_count",
+          "value": "0"
+        },
+        {
+          "metric_id": "preferred_skill_count",
+          "value": "0"
+        },
+        {
+          "metric_id": "required_skill_matches",
+          "value": "0"
+        },
+        {
+          "metric_id": "preferred_skill_matches",
+          "value": "0"
+        },
+        {
+          "metric_id": "required_skill_raw_score",
+          "value": "0"
+        },
+        {
+          "metric_id": "preferred_skill_raw_score",
+          "value": "0"
+        }
+      ]
+    },
+    {
+      "category": "experience_match",
+      "weight": 25,
+      "raw_score": 100,
+      "score": 75,
+      "score_adjusted": true,
+      "explanation": "Resume experience entries were detected, and the job has no explicit year requirement. The published score was bounded because normalization confidence is uncertain.",
+      "items": [],
+      "metrics": [
+        {
+          "metric_id": "experience_entry_count",
+          "value": "1"
+        },
+        {
+          "metric_id": "dated_experience_entry_count",
+          "value": "1"
+        },
+        {
+          "metric_id": "required_years",
+          "value": "0"
+        },
+        {
+          "metric_id": "estimated_resume_years",
+          "value": "3"
+        }
+      ]
+    },
+    {
+      "category": "seniority_fit",
+      "weight": 15,
+      "raw_score": 50,
+      "score": 50,
+      "score_adjusted": false,
+      "explanation": "The job description has no explicit seniority signal; no seniority gap is inferred.",
+      "items": [],
+      "metrics": [
+        {
+          "metric_id": "job_seniority_signals",
+          "value": ""
+        },
+        {
+          "metric_id": "resume_seniority_signals",
+          "value": ""
+        }
+      ]
+    },
+    {
+      "category": "domain_fit",
+      "weight": 10,
+      "raw_score": 100,
+      "score": 75,
+      "score_adjusted": true,
+      "explanation": "Matched 1/1 bounded lexical job-domain signals. The published score was bounded because normalization confidence is uncertain.",
+      "items": [
+        {
+          "kind": "domain",
+          "item": "product",
+          "resume_item": "product",
+          "status": "confirmed_match",
+          "match_type": "derived_signal",
+          "job_source": null,
+          "resume_source": null
+        }
+      ],
+      "metrics": [
+        {
+          "metric_id": "job_domains",
+          "value": "product"
+        },
+        {
+          "metric_id": "resume_domains",
+          "value": "data, product"
+        }
+      ]
+    },
+    {
+      "category": "keyword_alignment",
+      "weight": 10,
+      "raw_score": 15,
+      "score": 50,
+      "score_adjusted": true,
+      "explanation": "Matched 2/13 of the first 20 frequency-ranked job keywords after fixed stopword removal. The published score was bounded because normalization confidence is uncertain.",
+      "items": [
+        {
+          "kind": "keyword",
+          "item": "product",
+          "resume_item": "product",
+          "status": "confirmed_match",
+          "match_type": "derived_signal",
+          "job_source": null,
+          "resume_source": null
+        },
+        {
+          "kind": "keyword",
+          "item": "minded",
+          "resume_item": null,
+          "status": "unverified",
+          "match_type": null,
+          "job_source": null,
+          "resume_source": null
+        },
+        {
+          "kind": "keyword",
+          "item": "engineer",
+          "resume_item": "engineer",
+          "status": "confirmed_match",
+          "match_type": "derived_signal",
+          "job_source": null,
+          "resume_source": null
+        },
+        {
+          "kind": "keyword",
+          "item": "join",
+          "resume_item": null,
+          "status": "unverified",
+          "match_type": null,
+          "job_source": null,
+          "resume_source": null
+        },
+        {
+          "kind": "keyword",
+          "item": "collaborative",
+          "resume_item": null,
+          "status": "unverified",
+          "match_type": null,
+          "job_source": null,
+          "resume_source": null
+        },
+        {
+          "kind": "keyword",
+          "item": "create",
+          "resume_item": null,
+          "status": "unverified",
+          "match_type": null,
+          "job_source": null,
+          "resume_source": null
+        },
+        {
+          "kind": "keyword",
+          "item": "delightful",
+          "resume_item": null,
+          "status": "unverified",
+          "match_type": null,
+          "job_source": null,
+          "resume_source": null
+        },
+        {
+          "kind": "keyword",
+          "item": "experiences",
+          "resume_item": null,
+          "status": "unverified",
+          "match_type": null,
+          "job_source": null,
+          "resume_source": null
+        },
+        {
+          "kind": "keyword",
+          "item": "move",
+          "resume_item": null,
+          "status": "unverified",
+          "match_type": null,
+          "job_source": null,
+          "resume_source": null
+        },
+        {
+          "kind": "keyword",
+          "item": "quickly",
+          "resume_item": null,
+          "status": "unverified",
+          "match_type": null,
+          "job_source": null,
+          "resume_source": null
+        },
+        {
+          "kind": "keyword",
+          "item": "help",
+          "resume_item": null,
+          "status": "unverified",
+          "match_type": null,
+          "job_source": null,
+          "resume_source": null
+        },
+        {
+          "kind": "keyword",
+          "item": "wherever",
+          "resume_item": null,
+          "status": "unverified",
+          "match_type": null,
+          "job_source": null,
+          "resume_source": null
+        },
+        {
+          "kind": "keyword",
+          "item": "needed",
+          "resume_item": null,
+          "status": "unverified",
+          "match_type": null,
+          "job_source": null,
+          "resume_source": null
+        }
+      ],
+      "metrics": [
+        {
+          "metric_id": "target_keyword_count",
+          "value": "13"
+        },
+        {
+          "metric_id": "matched_keyword_count",
+          "value": "2"
+        },
+        {
+          "metric_id": "missing_keyword_count",
+          "value": "11"
+        }
+      ]
+    },
+    {
+      "category": "education_fit",
+      "weight": 10,
+      "raw_score": 100,
+      "score": 75,
+      "score_adjusted": true,
+      "explanation": "The job has no explicit education or certification requirement. The published score was bounded because normalization confidence is uncertain.",
+      "items": [],
+      "metrics": [
+        {
+          "metric_id": "resume_degrees",
+          "value": "bachelor's, degree"
+        },
+        {
+          "metric_id": "required_degrees",
+          "value": ""
+        },
+        {
+          "metric_id": "resume_certifications",
+          "value": ""
+        },
+        {
+          "metric_id": "required_certifications",
+          "value": ""
+        },
+        {
+          "metric_id": "unassessed_required_qualification_count",
+          "value": "0"
+        }
+      ]
+    }
+  ],
+  "confidence_context": {
+    "score_source": "deterministic_normalization_baselines",
+    "resume_parse_confidence": {
+      "label": "high",
+      "score": 86,
+      "max_score": 100,
+      "signals": [
+        {
+          "signal": "extraction_quality",
+          "score": 18,
+          "max_score": 25,
+          "evidence": [
+            "character_count=288",
+            "non_empty_line_count=13",
+            "readable_character_percent=100"
+          ]
+        },
+        {
+          "signal": "section_coverage",
+          "score": 25,
+          "max_score": 25,
+          "evidence": [
+            "detected_expected_section_count=4",
+            "expected_section_count=4"
+          ]
+        },
+        {
+          "signal": "contact_completeness",
+          "score": 11,
+          "max_score": 15,
+          "evidence": [
+            "has_name=true",
+            "has_email=true",
+            "has_phone_or_link=false"
+          ]
+        },
+        {
+          "signal": "experience_completeness",
+          "score": 25,
+          "max_score": 25,
+          "evidence": [
+            "entry_count=1",
+            "has_job_title=true",
+            "has_company=true",
+            "has_date_range=true",
+            "has_detail=true"
+          ]
+        },
+        {
+          "signal": "skills_completeness",
+          "score": 7,
+          "max_score": 10,
+          "evidence": [
+            "skill_count=3"
+          ]
+        }
+      ]
+    },
+    "job_parse_confidence": {
+      "label": "low",
+      "score": 28,
+      "max_score": 100,
+      "signals": [
+        {
+          "signal": "text_quality",
+          "score": 9,
+          "max_score": 15,
+          "evidence": [
+            "character_count=125",
+            "non_empty_line_count=2",
+            "readable_character_per_mille=1000"
+          ]
+        },
+        {
+          "signal": "title_detection",
+          "score": 15,
+          "max_score": 15,
+          "evidence": [
+            "title_present=true",
+            "title_word_count=2",
+            "title_plausible=true"
+          ]
+        },
+        {
+          "signal": "skills_detection",
+          "score": 0,
+          "max_score": 30,
+          "evidence": [
+            "detected_skill_count=0"
+          ]
+        },
+        {
+          "signal": "responsibilities_detection",
+          "score": 0,
+          "max_score": 20,
+          "evidence": [
+            "detected_responsibility_count=0"
+          ]
+        },
+        {
+          "signal": "requirement_detection",
+          "score": 0,
+          "max_score": 10,
+          "evidence": [
+            "detected_groups="
+          ]
+        },
+        {
+          "signal": "structure_quality",
+          "score": 4,
+          "max_score": 10,
+          "evidence": [
+            "classified_line_per_mille=500",
+            "matched_section_count=0",
+            "long_line_per_mille=0"
+          ]
+        }
+      ]
+    },
+    "resume_normalization_truncated": false,
+    "job_normalization_truncated": false,
+    "is_uncertain": true,
+    "uncertainty_sources": [
+      "job_parse_confidence"
+    ],
+    "score_floor": 50,
+    "score_ceiling": 75,
+    "adjusted_categories": [
+      "skills_match",
+      "experience_match",
+      "domain_fit",
+      "keyword_alignment",
+      "education_fit"
+    ],
+    "adjustment_applied": true,
+    "missing_claims_status": "unverified"
+  },
+  "top_strengths": [
+    {
+      "category": "domain_fit",
+      "item": "product",
+      "reason": "Explicit source signals support alignment for: product.",
+      "status": "confirmed",
+      "match_type": "derived_signal",
+      "job_source": null,
+      "resume_source": null
+    },
+    {
+      "category": "keyword_alignment",
+      "item": "engineer",
+      "reason": "Explicit source signals support alignment for: engineer.",
+      "status": "confirmed",
+      "match_type": "derived_signal",
+      "job_source": null,
+      "resume_source": null
+    },
+    {
+      "category": "keyword_alignment",
+      "item": "product",
+      "reason": "Explicit source signals support alignment for: product.",
+      "status": "confirmed",
+      "match_type": "derived_signal",
+      "job_source": null,
+      "resume_source": null
+    }
+  ],
+  "top_gaps": [],
+  "recommendation": {
+    "policy_version": "job_match_recommendation_v1",
+    "label": "apply_after_small_edits",
+    "status": "provisional",
+    "reason": "The deterministic match score is 61%. Normalization confidence is uncertain, so this recommendation remains provisional. Core categories below the apply-now threshold: skills_match 50%, seniority_fit 50%. Review the identified gaps and source evidence before applying.",
+    "gate_reasons": [
+      "overall_score_below_apply_now_threshold",
+      "normalization_confidence_uncertain",
+      "core_category_below_apply_now_threshold"
+    ],
+    "thresholds": {
+      "apply_now_minimum_overall_score": 80,
+      "apply_after_edits_minimum_overall_score": 60,
+      "apply_after_edits_minimum_core_category_score": 50,
+      "apply_now_minimum_core_category_score": 70
+    },
+    "low_core_categories": [
+      {
+        "category": "skills_match",
+        "score": 50
+      },
+      {
+        "category": "seniority_fit",
+        "score": 50
+      }
+    ],
+    "blocking_required_skill_gaps": [],
+    "blocking_core_evidence_gaps": [],
+    "unassessed_required_qualifications": []
+  },
+  "warnings": [
+    {
+      "code": "deterministic_alignment_only",
+      "message": "This is a deterministic resume-to-job alignment result, not a hiring prediction, recruiter decision, or proprietary ATS score.",
+      "related_categories": [
+        "skills_match",
+        "experience_match",
+        "seniority_fit",
+        "domain_fit",
+        "keyword_alignment",
+        "education_fit"
+      ]
+    },
+    {
+      "code": "source_text_and_explicit_evidence_only",
+      "message": "Matching uses caller-supplied plain text and explicit lexical evidence only; it does not inspect document layout, infer unstated qualifications, or use fuzzy semantic similarity.",
+      "related_categories": [
+        "skills_match",
+        "experience_match",
+        "seniority_fit",
+        "domain_fit",
+        "keyword_alignment",
+        "education_fit"
+      ]
+    },
+    {
+      "code": "normalization_confidence_provisional",
+      "message": "Resume or job normalization is uncertain, so category scores are bounded and missing or partial claims are unverified.",
+      "related_categories": [
+        "skills_match",
+        "experience_match",
+        "seniority_fit",
+        "domain_fit",
+        "keyword_alignment",
+        "education_fit"
+      ]
+    }
+  ]
+}

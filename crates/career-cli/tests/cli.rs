@@ -27,6 +27,12 @@ fn phase4a_fixture_path(name: &str) -> PathBuf {
         .join(name)
 }
 
+fn phase4b_fixture_path(name: &str) -> PathBuf {
+    PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("../../fixtures/job/phase4b")
+        .join(name)
+}
+
 #[test]
 fn capabilities_default_to_valid_json() {
     let output = Command::new(env!("CARGO_BIN_EXE_career"))
@@ -52,7 +58,7 @@ fn capabilities_default_to_valid_json() {
     assert_eq!(value["capabilities"][5]["id"], "job.normalize");
     assert_eq!(value["capabilities"][5]["status"], "available");
     assert_eq!(value["capabilities"][6]["id"], "job.match");
-    assert_eq!(value["capabilities"][6]["status"], "planned");
+    assert_eq!(value["capabilities"][6]["status"], "available");
 }
 
 #[test]
@@ -70,7 +76,7 @@ fn capabilities_support_human_readable_output() {
     assert!(stdout.contains("resume.normalize [available]"));
     assert!(stdout.contains("resume.enrich [available]"));
     assert!(stdout.contains("job.normalize [available]"));
-    assert!(stdout.contains("job.match [planned]"));
+    assert!(stdout.contains("job.match [available]"));
 }
 
 #[test]
@@ -253,6 +259,96 @@ fn job_normalization_accepts_stdin_and_text_output() {
     assert!(stdout.contains("Job-description normalization: low confidence (14/100)"));
     assert!(stdout.contains("Required skills: 0; preferred skills: 0; responsibilities: 0"));
     assert!(stdout.contains("downstream matching must not turn unverified fields"));
+}
+
+#[test]
+fn job_matching_matches_reviewed_golden_json() {
+    for fixture in ["complete-match", "vague-job"] {
+        let output = Command::new(env!("CARGO_BIN_EXE_career"))
+            .args([
+                "job",
+                "match",
+                "--input",
+                phase4b_fixture_path(&format!("{fixture}.input.json"))
+                    .to_str()
+                    .expect("fixture path should be UTF-8"),
+            ])
+            .output()
+            .expect("career binary should run");
+
+        assert!(output.status.success(), "fixture {fixture} should match");
+        assert!(output.stderr.is_empty());
+        let expected = fs::read(phase4b_fixture_path(&format!("{fixture}.expected.json")))
+            .expect("expected fixture should be readable");
+        assert_eq!(output.stdout, expected, "fixture {fixture} changed");
+    }
+}
+
+#[test]
+fn job_matching_accepts_stdin_and_marks_uncertain_text_output_provisional() {
+    let input = fs::read(phase4b_fixture_path("vague-job.input.json"))
+        .expect("input fixture should be readable");
+    let mut child = Command::new(env!("CARGO_BIN_EXE_career"))
+        .args(["job", "match", "--input", "-", "--format", "text"])
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .expect("career binary should start");
+    child
+        .stdin
+        .take()
+        .expect("stdin should be piped")
+        .write_all(&input)
+        .expect("fixture should be written");
+    let output = child
+        .wait_with_output()
+        .expect("career binary should finish");
+
+    assert!(output.status.success());
+    assert!(output.stderr.is_empty());
+    let stdout = String::from_utf8(output.stdout).expect("stdout should contain UTF-8");
+    assert!(stdout.contains("Deterministic resume-to-job match: 61/100"));
+    assert!(stdout.contains("Normalization confidence: resume high; job low; uncertain: true"));
+    assert!(stdout.contains("Recommendation: apply after small edits [provisional]"));
+    assert!(stdout.contains("not a hiring prediction"));
+    assert!(!stdout.contains("Top gaps:"));
+}
+
+#[test]
+fn invalid_job_match_input_prefixes_nested_error_without_payload_echo() {
+    let secret = "Secret unsupported resume payload";
+    let mut input: serde_json::Value = serde_json::from_slice(
+        &fs::read(phase4b_fixture_path("complete-match.input.json"))
+            .expect("input fixture should be readable"),
+    )
+    .expect("fixture should be JSON");
+    input["resume"]["text"] = serde_json::Value::String(secret.repeat(2_000));
+    let input = serde_json::to_vec(&input).expect("input should serialize");
+    let mut child = Command::new(env!("CARGO_BIN_EXE_career"))
+        .args(["job", "match", "--input", "-"])
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .expect("career binary should start");
+    child
+        .stdin
+        .take()
+        .expect("stdin should be piped")
+        .write_all(&input)
+        .expect("input should be written");
+    let output = child
+        .wait_with_output()
+        .expect("career binary should finish");
+
+    assert_eq!(output.status.code(), Some(5));
+    assert!(output.stdout.is_empty());
+    let error: serde_json::Value =
+        serde_json::from_slice(&output.stderr).expect("stderr should contain JSON");
+    assert_eq!(error["code"], "source_text_too_large");
+    assert_eq!(error["field_path"], "resume.text");
+    assert!(!String::from_utf8_lossy(&output.stderr).contains(secret));
 }
 
 #[test]
@@ -522,6 +618,37 @@ fn cli_input_bytes_are_bounded_before_json_parsing() {
     let error: serde_json::Value =
         serde_json::from_slice(&output.stderr).expect("stderr should contain JSON");
     assert_eq!(error["code"], "cli_input_too_large");
+}
+
+#[test]
+fn job_match_cli_input_bytes_use_a_bounded_composite_limit() {
+    let mut child = Command::new(env!("CARGO_BIN_EXE_career"))
+        .args(["job", "match", "--input", "-"])
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .expect("career binary should start");
+    child
+        .stdin
+        .take()
+        .expect("stdin should be piped")
+        .write_all(&vec![b'x'; 1_048_577])
+        .expect("oversized input should be written");
+    let output = child
+        .wait_with_output()
+        .expect("career binary should finish");
+
+    assert_eq!(output.status.code(), Some(3));
+    assert!(output.stdout.is_empty());
+    let error: serde_json::Value =
+        serde_json::from_slice(&output.stderr).expect("stderr should contain JSON");
+    assert_eq!(error["code"], "cli_input_too_large");
+    assert!(
+        error["message"]
+            .as_str()
+            .is_some_and(|message| message.contains("1048576 bytes"))
+    );
 }
 
 #[test]

@@ -1,0 +1,526 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/revazi/career-core/main/schemas/job-match-v1.schema.json",
+  "title": "career-core deterministic job match v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "policy_version",
+    "reference_policy_version",
+    "skill_equivalence_policy_version",
+    "recommendation_policy_version",
+    "recommendation_reference_policy_version",
+    "resume_normalization_policy_version",
+    "job_normalization_policy_version",
+    "core_version",
+    "resume_document_id",
+    "job_document_id",
+    "scoring_weights",
+    "overall_score",
+    "category_scores",
+    "category_results",
+    "confidence_context",
+    "top_strengths",
+    "top_gaps",
+    "recommendation",
+    "warnings"
+  ],
+  "properties": {
+    "schema_version": { "const": "career.job_match.v1" },
+    "policy_version": { "const": "job_match_v1" },
+    "reference_policy_version": { "const": "job_match_deterministic_v2" },
+    "skill_equivalence_policy_version": { "const": "conservative_skill_equivalence_v1" },
+    "recommendation_policy_version": { "const": "job_match_recommendation_v1" },
+    "recommendation_reference_policy_version": { "const": "job_match_recommendation_safety_v1" },
+    "resume_normalization_policy_version": { "const": "resume_normalization_v1" },
+    "job_normalization_policy_version": { "const": "job_normalization_v1" },
+    "core_version": { "type": "string", "minLength": 1, "maxLength": 64 },
+    "resume_document_id": { "$ref": "#/$defs/nullableDocumentId" },
+    "job_document_id": { "$ref": "#/$defs/nullableDocumentId" },
+    "scoring_weights": { "$ref": "#/$defs/scoringWeights" },
+    "overall_score": { "$ref": "#/$defs/score" },
+    "category_scores": { "$ref": "#/$defs/categoryValues" },
+    "category_results": {
+      "type": "array",
+      "minItems": 6,
+      "maxItems": 6,
+      "prefixItems": [
+        { "$ref": "#/$defs/skillsResult" },
+        { "$ref": "#/$defs/experienceResult" },
+        { "$ref": "#/$defs/seniorityResult" },
+        { "$ref": "#/$defs/domainResult" },
+        { "$ref": "#/$defs/keywordResult" },
+        { "$ref": "#/$defs/educationResult" }
+      ],
+      "items": false
+    },
+    "confidence_context": { "$ref": "#/$defs/confidenceContext" },
+    "top_strengths": {
+      "type": "array",
+      "maxItems": 5,
+      "items": { "$ref": "#/$defs/strength" }
+    },
+    "top_gaps": {
+      "type": "array",
+      "maxItems": 5,
+      "items": { "$ref": "#/$defs/gap" }
+    },
+    "recommendation": { "$ref": "#/$defs/recommendation" },
+    "warnings": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 5,
+      "items": { "$ref": "#/$defs/warning" }
+    }
+  },
+  "$defs": {
+    "score": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "nullableDocumentId": {
+      "type": ["string", "null"],
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "category": {
+      "enum": [
+        "skills_match",
+        "experience_match",
+        "seniority_fit",
+        "domain_fit",
+        "keyword_alignment",
+        "education_fit"
+      ]
+    },
+    "scoringWeights": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "skills_match",
+        "experience_match",
+        "seniority_fit",
+        "domain_fit",
+        "keyword_alignment",
+        "education_fit"
+      ],
+      "properties": {
+        "skills_match": { "const": 30 },
+        "experience_match": { "const": 25 },
+        "seniority_fit": { "const": 15 },
+        "domain_fit": { "const": 10 },
+        "keyword_alignment": { "const": 10 },
+        "education_fit": { "const": 10 }
+      }
+    },
+    "categoryValues": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "skills_match",
+        "experience_match",
+        "seniority_fit",
+        "domain_fit",
+        "keyword_alignment",
+        "education_fit"
+      ],
+      "properties": {
+        "skills_match": { "$ref": "#/$defs/score" },
+        "experience_match": { "$ref": "#/$defs/score" },
+        "seniority_fit": { "$ref": "#/$defs/score" },
+        "domain_fit": { "$ref": "#/$defs/score" },
+        "keyword_alignment": { "$ref": "#/$defs/score" },
+        "education_fit": { "$ref": "#/$defs/score" }
+      }
+    },
+    "itemKind": {
+      "enum": [
+        "required_skill",
+        "preferred_skill",
+        "keyword",
+        "domain",
+        "education",
+        "certification",
+        "experience",
+        "seniority"
+      ]
+    },
+    "itemStatus": {
+      "enum": ["confirmed_match", "partial_match", "likely_missing", "unverified"]
+    },
+    "matchType": {
+      "enum": ["normalized_exact", "conservative_alias", "derived_signal"]
+    },
+    "categoryItem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "item",
+        "resume_item",
+        "status",
+        "match_type",
+        "job_source",
+        "resume_source"
+      ],
+      "properties": {
+        "kind": { "$ref": "#/$defs/itemKind" },
+        "item": { "type": "string", "minLength": 1, "maxLength": 2000 },
+        "resume_item": {
+          "type": ["string", "null"],
+          "minLength": 1,
+          "maxLength": 2000
+        },
+        "status": { "$ref": "#/$defs/itemStatus" },
+        "match_type": {
+          "oneOf": [
+            { "$ref": "#/$defs/matchType" },
+            { "type": "null" }
+          ]
+        },
+        "job_source": {
+          "oneOf": [
+            { "$ref": "job-normalization-v1.schema.json#/$defs/sourceSpan" },
+            { "type": "null" }
+          ]
+        },
+        "resume_source": {
+          "oneOf": [
+            { "$ref": "resume-normalization-v1.schema.json#/$defs/sourceSpan" },
+            { "type": "null" }
+          ]
+        }
+      }
+    },
+    "metricId": {
+      "enum": [
+        "resume_skill_count",
+        "required_skill_count",
+        "preferred_skill_count",
+        "required_skill_matches",
+        "preferred_skill_matches",
+        "required_skill_raw_score",
+        "preferred_skill_raw_score",
+        "experience_entry_count",
+        "dated_experience_entry_count",
+        "required_years",
+        "estimated_resume_years",
+        "job_seniority_signals",
+        "resume_seniority_signals",
+        "job_domains",
+        "resume_domains",
+        "target_keyword_count",
+        "matched_keyword_count",
+        "missing_keyword_count",
+        "resume_degrees",
+        "required_degrees",
+        "resume_certifications",
+        "required_certifications",
+        "unassessed_required_qualification_count"
+      ]
+    },
+    "metric": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["metric_id", "value"],
+      "properties": {
+        "metric_id": { "$ref": "#/$defs/metricId" },
+        "value": { "type": "string", "maxLength": 240 }
+      }
+    },
+    "categoryResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "category",
+        "weight",
+        "raw_score",
+        "score",
+        "score_adjusted",
+        "explanation",
+        "items",
+        "metrics"
+      ],
+      "properties": {
+        "category": { "$ref": "#/$defs/category" },
+        "weight": { "$ref": "#/$defs/score" },
+        "raw_score": { "$ref": "#/$defs/score" },
+        "score": { "$ref": "#/$defs/score" },
+        "score_adjusted": { "type": "boolean" },
+        "explanation": { "type": "string", "minLength": 1, "maxLength": 1000 },
+        "items": {
+          "type": "array",
+          "maxItems": 100,
+          "items": { "$ref": "#/$defs/categoryItem" }
+        },
+        "metrics": {
+          "type": "array",
+          "maxItems": 12,
+          "items": { "$ref": "#/$defs/metric" }
+        }
+      }
+    },
+    "skillsResult": {
+      "allOf": [
+        { "$ref": "#/$defs/categoryResult" },
+        { "properties": { "category": { "const": "skills_match" }, "weight": { "const": 30 } } }
+      ]
+    },
+    "experienceResult": {
+      "allOf": [
+        { "$ref": "#/$defs/categoryResult" },
+        { "properties": { "category": { "const": "experience_match" }, "weight": { "const": 25 } } }
+      ]
+    },
+    "seniorityResult": {
+      "allOf": [
+        { "$ref": "#/$defs/categoryResult" },
+        { "properties": { "category": { "const": "seniority_fit" }, "weight": { "const": 15 } } }
+      ]
+    },
+    "domainResult": {
+      "allOf": [
+        { "$ref": "#/$defs/categoryResult" },
+        { "properties": { "category": { "const": "domain_fit" }, "weight": { "const": 10 } } }
+      ]
+    },
+    "keywordResult": {
+      "allOf": [
+        { "$ref": "#/$defs/categoryResult" },
+        { "properties": { "category": { "const": "keyword_alignment" }, "weight": { "const": 10 } } }
+      ]
+    },
+    "educationResult": {
+      "allOf": [
+        { "$ref": "#/$defs/categoryResult" },
+        { "properties": { "category": { "const": "education_fit" }, "weight": { "const": 10 } } }
+      ]
+    },
+    "uncertaintySource": {
+      "enum": [
+        "resume_parse_confidence",
+        "job_parse_confidence",
+        "resume_normalization_truncated",
+        "job_normalization_truncated"
+      ]
+    },
+    "confidenceContext": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "score_source",
+        "resume_parse_confidence",
+        "job_parse_confidence",
+        "resume_normalization_truncated",
+        "job_normalization_truncated",
+        "is_uncertain",
+        "uncertainty_sources",
+        "score_floor",
+        "score_ceiling",
+        "adjusted_categories",
+        "adjustment_applied",
+        "missing_claims_status"
+      ],
+      "properties": {
+        "score_source": { "const": "deterministic_normalization_baselines" },
+        "resume_parse_confidence": {
+          "$ref": "resume-normalization-v1.schema.json#/$defs/confidence"
+        },
+        "job_parse_confidence": {
+          "$ref": "job-normalization-v1.schema.json#/$defs/confidence"
+        },
+        "resume_normalization_truncated": { "type": "boolean" },
+        "job_normalization_truncated": { "type": "boolean" },
+        "is_uncertain": { "type": "boolean" },
+        "uncertainty_sources": {
+          "type": "array",
+          "maxItems": 4,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/uncertaintySource" }
+        },
+        "score_floor": { "const": 50 },
+        "score_ceiling": { "const": 75 },
+        "adjusted_categories": {
+          "type": "array",
+          "maxItems": 6,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/category" }
+        },
+        "adjustment_applied": { "type": "boolean" },
+        "missing_claims_status": { "enum": ["likely_missing", "unverified"] }
+      }
+    },
+    "findingStatus": {
+      "enum": ["confirmed", "partial", "likely_missing", "unverified"]
+    },
+    "strength": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "category",
+        "item",
+        "reason",
+        "status",
+        "match_type",
+        "job_source",
+        "resume_source"
+      ],
+      "properties": {
+        "category": { "$ref": "#/$defs/category" },
+        "item": { "type": "string", "minLength": 1, "maxLength": 2000 },
+        "reason": { "type": "string", "minLength": 1, "maxLength": 600 },
+        "status": { "const": "confirmed" },
+        "match_type": { "$ref": "#/$defs/matchType" },
+        "job_source": {
+          "oneOf": [
+            { "$ref": "job-normalization-v1.schema.json#/$defs/sourceSpan" },
+            { "type": "null" }
+          ]
+        },
+        "resume_source": {
+          "oneOf": [
+            { "$ref": "resume-normalization-v1.schema.json#/$defs/sourceSpan" },
+            { "type": "null" }
+          ]
+        }
+      }
+    },
+    "gap": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "category",
+        "item",
+        "reason",
+        "status",
+        "job_source",
+        "resume_source"
+      ],
+      "properties": {
+        "category": { "$ref": "#/$defs/category" },
+        "item": { "type": "string", "minLength": 1, "maxLength": 2000 },
+        "reason": { "type": "string", "minLength": 1, "maxLength": 600 },
+        "status": { "$ref": "#/$defs/findingStatus" },
+        "job_source": {
+          "oneOf": [
+            { "$ref": "job-normalization-v1.schema.json#/$defs/sourceSpan" },
+            { "type": "null" }
+          ]
+        },
+        "resume_source": {
+          "oneOf": [
+            { "$ref": "resume-normalization-v1.schema.json#/$defs/sourceSpan" },
+            { "type": "null" }
+          ]
+        }
+      }
+    },
+    "recommendationLabel": {
+      "enum": ["improve_first", "apply_after_small_edits", "apply_now"]
+    },
+    "recommendationGate": {
+      "enum": [
+        "overall_score_below_apply_after_threshold",
+        "overall_score_below_apply_now_threshold",
+        "normalization_confidence_uncertain",
+        "core_category_below_apply_after_threshold",
+        "core_category_below_apply_now_threshold",
+        "deterministic_required_skill_gap",
+        "deterministic_core_evidence_gap",
+        "unassessed_required_qualification"
+      ]
+    },
+    "categoryScore": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["category", "score"],
+      "properties": {
+        "category": { "$ref": "#/$defs/category" },
+        "score": { "$ref": "#/$defs/score" }
+      }
+    },
+    "recommendation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "policy_version",
+        "label",
+        "status",
+        "reason",
+        "gate_reasons",
+        "thresholds",
+        "low_core_categories",
+        "blocking_required_skill_gaps",
+        "blocking_core_evidence_gaps",
+        "unassessed_required_qualifications"
+      ],
+      "properties": {
+        "policy_version": { "const": "job_match_recommendation_v1" },
+        "label": { "$ref": "#/$defs/recommendationLabel" },
+        "status": { "enum": ["deterministic", "provisional"] },
+        "reason": { "type": "string", "minLength": 1, "maxLength": 2000 },
+        "gate_reasons": {
+          "type": "array",
+          "maxItems": 8,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/recommendationGate" }
+        },
+        "thresholds": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "apply_now_minimum_overall_score",
+            "apply_after_edits_minimum_overall_score",
+            "apply_after_edits_minimum_core_category_score",
+            "apply_now_minimum_core_category_score"
+          ],
+          "properties": {
+            "apply_now_minimum_overall_score": { "const": 80 },
+            "apply_after_edits_minimum_overall_score": { "const": 60 },
+            "apply_after_edits_minimum_core_category_score": { "const": 50 },
+            "apply_now_minimum_core_category_score": { "const": 70 }
+          }
+        },
+        "low_core_categories": {
+          "type": "array",
+          "maxItems": 4,
+          "items": { "$ref": "#/$defs/categoryScore" }
+        },
+        "blocking_required_skill_gaps": { "$ref": "#/$defs/blockerList" },
+        "blocking_core_evidence_gaps": { "$ref": "#/$defs/blockerList" },
+        "unassessed_required_qualifications": { "$ref": "#/$defs/blockerList" }
+      }
+    },
+    "blockerList": {
+      "type": "array",
+      "maxItems": 10,
+      "items": { "type": "string", "minLength": 1, "maxLength": 2000 }
+    },
+    "warningCode": {
+      "enum": [
+        "deterministic_alignment_only",
+        "source_text_and_explicit_evidence_only",
+        "normalization_confidence_provisional",
+        "normalization_output_truncated",
+        "unassessed_required_qualifications"
+      ]
+    },
+    "warning": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "message", "related_categories"],
+      "properties": {
+        "code": { "$ref": "#/$defs/warningCode" },
+        "message": { "type": "string", "minLength": 1, "maxLength": 1000 },
+        "related_categories": {
+          "type": "array",
+          "maxItems": 6,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/category" }
+        }
+      }
+    }
+  }
+}

@@ -95,6 +95,13 @@ jobs:
           python3 -m json.tool /tmp/job-normalization.json > /dev/null
           cmp /tmp/job-normalization.json fixtures/job/phase4a/complete-normalization.expected.json
 
+          cargo run --quiet --locked -p career-cli -- \
+            job match \
+            --input fixtures/job/phase4b/complete-match.input.json \
+            > /tmp/job-match.json
+          python3 -m json.tool /tmp/job-match.json > /dev/null
+          cmp /tmp/job-match.json fixtures/job/phase4b/complete-match.expected.json
+
           for schema in schemas/*.schema.json; do
             python3 -m json.tool "$schema" > /dev/null
           done

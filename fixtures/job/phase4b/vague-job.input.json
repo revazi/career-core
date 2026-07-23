@@ -1,0 +1,17 @@
+{
+  "schema_version": "career.job_match_input.v1",
+  "resume": {
+    "schema_version": "career.resume_input.v1",
+    "text": "Jordan Patel\njordan.patel@example.com\nSUMMARY\nSoftware engineer focused on useful product delivery.\nEXPERIENCE\nSoftware Engineer at Example Studio\n2021 - 2024\n- Developed internal tools for product teams.\nEDUCATION\nBachelor's degree, Example University\n2017 - 2021\nSKILLS\nPython, SQL, Git",
+    "metadata": {
+      "document_id": "synthetic-match-resume-vague-v1"
+    }
+  },
+  "job": {
+    "schema_version": "career.job_input.v1",
+    "text": "Product-Minded Engineer\nJoin our collaborative team to create delightful experiences, move quickly, and help wherever needed.",
+    "metadata": {
+      "document_id": "synthetic-match-job-vague-v1"
+    }
+  }
+}

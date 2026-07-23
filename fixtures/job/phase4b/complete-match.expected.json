@@ -1,0 +1,942 @@
+{
+  "schema_version": "career.job_match.v1",
+  "policy_version": "job_match_v1",
+  "reference_policy_version": "job_match_deterministic_v2",
+  "skill_equivalence_policy_version": "conservative_skill_equivalence_v1",
+  "recommendation_policy_version": "job_match_recommendation_v1",
+  "recommendation_reference_policy_version": "job_match_recommendation_safety_v1",
+  "resume_normalization_policy_version": "resume_normalization_v1",
+  "job_normalization_policy_version": "job_normalization_v1",
+  "core_version": "0.1.0",
+  "resume_document_id": "synthetic-match-resume-complete-v1",
+  "job_document_id": "synthetic-match-job-complete-v1",
+  "scoring_weights": {
+    "skills_match": 30,
+    "experience_match": 25,
+    "seniority_fit": 15,
+    "domain_fit": 10,
+    "keyword_alignment": 10,
+    "education_fit": 10
+  },
+  "overall_score": 96,
+  "category_scores": {
+    "skills_match": 100,
+    "experience_match": 100,
+    "seniority_fit": 100,
+    "domain_fit": 100,
+    "keyword_alignment": 65,
+    "education_fit": 100
+  },
+  "category_results": [
+    {
+      "category": "skills_match",
+      "weight": 30,
+      "raw_score": 100,
+      "score": 100,
+      "score_adjusted": false,
+      "explanation": "Matched 4/4 required skills and 4/4 preferred skills using normalized exact or reviewed same-technology aliases.",
+      "items": [
+        {
+          "kind": "required_skill",
+          "item": "Python",
+          "resume_item": "Python",
+          "status": "confirmed_match",
+          "match_type": "normalized_exact",
+          "job_source": {
+            "start_line": 8,
+            "end_line": 8,
+            "excerpt": "- Python, Django, PostgreSQL, REST APIs",
+            "transformation": "delimiter_split"
+          },
+          "resume_source": {
+            "start_line": 15,
+            "end_line": 15,
+            "excerpt": "Python",
+            "transformation": "delimiter_split"
+          }
+        },
+        {
+          "kind": "required_skill",
+          "item": "Django",
+          "resume_item": "Django",
+          "status": "confirmed_match",
+          "match_type": "normalized_exact",
+          "job_source": {
+            "start_line": 8,
+            "end_line": 8,
+            "excerpt": "- Python, Django, PostgreSQL, REST APIs",
+            "transformation": "delimiter_split"
+          },
+          "resume_source": {
+            "start_line": 15,
+            "end_line": 15,
+            "excerpt": "Django",
+            "transformation": "delimiter_split"
+          }
+        },
+        {
+          "kind": "required_skill",
+          "item": "PostgreSQL",
+          "resume_item": "PostgreSQL",
+          "status": "confirmed_match",
+          "match_type": "normalized_exact",
+          "job_source": {
+            "start_line": 8,
+            "end_line": 8,
+            "excerpt": "- Python, Django, PostgreSQL, REST APIs",
+            "transformation": "delimiter_split"
+          },
+          "resume_source": {
+            "start_line": 15,
+            "end_line": 15,
+            "excerpt": "PostgreSQL",
+            "transformation": "delimiter_split"
+          }
+        },
+        {
+          "kind": "required_skill",
+          "item": "REST APIs",
+          "resume_item": "REST APIs",
+          "status": "confirmed_match",
+          "match_type": "normalized_exact",
+          "job_source": {
+            "start_line": 8,
+            "end_line": 8,
+            "excerpt": "- Python, Django, PostgreSQL, REST APIs",
+            "transformation": "delimiter_split"
+          },
+          "resume_source": {
+            "start_line": 15,
+            "end_line": 15,
+            "excerpt": "REST APIs",
+            "transformation": "delimiter_split"
+          }
+        },
+        {
+          "kind": "preferred_skill",
+          "item": "AWS",
+          "resume_item": "AWS",
+          "status": "confirmed_match",
+          "match_type": "normalized_exact",
+          "job_source": {
+            "start_line": 12,
+            "end_line": 12,
+            "excerpt": "- AWS, Docker, Kubernetes",
+            "transformation": "delimiter_split"
+          },
+          "resume_source": {
+            "start_line": 15,
+            "end_line": 15,
+            "excerpt": "AWS",
+            "transformation": "delimiter_split"
+          }
+        },
+        {
+          "kind": "preferred_skill",
+          "item": "Docker",
+          "resume_item": "Docker",
+          "status": "confirmed_match",
+          "match_type": "normalized_exact",
+          "job_source": {
+            "start_line": 12,
+            "end_line": 12,
+            "excerpt": "- AWS, Docker, Kubernetes",
+            "transformation": "delimiter_split"
+          },
+          "resume_source": {
+            "start_line": 15,
+            "end_line": 15,
+            "excerpt": "Docker",
+            "transformation": "delimiter_split"
+          }
+        },
+        {
+          "kind": "preferred_skill",
+          "item": "Kubernetes",
+          "resume_item": "Kubernetes",
+          "status": "confirmed_match",
+          "match_type": "normalized_exact",
+          "job_source": {
+            "start_line": 12,
+            "end_line": 12,
+            "excerpt": "- AWS, Docker, Kubernetes",
+            "transformation": "delimiter_split"
+          },
+          "resume_source": {
+            "start_line": 15,
+            "end_line": 15,
+            "excerpt": "Kubernetes",
+            "transformation": "delimiter_split"
+          }
+        },
+        {
+          "kind": "preferred_skill",
+          "item": "Git",
+          "resume_item": "Git",
+          "status": "confirmed_match",
+          "match_type": "normalized_exact",
+          "job_source": {
+            "start_line": 13,
+            "end_line": 13,
+            "excerpt": "- Git",
+            "transformation": "delimiter_split"
+          },
+          "resume_source": {
+            "start_line": 15,
+            "end_line": 15,
+            "excerpt": "Git",
+            "transformation": "delimiter_split"
+          }
+        }
+      ],
+      "metrics": [
+        {
+          "metric_id": "resume_skill_count",
+          "value": "8"
+        },
+        {
+          "metric_id": "required_skill_count",
+          "value": "4"
+        },
+        {
+          "metric_id": "preferred_skill_count",
+          "value": "4"
+        },
+        {
+          "metric_id": "required_skill_matches",
+          "value": "4"
+        },
+        {
+          "metric_id": "preferred_skill_matches",
+          "value": "4"
+        },
+        {
+          "metric_id": "required_skill_raw_score",
+          "value": "100"
+        },
+        {
+          "metric_id": "preferred_skill_raw_score",
+          "value": "100"
+        }
+      ]
+    },
+    {
+      "category": "experience_match",
+      "weight": 25,
+      "raw_score": 100,
+      "score": 100,
+      "score_adjusted": false,
+      "explanation": "The job asks for about 5 years; explicit resume date signals support about 6 years.",
+      "items": [
+        {
+          "kind": "experience",
+          "item": "- 5+ years of backend engineering experience",
+          "resume_item": "approximately 6 explicit years",
+          "status": "confirmed_match",
+          "match_type": "derived_signal",
+          "job_source": {
+            "start_line": 9,
+            "end_line": 9,
+            "excerpt": "- 5+ years of backend engineering experience",
+            "transformation": "verbatim"
+          },
+          "resume_source": {
+            "start_line": 8,
+            "end_line": 8,
+            "excerpt": "2018 - 2024",
+            "transformation": "verbatim"
+          }
+        }
+      ],
+      "metrics": [
+        {
+          "metric_id": "experience_entry_count",
+          "value": "1"
+        },
+        {
+          "metric_id": "dated_experience_entry_count",
+          "value": "1"
+        },
+        {
+          "metric_id": "required_years",
+          "value": "5"
+        },
+        {
+          "metric_id": "estimated_resume_years",
+          "value": "6"
+        }
+      ]
+    },
+    {
+      "category": "seniority_fit",
+      "weight": 15,
+      "raw_score": 100,
+      "score": 100,
+      "score_adjusted": false,
+      "explanation": "Compared explicit job seniority [senior] with resume seniority [senior].",
+      "items": [
+        {
+          "kind": "seniority",
+          "item": "senior",
+          "resume_item": "senior",
+          "status": "confirmed_match",
+          "match_type": "derived_signal",
+          "job_source": {
+            "start_line": 1,
+            "end_line": 1,
+            "excerpt": "Senior Backend Engineer",
+            "transformation": "normalized_case"
+          },
+          "resume_source": {
+            "start_line": 5,
+            "end_line": 5,
+            "excerpt": "Senior backend engineer building reliable APIs and cloud platforms.",
+            "transformation": "whitespace_joined"
+          }
+        }
+      ],
+      "metrics": [
+        {
+          "metric_id": "job_seniority_signals",
+          "value": "senior"
+        },
+        {
+          "metric_id": "resume_seniority_signals",
+          "value": "senior"
+        }
+      ]
+    },
+    {
+      "category": "domain_fit",
+      "weight": 10,
+      "raw_score": 100,
+      "score": 100,
+      "score_adjusted": false,
+      "explanation": "Matched 3/3 bounded lexical job-domain signals.",
+      "items": [
+        {
+          "kind": "domain",
+          "item": "backend",
+          "resume_item": "backend",
+          "status": "confirmed_match",
+          "match_type": "derived_signal",
+          "job_source": null,
+          "resume_source": null
+        },
+        {
+          "kind": "domain",
+          "item": "data",
+          "resume_item": "data",
+          "status": "confirmed_match",
+          "match_type": "derived_signal",
+          "job_source": null,
+          "resume_source": null
+        },
+        {
+          "kind": "domain",
+          "item": "devops_cloud",
+          "resume_item": "devops_cloud",
+          "status": "confirmed_match",
+          "match_type": "derived_signal",
+          "job_source": null,
+          "resume_source": null
+        }
+      ],
+      "metrics": [
+        {
+          "metric_id": "job_domains",
+          "value": "backend, data, devops_cloud"
+        },
+        {
+          "metric_id": "resume_domains",
+          "value": "backend, data, devops_cloud"
+        }
+      ]
+    },
+    {
+      "category": "keyword_alignment",
+      "weight": 10,
+      "raw_score": 65,
+      "score": 65,
+      "score_adjusted": false,
+      "explanation": "Matched 13/20 of the first 20 frequency-ranked job keywords after fixed stopword removal.",
+      "items": [
+        {
+          "kind": "keyword",
+          "item": "backend",
+          "resume_item": "backend",
+          "status": "confirmed_match",
+          "match_type": "derived_signal",
+          "job_source": null,
+          "resume_source": null
+        },
+        {
+          "kind": "keyword",
+          "item": "apis",
+          "resume_item": "apis",
+          "status": "confirmed_match",
+          "match_type": "derived_signal",
+          "job_source": null,
+          "resume_source": null
+        },
+        {
+          "kind": "keyword",
+          "item": "design",
+          "resume_item": null,
+          "status": "likely_missing",
+          "match_type": null,
+          "job_source": null,
+          "resume_source": null
+        },
+        {
+          "kind": "keyword",
+          "item": "reliable",
+          "resume_item": "reliable",
+          "status": "confirmed_match",
+          "match_type": "derived_signal",
+          "job_source": null,
+          "resume_source": null
+        },
+        {
+          "kind": "keyword",
+          "item": "customer",
+          "resume_item": null,
+          "status": "likely_missing",
+          "match_type": null,
+          "job_source": null,
+          "resume_source": null
+        },
+        {
+          "kind": "keyword",
+          "item": "facing",
+          "resume_item": null,
+          "status": "likely_missing",
+          "match_type": null,
+          "job_source": null,
+          "resume_source": null
+        },
+        {
+          "kind": "keyword",
+          "item": "improve",
+          "resume_item": null,
+          "status": "likely_missing",
+          "match_type": null,
+          "job_source": null,
+          "resume_source": null
+        },
+        {
+          "kind": "keyword",
+          "item": "cloud",
+          "resume_item": "cloud",
+          "status": "confirmed_match",
+          "match_type": "derived_signal",
+          "job_source": null,
+          "resume_source": null
+        },
+        {
+          "kind": "keyword",
+          "item": "platform",
+          "resume_item": null,
+          "status": "likely_missing",
+          "match_type": null,
+          "job_source": null,
+          "resume_source": null
+        },
+        {
+          "kind": "keyword",
+          "item": "performance",
+          "resume_item": null,
+          "status": "likely_missing",
+          "match_type": null,
+          "job_source": null,
+          "resume_source": null
+        },
+        {
+          "kind": "keyword",
+          "item": "maintain",
+          "resume_item": null,
+          "status": "likely_missing",
+          "match_type": null,
+          "job_source": null,
+          "resume_source": null
+        },
+        {
+          "kind": "keyword",
+          "item": "services",
+          "resume_item": "services",
+          "status": "confirmed_match",
+          "match_type": "derived_signal",
+          "job_source": null,
+          "resume_source": null
+        },
+        {
+          "kind": "keyword",
+          "item": "python",
+          "resume_item": "python",
+          "status": "confirmed_match",
+          "match_type": "derived_signal",
+          "job_source": null,
+          "resume_source": null
+        },
+        {
+          "kind": "keyword",
+          "item": "django",
+          "resume_item": "django",
+          "status": "confirmed_match",
+          "match_type": "derived_signal",
+          "job_source": null,
+          "resume_source": null
+        },
+        {
+          "kind": "keyword",
+          "item": "postgresql",
+          "resume_item": "postgresql",
+          "status": "confirmed_match",
+          "match_type": "derived_signal",
+          "job_source": null,
+          "resume_source": null
+        },
+        {
+          "kind": "keyword",
+          "item": "rest",
+          "resume_item": "rest",
+          "status": "confirmed_match",
+          "match_type": "derived_signal",
+          "job_source": null,
+          "resume_source": null
+        },
+        {
+          "kind": "keyword",
+          "item": "aws",
+          "resume_item": "aws",
+          "status": "confirmed_match",
+          "match_type": "derived_signal",
+          "job_source": null,
+          "resume_source": null
+        },
+        {
+          "kind": "keyword",
+          "item": "docker",
+          "resume_item": "docker",
+          "status": "confirmed_match",
+          "match_type": "derived_signal",
+          "job_source": null,
+          "resume_source": null
+        },
+        {
+          "kind": "keyword",
+          "item": "kubernetes",
+          "resume_item": "kubernetes",
+          "status": "confirmed_match",
+          "match_type": "derived_signal",
+          "job_source": null,
+          "resume_source": null
+        },
+        {
+          "kind": "keyword",
+          "item": "git",
+          "resume_item": "git",
+          "status": "confirmed_match",
+          "match_type": "derived_signal",
+          "job_source": null,
+          "resume_source": null
+        }
+      ],
+      "metrics": [
+        {
+          "metric_id": "target_keyword_count",
+          "value": "20"
+        },
+        {
+          "metric_id": "matched_keyword_count",
+          "value": "13"
+        },
+        {
+          "metric_id": "missing_keyword_count",
+          "value": "7"
+        }
+      ]
+    },
+    {
+      "category": "education_fit",
+      "weight": 10,
+      "raw_score": 100,
+      "score": 100,
+      "score_adjusted": false,
+      "explanation": "Compared only explicit degree and certification signals; broader equivalence was not inferred.",
+      "items": [
+        {
+          "kind": "education",
+          "item": "bachelor's",
+          "resume_item": "bachelor's",
+          "status": "confirmed_match",
+          "match_type": "derived_signal",
+          "job_source": {
+            "start_line": 10,
+            "end_line": 10,
+            "excerpt": "- Bachelor's degree in Computer Science",
+            "transformation": "verbatim"
+          },
+          "resume_source": {
+            "start_line": 12,
+            "end_line": 12,
+            "excerpt": "Bachelor's degree in Computer Science",
+            "transformation": "verbatim"
+          }
+        },
+        {
+          "kind": "education",
+          "item": "degree",
+          "resume_item": "degree",
+          "status": "confirmed_match",
+          "match_type": "derived_signal",
+          "job_source": {
+            "start_line": 10,
+            "end_line": 10,
+            "excerpt": "- Bachelor's degree in Computer Science",
+            "transformation": "verbatim"
+          },
+          "resume_source": {
+            "start_line": 12,
+            "end_line": 12,
+            "excerpt": "Bachelor's degree in Computer Science",
+            "transformation": "verbatim"
+          }
+        }
+      ],
+      "metrics": [
+        {
+          "metric_id": "resume_degrees",
+          "value": "bachelor's, degree"
+        },
+        {
+          "metric_id": "required_degrees",
+          "value": "bachelor's, degree"
+        },
+        {
+          "metric_id": "resume_certifications",
+          "value": "aws certified"
+        },
+        {
+          "metric_id": "required_certifications",
+          "value": ""
+        },
+        {
+          "metric_id": "unassessed_required_qualification_count",
+          "value": "0"
+        }
+      ]
+    }
+  ],
+  "confidence_context": {
+    "score_source": "deterministic_normalization_baselines",
+    "resume_parse_confidence": {
+      "label": "high",
+      "score": 97,
+      "max_score": 100,
+      "signals": [
+        {
+          "signal": "extraction_quality",
+          "score": 22,
+          "max_score": 25,
+          "evidence": [
+            "character_count=494",
+            "non_empty_line_count=17",
+            "readable_character_percent=100"
+          ]
+        },
+        {
+          "signal": "section_coverage",
+          "score": 25,
+          "max_score": 25,
+          "evidence": [
+            "detected_expected_section_count=4",
+            "expected_section_count=4"
+          ]
+        },
+        {
+          "signal": "contact_completeness",
+          "score": 15,
+          "max_score": 15,
+          "evidence": [
+            "has_name=true",
+            "has_email=true",
+            "has_phone_or_link=true"
+          ]
+        },
+        {
+          "signal": "experience_completeness",
+          "score": 25,
+          "max_score": 25,
+          "evidence": [
+            "entry_count=1",
+            "has_job_title=true",
+            "has_company=true",
+            "has_date_range=true",
+            "has_detail=true"
+          ]
+        },
+        {
+          "signal": "skills_completeness",
+          "score": 10,
+          "max_score": 10,
+          "evidence": [
+            "skill_count=8"
+          ]
+        }
+      ]
+    },
+    "job_parse_confidence": {
+      "label": "high",
+      "score": 94,
+      "max_score": 100,
+      "signals": [
+        {
+          "signal": "text_quality",
+          "score": 15,
+          "max_score": 15,
+          "evidence": [
+            "character_count=356",
+            "non_empty_line_count=13",
+            "readable_character_per_mille=1000"
+          ]
+        },
+        {
+          "signal": "title_detection",
+          "score": 15,
+          "max_score": 15,
+          "evidence": [
+            "title_present=true",
+            "title_word_count=3",
+            "title_plausible=true"
+          ]
+        },
+        {
+          "signal": "skills_detection",
+          "score": 30,
+          "max_score": 30,
+          "evidence": [
+            "detected_skill_count=8"
+          ]
+        },
+        {
+          "signal": "responsibilities_detection",
+          "score": 16,
+          "max_score": 20,
+          "evidence": [
+            "detected_responsibility_count=3"
+          ]
+        },
+        {
+          "signal": "requirement_detection",
+          "score": 8,
+          "max_score": 10,
+          "evidence": [
+            "detected_groups=seniority,experience,education,qualification"
+          ]
+        },
+        {
+          "signal": "structure_quality",
+          "score": 10,
+          "max_score": 10,
+          "evidence": [
+            "classified_line_per_mille=1000",
+            "matched_section_count=3",
+            "long_line_per_mille=0"
+          ]
+        }
+      ]
+    },
+    "resume_normalization_truncated": false,
+    "job_normalization_truncated": false,
+    "is_uncertain": false,
+    "uncertainty_sources": [],
+    "score_floor": 50,
+    "score_ceiling": 75,
+    "adjusted_categories": [],
+    "adjustment_applied": false,
+    "missing_claims_status": "likely_missing"
+  },
+  "top_strengths": [
+    {
+      "category": "skills_match",
+      "item": "AWS",
+      "reason": "The resume contains a normalized exact match for this job signal: AWS.",
+      "status": "confirmed",
+      "match_type": "normalized_exact",
+      "job_source": {
+        "start_line": 12,
+        "end_line": 12,
+        "excerpt": "- AWS, Docker, Kubernetes",
+        "transformation": "delimiter_split"
+      },
+      "resume_source": {
+        "start_line": 15,
+        "end_line": 15,
+        "excerpt": "AWS",
+        "transformation": "delimiter_split"
+      }
+    },
+    {
+      "category": "skills_match",
+      "item": "Django",
+      "reason": "The resume contains a normalized exact match for this job signal: Django.",
+      "status": "confirmed",
+      "match_type": "normalized_exact",
+      "job_source": {
+        "start_line": 8,
+        "end_line": 8,
+        "excerpt": "- Python, Django, PostgreSQL, REST APIs",
+        "transformation": "delimiter_split"
+      },
+      "resume_source": {
+        "start_line": 15,
+        "end_line": 15,
+        "excerpt": "Django",
+        "transformation": "delimiter_split"
+      }
+    },
+    {
+      "category": "skills_match",
+      "item": "Docker",
+      "reason": "The resume contains a normalized exact match for this job signal: Docker.",
+      "status": "confirmed",
+      "match_type": "normalized_exact",
+      "job_source": {
+        "start_line": 12,
+        "end_line": 12,
+        "excerpt": "- AWS, Docker, Kubernetes",
+        "transformation": "delimiter_split"
+      },
+      "resume_source": {
+        "start_line": 15,
+        "end_line": 15,
+        "excerpt": "Docker",
+        "transformation": "delimiter_split"
+      }
+    },
+    {
+      "category": "skills_match",
+      "item": "Git",
+      "reason": "The resume contains a normalized exact match for this job signal: Git.",
+      "status": "confirmed",
+      "match_type": "normalized_exact",
+      "job_source": {
+        "start_line": 13,
+        "end_line": 13,
+        "excerpt": "- Git",
+        "transformation": "delimiter_split"
+      },
+      "resume_source": {
+        "start_line": 15,
+        "end_line": 15,
+        "excerpt": "Git",
+        "transformation": "delimiter_split"
+      }
+    },
+    {
+      "category": "skills_match",
+      "item": "Kubernetes",
+      "reason": "The resume contains a normalized exact match for this job signal: Kubernetes.",
+      "status": "confirmed",
+      "match_type": "normalized_exact",
+      "job_source": {
+        "start_line": 12,
+        "end_line": 12,
+        "excerpt": "- AWS, Docker, Kubernetes",
+        "transformation": "delimiter_split"
+      },
+      "resume_source": {
+        "start_line": 15,
+        "end_line": 15,
+        "excerpt": "Kubernetes",
+        "transformation": "delimiter_split"
+      }
+    }
+  ],
+  "top_gaps": [
+    {
+      "category": "keyword_alignment",
+      "item": "design",
+      "reason": "This explicit job signal is not clearly supported by the deterministic resume baseline: design.",
+      "status": "likely_missing",
+      "job_source": null,
+      "resume_source": null
+    },
+    {
+      "category": "keyword_alignment",
+      "item": "customer",
+      "reason": "This explicit job signal is not clearly supported by the deterministic resume baseline: customer.",
+      "status": "likely_missing",
+      "job_source": null,
+      "resume_source": null
+    },
+    {
+      "category": "keyword_alignment",
+      "item": "facing",
+      "reason": "This explicit job signal is not clearly supported by the deterministic resume baseline: facing.",
+      "status": "likely_missing",
+      "job_source": null,
+      "resume_source": null
+    },
+    {
+      "category": "keyword_alignment",
+      "item": "improve",
+      "reason": "This explicit job signal is not clearly supported by the deterministic resume baseline: improve.",
+      "status": "likely_missing",
+      "job_source": null,
+      "resume_source": null
+    },
+    {
+      "category": "keyword_alignment",
+      "item": "platform",
+      "reason": "This explicit job signal is not clearly supported by the deterministic resume baseline: platform.",
+      "status": "likely_missing",
+      "job_source": null,
+      "resume_source": null
+    }
+  ],
+  "recommendation": {
+    "policy_version": "job_match_recommendation_v1",
+    "label": "apply_now",
+    "status": "deterministic",
+    "reason": "The deterministic match score is 96%. Core deterministic gates support applying now, without predicting a hiring outcome.",
+    "gate_reasons": [],
+    "thresholds": {
+      "apply_now_minimum_overall_score": 80,
+      "apply_after_edits_minimum_overall_score": 60,
+      "apply_after_edits_minimum_core_category_score": 50,
+      "apply_now_minimum_core_category_score": 70
+    },
+    "low_core_categories": [],
+    "blocking_required_skill_gaps": [],
+    "blocking_core_evidence_gaps": [],
+    "unassessed_required_qualifications": []
+  },
+  "warnings": [
+    {
+      "code": "deterministic_alignment_only",
+      "message": "This is a deterministic resume-to-job alignment result, not a hiring prediction, recruiter decision, or proprietary ATS score.",
+      "related_categories": [
+        "skills_match",
+        "experience_match",
+        "seniority_fit",
+        "domain_fit",
+        "keyword_alignment",
+        "education_fit"
+      ]
+    },
+    {
+      "code": "source_text_and_explicit_evidence_only",
+      "message": "Matching uses caller-supplied plain text and explicit lexical evidence only; it does not inspect document layout, infer unstated qualifications, or use fuzzy semantic similarity.",
+      "related_categories": [
+        "skills_match",
+        "experience_match",
+        "seniority_fit",
+        "domain_fit",
+        "keyword_alignment",
+        "education_fit"
+      ]
+    }
+  ]
+}
