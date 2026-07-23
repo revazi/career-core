@@ -6,9 +6,9 @@
 
 ## Status
 
-Complete locally. Phase 1 has not started.
+Complete. Phase 1 has not started.
 
-A GitHub remote has not been created, so the committed workflow has not yet run on GitHub Actions. Its equivalent commands pass from a clean local clone.
+The private GitHub repository is available at `https://github.com/revazi/career-core`. The initial `main` workflow and equivalent clean-clone checks pass.
 
 ## Implemented
 
@@ -37,6 +37,7 @@ A GitHub remote has not been created, so the committed workflow has not yet run 
 - Agent Skill frontmatter/name/description validation
 - repository credential-pattern scan
 - `git diff --check`
+- GitHub Actions `main` CI run `29995679467` — passed
 
 ## Explicitly unavailable
 
