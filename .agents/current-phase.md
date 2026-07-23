@@ -6,7 +6,7 @@
 
 ## Status
 
-Implementation and full local verification are complete on `feature/resume-evaluation-parity-v1`. Clean-clone verification, GitHub Actions, and review are pending. Phase 4 has not started.
+Implementation and clean-clone verification are complete on `feature/resume-evaluation-parity-v1`. GitHub Actions and review are pending. Phase 4 has not started.
 
 ## Implemented so far
 
@@ -64,8 +64,9 @@ Intentional differences:
 - credential-pattern scan reports no findings
 - Fallow changed-code and security checks report no findings; Fallow does not currently analyze Rust source for health metrics
 - `git diff --check`
+- clean-clone formatting, Clippy, 61-test, locked-build, rustdoc, capabilities, and all four CLI golden checks pass
 
-Clean-clone verification and GitHub Actions, including Rust 1.85 compatibility, remain pending.
+GitHub Actions, including Rust 1.85 compatibility, remains pending until the branch is pushed.
 
 ## Explicitly unavailable
 
