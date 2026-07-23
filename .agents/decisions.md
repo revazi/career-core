@@ -41,3 +41,7 @@ Creating GitHub releases, publishing crates, uploading binaries, and changing re
 ## D-010 — Hosts orchestrate optional external enrichment
 
 An agent or application may automatically attempt external normalization enrichment only after the user enables it, an eligible core request exists, and a provider is configured. The host owns consent, keys, prompts, provider calls, timeouts, and failure isolation. The core owns target selection, proposal contracts, source-grounding validation, conservative empty-field merging, provenance, and deterministic-score isolation. Provider failure always leaves the local deterministic result usable.
+
+## D-011 — Full analysis is additive and baseline-only
+
+`career.resume_evaluation.v1` and `career resume evaluate` retain their Phase 1 section-coverage semantics. Full deterministic readiness scoring is exposed separately as `career.resume_analysis.v1` and `career resume analyze`. Analysis reruns `resume_normalization_v1` from the original input and cannot accept assisted documents, so external proposals never alter authoritative checks, confidence, evidence, or scores.

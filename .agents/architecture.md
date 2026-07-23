@@ -12,6 +12,20 @@ career-core ─X─► adapters, UI, persistence, network, LLMs
 
 The repository root is the default `career-core` library package. Workspace packages are adapters. An adapter may translate inputs and outputs but must not duplicate or override authoritative scoring.
 
+Authoritative resume analysis always follows the deterministic path:
+
+```text
+career.resume_input.v1
+        │
+        ▼
+resume_normalization_v1 deterministic baseline
+        │
+        ▼
+resume_analysis_v1 checks + integer aggregation + bounded evidence
+```
+
+`career.resume_evaluation.v1` remains the separate Phase 1 section-coverage contract. The full policy is exposed additively as `career.resume_analysis.v1`; existing command semantics are not silently replaced.
+
 Optional assisted normalization follows a split boundary:
 
 ```text
@@ -33,6 +47,7 @@ The library accepts bounded typed values and returns typed deterministic results
 
 - normalize plain text
 - calculate confidence and scoring signals
+- analyze only deterministic normalization baselines with versioned checks and integer aggregation
 - compare explicit evidence
 - emit provider-neutral enrichment eligibility and target contracts
 - validate source-grounded external proposals as untrusted typed input
@@ -122,6 +137,8 @@ The Django implementation is evidence for behavior, not architecture. Port pure 
 Parity must be declared per versioned operation and fixture set. Partial ports must use their own version and document differences.
 
 LLM/provider execution is never a core parity target. Proposal bounds, grounding checks, and conservative merge rules may be adapted into provider-neutral core validation because they operate deterministically on explicit caller input. Assisted values remain separate from authoritative deterministic scoring.
+
+Resume-analysis parity is defined at the scoring-rule and equivalent-normalized-fixture layers. Rust raw-text end-to-end output may differ when `resume_normalization_v1` intentionally differs from Django normalization. Public analysis results identify both the Rust policy and the selected Django reference policy.
 
 ## Future Swift boundary
 

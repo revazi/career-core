@@ -4,7 +4,7 @@
 
 The project is intentionally **not an AI service**. The core performs no network requests and has no LLM dependency. Native applications, command-line tools, and coding-agent integrations can use its versioned evidence and scoring contracts. An opted-in host may submit an external source-grounded proposal for deterministic validation, but provider calls remain outside the authoritative core.
 
-> **Status:** Phase 2. Capability discovery, bounded section evaluation, deterministic resume normalization, and provider-neutral assisted normalization are available. Full resume scoring and job matching remain planned.
+> **Status:** Phase 3. Capability discovery, bounded section evaluation, deterministic normalization, provider-neutral assisted normalization, and full explainable resume-readiness analysis are available. Job matching remains planned.
 
 ## Goals
 
@@ -73,6 +73,11 @@ JSON is the default output:
       "summary": "Evaluate recognized resume section coverage with explainable deterministic checks."
     },
     {
+      "id": "resume.analyze",
+      "status": "available",
+      "summary": "Analyze resume readiness with 18 explainable deterministic checks and confidence-aware evidence."
+    },
+    {
       "id": "resume.normalize",
       "status": "available",
       "summary": "Normalize bounded resume text into source-grounded deterministic facts and confidence."
@@ -133,6 +138,19 @@ Add `--format text` for concise human output. JSON results use `career.resume_ev
 
 Phase 1 scores only whether four recognized core headers have following content. It does **not** claim to measure complete resume quality or ATS compatibility. See [`docs/contracts/resume-evaluation-v1.md`](docs/contracts/resume-evaluation-v1.md) for limits, aliases, scoring, evidence, warnings, and provenance.
 
+## Analyze resume readiness
+
+Run the full deterministic scoring policy without changing the Phase 1 contract:
+
+```bash
+cargo run --quiet -p career-cli -- \
+  resume analyze --input fixtures/resume/phase3/complete-analysis.input.json
+```
+
+`career.resume_analysis.v1` reports 18 bounded checks across ATS-readability signals, content strength, experience impact, skills coverage, presentation, and completeness. It includes raw and confidence-adjusted scores, source-grounded evidence, provisional findings, deterministic improvement actions, and explicit limitations.
+
+This is a general text-based readiness analysis. It does not reproduce proprietary ATS rankings, inspect visual document layout, or guarantee hiring outcomes. Scores always consume the deterministic normalization baseline; assisted fields cannot alter them. See [`docs/contracts/resume-analysis-v1.md`](docs/contracts/resume-analysis-v1.md) for the complete policy and `deterministic_v2` compatibility matrix.
+
 ## Normalize resumes
 
 Normalize caller-extracted text deterministically:
@@ -165,7 +183,7 @@ The detailed, gated roadmap lives in [`.agents/phases.md`](.agents/phases.md). T
 
 1. versioned contracts and a minimal resume-evaluation vertical slice
 2. deterministic resume normalization and provider-neutral assisted validation
-3. explainable resume scoring parity
+3. explainable resume scoring parity and general ATS-readiness analysis
 4. job-description normalization and conservative matching
 5. hardened CLI and coding-agent distribution
 6. Swift bindings for a later SwiftUI application

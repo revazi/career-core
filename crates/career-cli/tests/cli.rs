@@ -15,6 +15,12 @@ fn phase2_fixture_path(name: &str) -> PathBuf {
         .join(name)
 }
 
+fn phase3_fixture_path(name: &str) -> PathBuf {
+    PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("../../fixtures/resume/phase3")
+        .join(name)
+}
+
 #[test]
 fn capabilities_default_to_valid_json() {
     let output = Command::new(env!("CARGO_BIN_EXE_career"))
@@ -31,10 +37,12 @@ fn capabilities_default_to_valid_json() {
     assert_eq!(value["performs_network_requests"], false);
     assert_eq!(value["capabilities"][1]["id"], "resume.evaluate");
     assert_eq!(value["capabilities"][1]["status"], "available");
-    assert_eq!(value["capabilities"][2]["id"], "resume.normalize");
+    assert_eq!(value["capabilities"][2]["id"], "resume.analyze");
     assert_eq!(value["capabilities"][2]["status"], "available");
-    assert_eq!(value["capabilities"][3]["id"], "resume.enrich");
+    assert_eq!(value["capabilities"][3]["id"], "resume.normalize");
     assert_eq!(value["capabilities"][3]["status"], "available");
+    assert_eq!(value["capabilities"][4]["id"], "resume.enrich");
+    assert_eq!(value["capabilities"][4]["status"], "available");
 }
 
 #[test]
@@ -48,6 +56,7 @@ fn capabilities_support_human_readable_output() {
     let stdout = String::from_utf8(output.stdout).expect("stdout should contain UTF-8");
     assert!(stdout.contains("career-core"));
     assert!(stdout.contains("resume.evaluate [available]"));
+    assert!(stdout.contains("resume.analyze [available]"));
     assert!(stdout.contains("resume.normalize [available]"));
     assert!(stdout.contains("resume.enrich [available]"));
 }
@@ -124,6 +133,59 @@ fn resume_evaluation_accepts_stdin_and_text_output() {
     assert!(stdout.contains("Resume section-coverage evaluation: 100/100"));
     assert!(stdout.contains("Summary: detected with content"));
     assert!(stdout.contains("not a complete resume-quality or ATS score"));
+}
+
+#[test]
+fn resume_analysis_matches_reviewed_golden_json() {
+    for fixture in ["complete-analysis", "messy-analysis"] {
+        let output = Command::new(env!("CARGO_BIN_EXE_career"))
+            .args([
+                "resume",
+                "analyze",
+                "--input",
+                phase3_fixture_path(&format!("{fixture}.input.json"))
+                    .to_str()
+                    .expect("fixture path should be UTF-8"),
+            ])
+            .output()
+            .expect("career binary should run");
+
+        assert!(output.status.success(), "fixture {fixture} should analyze");
+        assert!(output.stderr.is_empty());
+        let expected = fs::read(phase3_fixture_path(&format!("{fixture}.expected.json")))
+            .expect("expected fixture should be readable");
+        assert_eq!(output.stdout, expected, "fixture {fixture} changed");
+    }
+}
+
+#[test]
+fn resume_analysis_accepts_stdin_and_text_output() {
+    let input = fs::read(phase3_fixture_path("messy-analysis.input.json"))
+        .expect("input fixture should be readable");
+    let mut child = Command::new(env!("CARGO_BIN_EXE_career"))
+        .args(["resume", "analyze", "--input", "-", "--format", "text"])
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .expect("career binary should start");
+    child
+        .stdin
+        .take()
+        .expect("stdin should be piped")
+        .write_all(&input)
+        .expect("fixture should be written");
+    let output = child
+        .wait_with_output()
+        .expect("career binary should finish");
+
+    assert!(output.status.success());
+    assert!(output.stderr.is_empty());
+    let stdout = String::from_utf8(output.stdout).expect("stdout should contain UTF-8");
+    assert!(stdout.contains("Deterministic resume analysis: 62/100"));
+    assert!(stdout.contains("Parser confidence: low (32/100)"));
+    assert!(stdout.contains("Experience impact could not be verified [provisional]"));
+    assert!(stdout.contains("not a reproduction of a proprietary ATS ranking"));
 }
 
 #[test]

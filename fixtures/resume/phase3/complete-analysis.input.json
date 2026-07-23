@@ -1,0 +1,7 @@
+{
+  "schema_version": "career.resume_input.v1",
+  "text": "Morgan Lee\nmorgan.lee@example.com\n+1 555 010 0200\nhttps://example.com/morgan\nSUMMARY\nBackend engineer building reliable local services.\nEXPERIENCE\nPlatform Engineer at Acme Corp\n2021 - Present\n- Built reliable APIs for internal teams.\n- Reduced deployment failures by 30 percent.\nEDUCATION\nBachelor of Science in Computer Science, Example University\n2016 - 2020\nSKILLS\nRust, PostgreSQL, Docker, Testing, Git\nPROJECTS\nLocal Career Tool\nBuilt a private deterministic analysis workflow.\nCERTIFICATIONS\nCloud Engineering Certificate\nExample Institute",
+  "metadata": {
+    "document_id": "synthetic-phase3-complete-v1"
+  }
+}

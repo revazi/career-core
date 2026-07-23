@@ -20,6 +20,7 @@ List exact commands and results.
 - [ ] `cargo build --workspace --all-features --locked`
 - [ ] `cargo run --quiet -p career-cli -- capabilities`
 - [ ] `cargo run --quiet -p career-cli -- resume evaluate --input fixtures/resume/phase1/complete-sections.input.json`
+- [ ] `cargo run --quiet -p career-cli -- resume analyze --input fixtures/resume/phase3/complete-analysis.input.json`
 - [ ] `cargo run --quiet -p career-cli -- resume normalize --input fixtures/resume/phase2/complete-normalization.input.json`
 - [ ] `cargo run --quiet -p career-cli -- resume enrich --input fixtures/resume/phase2/messy-unlabeled.enrichment-input.json`
 - [ ] `git diff --check`

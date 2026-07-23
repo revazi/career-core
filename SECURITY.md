@@ -20,5 +20,7 @@ The core library processes untrusted career-document text and structured data lo
 - keep output bounded and deterministic
 - treat external normalization proposals as untrusted data requiring exact shape, limits, eligible targets, and source grounding
 - preserve deterministic output when assisted validation fails
+- score only the deterministic normalization baseline and never assisted proposal values
+- label parser uncertainty and general ATS-readiness limitations without claiming proprietary ranking behavior
 
 The CLI may read only paths explicitly supplied by the caller and never makes a provider call. Hosts that send resumes to an external model must obtain user consent, keep API keys outside core contracts and logs, bound provider context, isolate failures, and label accepted values as assisted.

@@ -1,0 +1,322 @@
+{
+  "reference_policy_version": "deterministic_v2",
+  "comparison_basis": "equivalent_normalized_facts",
+  "fixtures": [
+    {
+      "name": "complete-analysis",
+      "overall_score": 94,
+      "category_scores": {
+        "format_ats": 100,
+        "content_strength": 100,
+        "experience_impact": 83,
+        "skills_coverage": 90,
+        "presentation": 93,
+        "completeness": 100
+      },
+      "checks": [
+        {
+          "id": "contact_email_present",
+          "category": "completeness",
+          "score": 100,
+          "passed": true,
+          "detection_status": null,
+          "details": "Email detected."
+        },
+        {
+          "id": "contact_name_present",
+          "category": "completeness",
+          "score": 100,
+          "passed": true,
+          "detection_status": null,
+          "details": "Candidate name detected."
+        },
+        {
+          "id": "contact_phone_or_link_present",
+          "category": "completeness",
+          "score": 100,
+          "passed": true,
+          "detection_status": null,
+          "details": "Phone number or profile link detected."
+        },
+        {
+          "id": "summary_present",
+          "category": "content_strength",
+          "score": 100,
+          "passed": true,
+          "detection_status": "detected",
+          "details": "Summary section detected."
+        },
+        {
+          "id": "experience_section_present",
+          "category": "completeness",
+          "score": 100,
+          "passed": true,
+          "detection_status": "detected",
+          "details": "Experience section detected."
+        },
+        {
+          "id": "education_section_present",
+          "category": "completeness",
+          "score": 100,
+          "passed": true,
+          "detection_status": "detected",
+          "details": "Education section detected."
+        },
+        {
+          "id": "skills_section_present",
+          "category": "skills_coverage",
+          "score": 100,
+          "passed": true,
+          "detection_status": "detected",
+          "details": "Skills section detected."
+        },
+        {
+          "id": "experience_bullets_present",
+          "category": "experience_impact",
+          "score": 100,
+          "passed": true,
+          "detection_status": null,
+          "details": "Detected 2 experience bullets."
+        },
+        {
+          "id": "experience_bullet_length_quality",
+          "category": "experience_impact",
+          "score": 100,
+          "passed": true,
+          "detection_status": null,
+          "details": "Checks whether experience bullets are reasonably sized."
+        },
+        {
+          "id": "experience_date_ranges_present",
+          "category": "presentation",
+          "score": 100,
+          "passed": true,
+          "detection_status": null,
+          "details": "Checks whether experience entries include date ranges."
+        },
+        {
+          "id": "experience_chronology_consistency",
+          "category": "presentation",
+          "score": 100,
+          "passed": true,
+          "detection_status": null,
+          "details": "Checks for basic chronology consistency across experience entries."
+        },
+        {
+          "id": "measurable_impact_in_bullets",
+          "category": "experience_impact",
+          "score": 50,
+          "passed": false,
+          "detection_status": null,
+          "details": "Checks for numbers, percentages, or measurable outcomes in bullets."
+        },
+        {
+          "id": "skills_count_quality",
+          "category": "skills_coverage",
+          "score": 80,
+          "passed": true,
+          "detection_status": null,
+          "details": "Detected 5 skills."
+        },
+        {
+          "id": "weak_phrasing_penalty",
+          "category": "content_strength",
+          "score": 100,
+          "passed": true,
+          "detection_status": null,
+          "details": "Checks for vague or weak phrases in the resume text."
+        },
+        {
+          "id": "keyword_repetition_penalty",
+          "category": "presentation",
+          "score": 80,
+          "passed": true,
+          "detection_status": null,
+          "details": "Checks for excessive repetition of significant words."
+        },
+        {
+          "id": "ats_section_header_clarity",
+          "category": "format_ats",
+          "score": 100,
+          "passed": true,
+          "detection_status": null,
+          "details": "Checks whether major sections were clearly detected."
+        },
+        {
+          "id": "ats_line_density",
+          "category": "format_ats",
+          "score": 100,
+          "passed": true,
+          "detection_status": null,
+          "details": "Checks for extremely sparse or overly dense extracted text."
+        },
+        {
+          "id": "parse_quality_proxy",
+          "category": "format_ats",
+          "score": 100,
+          "passed": true,
+          "detection_status": null,
+          "details": "Uses stored parse confidence as an ATS-readability proxy."
+        }
+      ]
+    },
+    {
+      "name": "messy-analysis",
+      "overall_score": 62,
+      "category_scores": {
+        "format_ats": 58,
+        "content_strength": 75,
+        "experience_impact": 50,
+        "skills_coverage": 50,
+        "presentation": 67,
+        "completeness": 70
+      },
+      "checks": [
+        {
+          "id": "contact_email_present",
+          "category": "completeness",
+          "score": 100,
+          "passed": true,
+          "detection_status": null,
+          "details": "Email detected."
+        },
+        {
+          "id": "contact_name_present",
+          "category": "completeness",
+          "score": 100,
+          "passed": true,
+          "detection_status": null,
+          "details": "Candidate name detected."
+        },
+        {
+          "id": "contact_phone_or_link_present",
+          "category": "completeness",
+          "score": 0,
+          "passed": false,
+          "detection_status": null,
+          "details": "No phone number or profile link detected."
+        },
+        {
+          "id": "summary_present",
+          "category": "content_strength",
+          "score": 50,
+          "passed": false,
+          "detection_status": "not_detected",
+          "details": "Summary was not detected; limited parsing confidence makes this check inconclusive."
+        },
+        {
+          "id": "experience_section_present",
+          "category": "completeness",
+          "score": 50,
+          "passed": false,
+          "detection_status": "not_detected",
+          "details": "Experience was not detected; limited parsing confidence makes this check inconclusive."
+        },
+        {
+          "id": "education_section_present",
+          "category": "completeness",
+          "score": 100,
+          "passed": true,
+          "detection_status": "detected",
+          "details": "Education section detected."
+        },
+        {
+          "id": "skills_section_present",
+          "category": "skills_coverage",
+          "score": 50,
+          "passed": false,
+          "detection_status": "not_detected",
+          "details": "Skills was not detected; limited parsing confidence makes this check inconclusive."
+        },
+        {
+          "id": "experience_bullets_present",
+          "category": "experience_impact",
+          "score": 50,
+          "passed": false,
+          "detection_status": "not_detected",
+          "details": "Experience was not detected; limited parsing confidence makes this check inconclusive."
+        },
+        {
+          "id": "experience_bullet_length_quality",
+          "category": "experience_impact",
+          "score": 50,
+          "passed": false,
+          "detection_status": "not_detected",
+          "details": "Experience was not detected; limited parsing confidence makes this check inconclusive."
+        },
+        {
+          "id": "experience_date_ranges_present",
+          "category": "presentation",
+          "score": 50,
+          "passed": false,
+          "detection_status": "not_detected",
+          "details": "Experience was not detected; limited parsing confidence makes this check inconclusive."
+        },
+        {
+          "id": "experience_chronology_consistency",
+          "category": "presentation",
+          "score": 50,
+          "passed": false,
+          "detection_status": "not_detected",
+          "details": "Experience was not detected; limited parsing confidence makes this check inconclusive."
+        },
+        {
+          "id": "measurable_impact_in_bullets",
+          "category": "experience_impact",
+          "score": 50,
+          "passed": false,
+          "detection_status": "not_detected",
+          "details": "Experience was not detected; limited parsing confidence makes this check inconclusive."
+        },
+        {
+          "id": "skills_count_quality",
+          "category": "skills_coverage",
+          "score": 50,
+          "passed": false,
+          "detection_status": "not_detected",
+          "details": "Skills was not detected; limited parsing confidence makes this check inconclusive."
+        },
+        {
+          "id": "weak_phrasing_penalty",
+          "category": "content_strength",
+          "score": 100,
+          "passed": true,
+          "detection_status": null,
+          "details": "Checks for vague or weak phrases in the resume text."
+        },
+        {
+          "id": "keyword_repetition_penalty",
+          "category": "presentation",
+          "score": 100,
+          "passed": true,
+          "detection_status": null,
+          "details": "Checks for excessive repetition of significant words."
+        },
+        {
+          "id": "ats_section_header_clarity",
+          "category": "format_ats",
+          "score": 25,
+          "passed": false,
+          "detection_status": null,
+          "details": "Checks whether major sections were clearly detected."
+        },
+        {
+          "id": "ats_line_density",
+          "category": "format_ats",
+          "score": 100,
+          "passed": true,
+          "detection_status": null,
+          "details": "Checks for extremely sparse or overly dense extracted text."
+        },
+        {
+          "id": "parse_quality_proxy",
+          "category": "format_ats",
+          "score": 50,
+          "passed": false,
+          "detection_status": null,
+          "details": "Uses stored parse confidence as an ATS-readability proxy."
+        }
+      ]
+    }
+  ]
+}

@@ -23,6 +23,18 @@ Use `-` to read JSON from stdin. JSON output follows `schemas/resume-evaluation-
 
 Phase 1 evaluation scope is `section_coverage`. Scores only represent four exact-header checks and must not be described as a full resume-quality or ATS score. Preserve all warnings, especially `limited_evaluation_scope` and parser uncertainty wording.
 
+## Full deterministic resume analysis
+
+```bash
+career resume analyze --input <path|-> [--format json|text]
+```
+
+Input is `career.resume_input.v1`; JSON output follows `schemas/resume-analysis-v1.schema.json`. The operation independently runs deterministic normalization and scores only its baseline.
+
+The result contains 18 canonical checks, raw and confidence-adjusted scores, six weighted categories, bounded evidence, provisional/confirmed findings, check-derived actions, and mandatory limitations. Preserve `inconclusive` and `provisional` labels. Do not describe `format_ats` as a proprietary ATS score, visual-layout inspection, or hiring prediction.
+
+See `docs/contracts/resume-analysis-v1.md` for exact rules, rounding, confidence adjustments, reference parity, and limitations.
+
 ## Resume normalization
 
 ```bash
@@ -76,6 +88,7 @@ Errors use `career.error.v1`. Messages are bounded and do not echo the source do
 ```bash
 cargo run --quiet -p career-cli -- capabilities
 cargo run --quiet -p career-cli -- resume evaluate --input fixtures/resume/phase1/complete-sections.input.json
+cargo run --quiet -p career-cli -- resume analyze --input fixtures/resume/phase3/complete-analysis.input.json
 cargo run --quiet -p career-cli -- resume normalize --input fixtures/resume/phase2/complete-normalization.input.json
 cargo run --quiet -p career-cli -- resume enrich --input fixtures/resume/phase2/messy-unlabeled.enrichment-input.json
 ```

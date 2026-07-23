@@ -1,3 +1,5 @@
+mod analysis;
+mod analysis_contract;
 mod contract;
 mod enrichment;
 mod enrichment_contract;
@@ -7,6 +9,8 @@ mod normalization_contract;
 mod sections;
 mod validation;
 
+pub use analysis::analyze_resume;
+pub use analysis_contract::*;
 pub use contract::{
     ERROR_SCHEMA_VERSION, EVALUATION_SCHEMA_VERSION, INPUT_SCHEMA_VERSION,
     MAX_DOCUMENT_ID_CHARACTERS, MAX_EVIDENCE_EXCERPT_CHARACTERS, MAX_RESUME_LINE_CHARACTERS,
