@@ -1,14 +1,14 @@
 # Current phase
 
-## Active phase
+## Most recently completed phase
 
 **Phase 1 — Versioned contracts and first resume vertical slice**
 
 ## Status
 
-Implementation complete locally; awaiting GitHub Actions and review before the phase is marked complete. Phase 2 has not started.
+Complete. Phase 2 has not started.
 
-The private repository is available at `https://github.com/revazi/career-core`; Phase 0 CI passed on `main` before this phase began.
+The private repository is available at `https://github.com/revazi/career-core`.
 
 ## Implemented
 
@@ -55,8 +55,7 @@ This is a bounded rule port. Full resume normalization and `deterministic_v2` sc
 - Rust core/boundary alias sets exactly match the selected `resume_normalization_v7` reference sets
 - all relative Markdown links resolve
 - `git diff --check`
-
-GitHub Actions remains pending until the feature branch is pushed.
+- GitHub Actions PR run `29997860390` — passed, including Rust 1.85 compatibility and golden CLI checks
 
 ## Explicitly unavailable
 
