@@ -170,6 +170,16 @@ pub enum ResumeEvaluationErrorCodeV1 {
     SourceLineTooLong,
     DocumentIdEmpty,
     DocumentIdTooLong,
+    UnsupportedEnrichmentInputSchemaVersion,
+    UnsupportedEnrichmentProposalSchemaVersion,
+    EnrichmentNotEligible,
+    EnrichmentProposalTooLarge,
+    EnrichmentNonTargetPopulated,
+    EnrichmentFieldEmpty,
+    EnrichmentFieldTooLong,
+    EnrichmentListTooLong,
+    EnrichmentValueNotGrounded,
+    EnrichmentEntryInvalid,
 }
 
 impl ResumeEvaluationErrorCodeV1 {
@@ -183,6 +193,20 @@ impl ResumeEvaluationErrorCodeV1 {
             Self::SourceLineTooLong => "source_line_too_long",
             Self::DocumentIdEmpty => "document_id_empty",
             Self::DocumentIdTooLong => "document_id_too_long",
+            Self::UnsupportedEnrichmentInputSchemaVersion => {
+                "unsupported_enrichment_input_schema_version"
+            }
+            Self::UnsupportedEnrichmentProposalSchemaVersion => {
+                "unsupported_enrichment_proposal_schema_version"
+            }
+            Self::EnrichmentNotEligible => "enrichment_not_eligible",
+            Self::EnrichmentProposalTooLarge => "enrichment_proposal_too_large",
+            Self::EnrichmentNonTargetPopulated => "enrichment_non_target_populated",
+            Self::EnrichmentFieldEmpty => "enrichment_field_empty",
+            Self::EnrichmentFieldTooLong => "enrichment_field_too_long",
+            Self::EnrichmentListTooLong => "enrichment_list_too_long",
+            Self::EnrichmentValueNotGrounded => "enrichment_value_not_grounded",
+            Self::EnrichmentEntryInvalid => "enrichment_entry_invalid",
         }
     }
 }
@@ -217,3 +241,9 @@ impl fmt::Display for ResumeEvaluationErrorV1 {
 }
 
 impl Error for ResumeEvaluationErrorV1 {}
+
+/// Operation-neutral alias retained alongside the original Phase 1 Rust type name.
+pub type ResumeErrorCodeV1 = ResumeEvaluationErrorCodeV1;
+
+/// Operation-neutral alias for the shared `career.error.v1` resume failure contract.
+pub type ResumeErrorV1 = ResumeEvaluationErrorV1;

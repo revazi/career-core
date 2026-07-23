@@ -2,72 +2,86 @@
 
 ## Most recently completed phase
 
-**Phase 1 — Versioned contracts and first resume vertical slice**
+**Phase 2 — Deterministic resume normalization and provider-neutral assisted boundary**
 
 ## Status
 
-Complete. Phase 2 has not started.
-
-The private repository is available at `https://github.com/revazi/career-core`.
+Complete. Phase 3 has not started.
 
 ## Implemented
 
-- Bounded `career.resume_input.v1` plain-text input with optional caller document identifier.
-- Typed `career.resume_evaluation.v1` checks, section detections, evidence, warnings, and integer score.
-- Typed `career.error.v1` core validation failures and bounded CLI failures.
-- Documented limits for source characters, lines, line length, metadata, evidence, and CLI JSON bytes.
-- Exact normalized aliases for Summary, Experience, Education, and Skills adapted from `resume_normalization_v7`.
-- Projects and Certifications aliases retained only as conservative content boundaries.
-- Explicit `detected_with_content`, `detected_without_content`, and `not_detected` statuses.
-- `resume_section_coverage_v1` scoring: four equally weighted 0/100 checks and an integer mean.
-- Mandatory warning that the score is section coverage, not complete quality or ATS compatibility.
-- Stable evidence IDs, one-based line numbers, bounded header excerpts, and canonical check ordering.
-- `career resume evaluate --input <path|-> --format json|text` with stdin support.
-- Distinct CLI exit statuses for usage, I/O/byte limits, JSON, core validation, and output failures.
-- Strict unknown-field rejection and no source-payload echo in errors.
-- Synthetic complete and adversarial prompt-like golden fixtures with Django provenance.
-- Public input, output, and error JSON schemas plus a detailed contract document.
-- Updated capability discovery and Agent Skills guidance marking `resume.evaluate` available.
-- CI golden-output/schema smoke checks and Rust 1.85 compatibility check.
+- `career.resume_normalization.v1` and `resume_normalization_v1` deterministic contracts.
+- Bounded contact, summary, experience, education, skills, projects, and certifications structures.
+- Source spans and explicit transformations for every non-empty normalized value.
+- Shared explicit whole-line aliases for all six sections.
+- Conservative experience blocks plus experience, skills, and education fallback heuristics.
+- Five-signal integer parser confidence with unknown/low/medium/high labels and explicit gates.
+- Detected, likely-missing, and not-detected field statuses without converting uncertainty into absence.
+- Stable section metadata, fallback identifiers, truncation metadata, and warnings.
+- `career resume normalize --input <path|-> --format json|text`.
+- `career.resume_enrichment_proposal.v1`, input, result, and policy contracts.
+- Low-confidence-and-empty-field enrichment eligibility in canonical target order.
+- Strict proposal shape, character, list, entry, target, and source-grounding validation.
+- Conservative empty-target-only merge with deterministic/external/not-available provenance.
+- A complete immutable deterministic baseline plus a separately labeled assisted document.
+- Preserved deterministic confidence and explicit warning that assisted fields are non-authoritative.
+- `career resume enrich --input <path|-> --format json|text` with no provider or network behavior.
+- Updated agent guidance for opt-in host orchestration, failure isolation, and baseline authority.
+- Synthetic clean, messy, source-grounded proposal, Unicode, sparse, prompt-like, limit, and invalid-output coverage.
+- Public schemas, contract documentation, CLI golden fixtures, and CI smoke checks.
+- Capability discovery marks `resume.normalize` and `resume.enrich` available.
+
+## Architecture decision
+
+The root library still has no API-key, provider, prompt, model-call, or network behavior. An opted-in agent or application owns those concerns. The core emits eligible targets, validates an explicit proposal as untrusted data, and creates a separate assisted view. Future authoritative scoring consumes the deterministic baseline only.
 
 ## Reference scope
 
-Behavior was intentionally adapted from:
+Behavior and bounds were intentionally adapted from:
 
 - `../resume-ai/accounts/services/resume_normalization.py`
-- `../resume-ai/accounts/test_services.py` (`ResumeSectionAliasTests`)
-- reference version `resume_normalization_v7`
+- `../resume-ai/accounts/services/resume_normalization_fallback_validation.py`
+- `../resume-ai/accounts/services/normalization_fallback_merge.py`
+- normalization tests and synthetic fixtures under `../resume-ai/accounts/`
+- reference versions `resume_normalization_v7`, `resume_normalization_llm_fallback_v1`, and `resume_normalization_fallback_merge_v1`
 
-This is a bounded rule port. Full resume normalization and `deterministic_v2` scoring parity have not been evaluated or claimed.
+Provider execution, prompts, Django persistence, and score coupling were not ported. The Rust baseline/assisted split, date-as-phone rejection, and education-date grouping are intentional differences. This is selected fixture/rule adaptation, not full Django policy parity.
 
 ## Verification completed locally
 
 - `cargo fmt --all --check`
 - `cargo clippy --workspace --all-targets --all-features -- -D warnings`
-- `cargo test --workspace --all-features --locked` — 25 tests passed
+- `cargo test --workspace --all-features --locked` — 47 tests passed
 - `cargo build --workspace --all-features --locked`
+- rustdoc with warnings denied
 - capability JSON and text smoke checks
-- complete resume-evaluation JSON golden comparison
-- sparse resume-evaluation text smoke check
-- all public schema documents parse as JSON
-- input, golden output, and representative error documents validate with `check-jsonschema`
-- clean-clone formatting, Clippy, 25-test, locked-build, and golden CLI verification
-- Rust core/boundary alias sets exactly match the selected `resume_normalization_v7` reference sets
+- Phase 1 evaluation goldens remain unchanged
+- Phase 2 deterministic and assisted JSON/text CLI checks pass
+- deterministic normalization and enrichment goldens match byte-for-byte
+- enrichment `baseline` exactly equals the independent deterministic messy-resume golden
+- all schemas pass Draft 2020-12 metaschema validation
+- input, normalization, proposal, enrichment-input, enrichment-result, and representative error documents validate with `check-jsonschema`
+- all six Rust section alias sets exactly match `resume_normalization_v7`
+- clean-clone formatting, Clippy, 47-test, locked-build, and all three CLI golden checks
+- regex dependency family declares Rust 1.65 MSRV and permissive MIT/Apache/Unlicense-compatible licensing
 - all relative Markdown links resolve
+- README JSON and CI YAML parse
+- Agent Skill metadata and size checks pass
+- credential-pattern scan reports no findings
+- Fallow changed-code and security checks report no findings; Fallow does not currently analyze Rust source for health metrics
 - `git diff --check`
-- GitHub Actions PR run `29997860390` — passed, including Rust 1.85 compatibility and golden CLI checks
+- GitHub Actions PR run `30002160729` — passed, including Rust 1.85 compatibility, 47 tests, locked build, and all CLI golden checks
 
 ## Explicitly unavailable
 
-- full resume normalization and evaluation parity
-- contact, experience-entry, education-entry, or skills-item extraction
-- job-description normalization
-- resume-to-job matching
-- PDF/DOCX ingestion
-- LLM or network behavior
-- Swift bindings
-- MCP or provider-specific agent adapters
+- complete `deterministic_v2` resume evaluation and ATS-readiness checks
+- job-description normalization and resume-to-job matching
+- provider clients, model calls, prompt construction, or API-key handling
+- automatic rewriting or mutation of source resumes
+- PDF/DOCX ingestion or OCR
+- Swift bindings and SwiftUI host orchestration
+- MCP or provider-specific adapters
 
 ## Next phase after approval
 
-Phase 2 will implement bounded deterministic resume normalization with structured facts, confidence, provenance, and golden fixtures. Do not begin Phase 2 until Phase 1 is marked complete and the maintainer explicitly requests it.
+Phase 3 will port explainable deterministic resume evaluation and ATS-readiness checks against the deterministic normalization contract. Do not begin Phase 3 until Phase 2 is green, reviewed, merged, and explicitly approved.

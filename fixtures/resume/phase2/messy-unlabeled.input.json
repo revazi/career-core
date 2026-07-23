@@ -1,0 +1,7 @@
+{
+  "schema_version": "career.resume_input.v1",
+  "text": "Morgan Lee\nmorgan.lee@example.com\nBackend engineer focused on reliable APIs and platform stability.\nPlatform Engineer at Acme Corp since 2021\nDelivered internal APIs used by support and operations teams.\nReduced deployment errors by 30 percent through release automation.\nComfortable with Python and Django for backend services\nBachelor of Science in Computer Science\nExample University\n2016 - 2020",
+  "metadata": {
+    "document_id": "synthetic-messy-v1"
+  }
+}

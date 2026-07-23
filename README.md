@@ -2,9 +2,9 @@
 
 `career-core` is an open-source Rust library for deterministic, explainable resume evaluation and resume-to-job matching.
 
-The project is intentionally **not an AI service**. The core performs no network requests and has no LLM dependency. Native applications, command-line tools, and coding-agent integrations can use its versioned evidence and scoring contracts. Optional AI interpretation belongs in a host application or agent, outside the authoritative core.
+The project is intentionally **not an AI service**. The core performs no network requests and has no LLM dependency. Native applications, command-line tools, and coding-agent integrations can use its versioned evidence and scoring contracts. An opted-in host may submit an external source-grounded proposal for deterministic validation, but provider calls remain outside the authoritative core.
 
-> **Status:** Phase 1. Capability discovery and bounded resume section-coverage evaluation are available. Full resume normalization/scoring and job matching remain planned.
+> **Status:** Phase 2. Capability discovery, bounded section evaluation, deterministic resume normalization, and provider-neutral assisted normalization are available. Full resume scoring and job matching remain planned.
 
 ## Goals
 
@@ -73,6 +73,16 @@ JSON is the default output:
       "summary": "Evaluate recognized resume section coverage with explainable deterministic checks."
     },
     {
+      "id": "resume.normalize",
+      "status": "available",
+      "summary": "Normalize bounded resume text into source-grounded deterministic facts and confidence."
+    },
+    {
+      "id": "resume.enrich",
+      "status": "available",
+      "summary": "Validate and conservatively merge an explicit source-grounded external proposal without network access."
+    },
+    {
       "id": "job.match",
       "status": "planned",
       "summary": "Compare normalized resume and job evidence conservatively."
@@ -123,6 +133,26 @@ Add `--format text` for concise human output. JSON results use `career.resume_ev
 
 Phase 1 scores only whether four recognized core headers have following content. It does **not** claim to measure complete resume quality or ATS compatibility. See [`docs/contracts/resume-evaluation-v1.md`](docs/contracts/resume-evaluation-v1.md) for limits, aliases, scoring, evidence, warnings, and provenance.
 
+## Normalize resumes
+
+Normalize caller-extracted text deterministically:
+
+```bash
+cargo run --quiet -p career-cli -- \
+  resume normalize --input fixtures/resume/phase2/complete-normalization.input.json
+```
+
+The result includes source-grounded contact, summary, experience, education, skills, projects, and certifications; parser confidence; field statuses; warnings; and optional external-enrichment eligibility.
+
+If an opted-in agent or application obtains an exact external proposal, validate and merge it without a provider call:
+
+```bash
+cargo run --quiet -p career-cli -- \
+  resume enrich --input fixtures/resume/phase2/messy-unlabeled.enrichment-input.json
+```
+
+The enrichment result preserves the complete deterministic `baseline` and exposes accepted values only in `assisted_document`. Assisted fields never replace deterministic confidence or authoritative scoring input. See [`docs/contracts/resume-normalization-v1.md`](docs/contracts/resume-normalization-v1.md) for contracts, limits, grounding rules, host orchestration, provenance, and intentional Django differences.
+
 ## Reference implementation
 
 The sibling Django repository at `../resume-ai` is a read-only behavioral reference during the port. It contains mature deterministic normalization, scoring, confidence, matching, fixtures, and regression tests. `career-core` must not import it, execute it at runtime, or claim parity until Rust golden tests prove the behavior.
@@ -134,7 +164,7 @@ See [`.agents/reference-map.md`](.agents/reference-map.md) for the bounded refer
 The detailed, gated roadmap lives in [`.agents/phases.md`](.agents/phases.md). The broad order is:
 
 1. versioned contracts and a minimal resume-evaluation vertical slice
-2. deterministic resume normalization
+2. deterministic resume normalization and provider-neutral assisted validation
 3. explainable resume scoring parity
 4. job-description normalization and conservative matching
 5. hardened CLI and coding-agent distribution
@@ -143,7 +173,7 @@ The detailed, gated roadmap lives in [`.agents/phases.md`](.agents/phases.md). T
 
 ## Security and privacy
 
-The core is designed to process sensitive career documents locally. It must not add telemetry, remote fetching, hidden model calls, or payload logging. See [`SECURITY.md`](SECURITY.md) and [`.agents/architecture.md`](.agents/architecture.md).
+The core is designed to process sensitive career documents locally. It must not add telemetry, remote fetching, hidden model calls, or payload logging. External enrichment is explicit and host-controlled: the host owns consent, keys, prompts, and network calls, while the core validates only the submitted proposal. See [`SECURITY.md`](SECURITY.md) and [`.agents/architecture.md`](.agents/architecture.md).
 
 ## Contributing
 

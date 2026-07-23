@@ -59,6 +59,28 @@ jobs:
           python3 -m json.tool /tmp/resume-evaluation.json > /dev/null
           cmp /tmp/resume-evaluation.json fixtures/resume/phase1/complete-sections.expected.json
 
+          cargo run --quiet --locked -p career-cli -- \
+            resume normalize \
+            --input fixtures/resume/phase2/complete-normalization.input.json \
+            > /tmp/resume-normalization.json
+          python3 -m json.tool /tmp/resume-normalization.json > /dev/null
+          cmp /tmp/resume-normalization.json fixtures/resume/phase2/complete-normalization.expected.json
+
+          cargo run --quiet --locked -p career-cli -- \
+            resume enrich \
+            --input fixtures/resume/phase2/messy-unlabeled.enrichment-input.json \
+            > /tmp/resume-enrichment.json
+          python3 -m json.tool /tmp/resume-enrichment.json > /dev/null
+          cmp /tmp/resume-enrichment.json fixtures/resume/phase2/messy-unlabeled.enrichment-expected.json
+          python3 - <<'PY'
+          import json
+          with open('/tmp/resume-enrichment.json') as result_file:
+              result = json.load(result_file)
+          with open('fixtures/resume/phase2/messy-unlabeled.expected.json') as baseline_file:
+              baseline = json.load(baseline_file)
+          assert result['baseline'] == baseline
+          PY
+
           for schema in schemas/*.schema.json; do
             python3 -m json.tool "$schema" > /dev/null
           done

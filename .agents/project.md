@@ -28,7 +28,8 @@ The existing Django project at `../resume-ai` remains an independent application
 - evidence before recommendation
 - parser uncertainty is explicit
 - no hidden network behavior
-- no AI requirement in the core
+- no AI requirement or provider call in the core
+- optional assisted fields remain separate from deterministic truth
 - stable machine-readable contracts
 - minimal dependencies and boring implementation
 - false negatives are safer than fabricated equivalence
@@ -44,12 +45,14 @@ The existing Django project at `../resume-ai` remains an independent application
 - **match**: deterministic comparison between normalized resume and job evidence
 - **capability**: a versioned operation advertised as available or planned
 - **adapter**: CLI, Swift binding, or other boundary depending on the core
+- **external proposal**: bounded untrusted source-grounded structured data submitted by an opted-in host for core validation
+- **assisted document**: a separately labeled view containing accepted external values without replacing the deterministic baseline
 
 ## Non-goals
 
 Until a phase explicitly changes them:
 
-- LLM prompts or provider clients
+- LLM prompts or provider clients inside the root core library
 - web APIs or hosted services
 - databases or user accounts
 - UI frameworks
@@ -63,4 +66,4 @@ Until a phase explicitly changes them:
 
 ## Success criteria for the first usable release
 
-A coding agent or local program can submit bounded plain-text resume and job inputs, receive versioned deterministic JSON with scores/evidence/warnings, reproduce the same output, and understand every active limitation without network access.
+A coding agent or local program can submit bounded plain-text resume and job inputs, receive versioned deterministic JSON with scores/evidence/warnings, reproduce the same output, and understand every active limitation without network access. An opted-in host may additionally submit an external proposal for deterministic grounding validation while retaining the unchanged local baseline.

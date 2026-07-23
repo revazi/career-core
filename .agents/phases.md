@@ -82,7 +82,7 @@ Deliver the first useful deterministic operation through the library and CLI wit
 
 ### Goal
 
-Produce a bounded structured resume representation with transparent confidence and provenance.
+Produce a bounded structured resume representation with transparent confidence and provenance, plus a provider-neutral boundary for optional source-grounded assistance.
 
 ### Scope
 
@@ -95,10 +95,16 @@ Produce a bounded structured resume representation with transparent confidence a
 - normalization metadata and warning contracts
 - fixture provenance and golden JSON
 - Unicode, malformed layout, prose-heavy, and sparse resume coverage
+- enrichment eligibility derived only from low deterministic confidence and empty core fields
+- versioned provider-neutral proposal, validation, merge, and provenance contracts
+- source-grounding validation for every proposed non-empty string
+- separate deterministic baseline and assisted document
+- `career resume normalize` and `career resume enrich` JSON CLI commands
 
 ### Out of scope
 
-- LLM fallback normalization
+- LLM/provider calls, prompt construction, API keys, or network orchestration inside the core or universal CLI
+- allowing assisted fields to alter authoritative confidence or scoring
 - OCR
 - arbitrary document conversion
 - format/layout reconstruction
@@ -115,8 +121,11 @@ Produce a bounded structured resume representation with transparent confidence a
 - every extracted value is traceable to source text or explicit deterministic transformation
 - fallback behavior never overwrites stronger parser output
 - confidence remains inspectable and does not become certainty through fallback
-- all lists, strings, evidence, and metadata are bounded
-- golden fixtures cover clean, messy, sparse, and adversarial text
+- all lists, strings, evidence, metadata, and external proposals are bounded
+- non-target, unsupported, malformed, or ungrounded proposed values are rejected without payload-bearing errors
+- assisted merging fills only eligible empty fields and preserves the byte-equivalent deterministic baseline
+- provider failure can be isolated by a host without losing deterministic output
+- golden fixtures cover clean, messy, sparse, adversarial, and source-grounded assisted cases
 
 ## Phase 3 — Explainable resume evaluation parity
 
@@ -213,7 +222,7 @@ Make the deterministic engine dependable from any coding-agent harness through d
 ### Out of scope
 
 - allowing agents to mutate source resumes automatically
-- hidden prompts or model-provider integration
+- hidden prompts or built-in model-provider integration
 - remote execution service
 - MCP unless a documented consumer cannot use CLI/stdin
 

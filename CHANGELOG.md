@@ -17,3 +17,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Bounded deterministic resume section-coverage evaluation with exact header aliases, evidence, and uncertainty warnings.
 - `career resume evaluate` with file/stdin input, JSON/text output, and documented exit statuses.
 - Synthetic reviewed golden fixtures and public JSON schemas for the Phase 1 vertical slice.
+- Versioned deterministic resume normalization with source spans, confidence signals, field statuses, warnings, conservative fallbacks, and bounded structured facts.
+- Provider-neutral external proposal contracts with strict source-grounding validation, empty-target-only merging, preserved deterministic baselines, and field provenance.
+- `career resume normalize` and `career resume enrich` with file/stdin input and JSON/text output.
+- Phase 2 schemas and synthetic clean, messy, assisted, Unicode, sparse, and adversarial regression coverage.

@@ -7,7 +7,10 @@ use std::process::ExitCode;
 
 use career_core::{
     Capabilities, CapabilityStatus, ERROR_SCHEMA_VERSION, ResumeDetectionStatusV1,
-    ResumeEvaluationErrorV1, ResumeEvaluationV1, ResumeInputV1, capabilities, evaluate_resume,
+    ResumeEnrichmentInputV1, ResumeEnrichmentMergeStatusV1, ResumeEnrichmentResultV1,
+    ResumeEvaluationErrorV1, ResumeEvaluationV1, ResumeFieldDetectionStatusV1, ResumeInputV1,
+    ResumeNormalizationV1, ResumeParseConfidenceLabelV1, apply_resume_enrichment, capabilities,
+    evaluate_resume, normalize_resume,
 };
 use clap::{Parser, Subcommand, ValueEnum, error::ErrorKind};
 use serde_json::json;
@@ -37,7 +40,7 @@ enum Command {
         #[arg(long, value_enum, default_value_t = OutputFormat::Json)]
         format: OutputFormat,
     },
-    /// Evaluate resume input.
+    /// Evaluate, normalize, or enrich resume input.
     Resume {
         #[command(subcommand)]
         command: ResumeCommand,
@@ -49,6 +52,24 @@ enum ResumeCommand {
     /// Evaluate recognized core-section coverage from versioned JSON input.
     Evaluate {
         /// Read input JSON from this path, or use `-` for stdin.
+        #[arg(long)]
+        input: PathBuf,
+        /// Select machine-readable JSON or concise human-readable text.
+        #[arg(long, value_enum, default_value_t = OutputFormat::Json)]
+        format: OutputFormat,
+    },
+    /// Normalize bounded resume text into deterministic source-grounded facts.
+    Normalize {
+        /// Read career.resume_input.v1 JSON from this path, or use `-` for stdin.
+        #[arg(long)]
+        input: PathBuf,
+        /// Select machine-readable JSON or concise human-readable text.
+        #[arg(long, value_enum, default_value_t = OutputFormat::Json)]
+        format: OutputFormat,
+    },
+    /// Validate and merge an explicit external proposal without making a network request.
+    Enrich {
+        /// Read career.resume_enrichment_input.v1 JSON from this path, or use `-` for stdin.
         #[arg(long)]
         input: PathBuf,
         /// Select machine-readable JSON or concise human-readable text.
@@ -104,11 +125,11 @@ impl CliFailure {
         }
     }
 
-    fn invalid_json(error: &serde_json::Error) -> Self {
+    fn invalid_json(error: &serde_json::Error, expected_contract: &str) -> Self {
         Self::Adapter {
             code: "invalid_json",
             message: format!(
-                "Resume input must be valid career.resume_input.v1 JSON (line {}, column {}).",
+                "Input must be valid {expected_contract} JSON (line {}, column {}).",
                 error.line(),
                 error.column()
             ),
@@ -225,9 +246,11 @@ impl Cli {
     fn output_format(&self) -> OutputFormat {
         match &self.command {
             Command::Capabilities { format } => *format,
-            Command::Resume {
-                command: ResumeCommand::Evaluate { format, .. },
-            } => *format,
+            Command::Resume { command } => match command {
+                ResumeCommand::Evaluate { format, .. }
+                | ResumeCommand::Normalize { format, .. }
+                | ResumeCommand::Enrich { format, .. } => *format,
+            },
         }
     }
 }
@@ -250,11 +273,38 @@ fn run(
         } => {
             let input_bytes = read_input(&input, standard_input)?;
             let resume_input = serde_json::from_slice::<ResumeInputV1>(&input_bytes)
-                .map_err(|error| CliFailure::invalid_json(&error))?;
+                .map_err(|error| CliFailure::invalid_json(&error, "career.resume_input.v1"))?;
             let evaluation = evaluate_resume(&resume_input).map_err(CliFailure::Evaluation)?;
             match format {
                 OutputFormat::Json => write_json(output, &evaluation),
                 OutputFormat::Text => write_resume_evaluation_text(output, &evaluation),
+            }
+        }
+        Command::Resume {
+            command: ResumeCommand::Normalize { input, format },
+        } => {
+            let input_bytes = read_input(&input, standard_input)?;
+            let resume_input = serde_json::from_slice::<ResumeInputV1>(&input_bytes)
+                .map_err(|error| CliFailure::invalid_json(&error, "career.resume_input.v1"))?;
+            let normalization = normalize_resume(&resume_input).map_err(CliFailure::Evaluation)?;
+            match format {
+                OutputFormat::Json => write_json(output, &normalization),
+                OutputFormat::Text => write_resume_normalization_text(output, &normalization),
+            }
+        }
+        Command::Resume {
+            command: ResumeCommand::Enrich { input, format },
+        } => {
+            let input_bytes = read_input(&input, standard_input)?;
+            let enrichment_input = serde_json::from_slice::<ResumeEnrichmentInputV1>(&input_bytes)
+                .map_err(|error| {
+                    CliFailure::invalid_json(&error, "career.resume_enrichment_input.v1")
+                })?;
+            let result =
+                apply_resume_enrichment(&enrichment_input).map_err(CliFailure::Evaluation)?;
+            match format {
+                OutputFormat::Json => write_json(output, &result),
+                OutputFormat::Text => write_resume_enrichment_text(output, &result),
             }
         }
     }
@@ -358,6 +408,97 @@ fn write_resume_evaluation_text(
     Ok(())
 }
 
+fn write_resume_normalization_text(
+    output: &mut impl Write,
+    normalization: &ResumeNormalizationV1,
+) -> Result<(), CliFailure> {
+    let confidence = match normalization.confidence.label {
+        ResumeParseConfidenceLabelV1::Unknown => "unknown",
+        ResumeParseConfidenceLabelV1::Low => "low",
+        ResumeParseConfidenceLabelV1::Medium => "medium",
+        ResumeParseConfidenceLabelV1::High => "high",
+    };
+    writeln!(
+        output,
+        "Resume normalization: {confidence} confidence ({}/100)",
+        normalization.confidence.score
+    )
+    .map_err(|_| CliFailure::output_failure())?;
+    for field in &normalization.field_statuses {
+        let status = match field.status {
+            ResumeFieldDetectionStatusV1::Detected => "detected",
+            ResumeFieldDetectionStatusV1::LikelyMissing => "likely missing",
+            ResumeFieldDetectionStatusV1::NotDetected => "not detected",
+        };
+        writeln!(output, "  - {}: {status}", field.field.label())
+            .map_err(|_| CliFailure::output_failure())?;
+    }
+    writeln!(
+        output,
+        "External enrichment: {} ({})",
+        normalization.enrichment_request.status.label(),
+        normalization.enrichment_request.reason.label()
+    )
+    .map_err(|_| CliFailure::output_failure())?;
+    if !normalization.enrichment_request.target_sections.is_empty() {
+        writeln!(
+            output,
+            "  targets: {}",
+            normalization
+                .enrichment_request
+                .target_sections
+                .iter()
+                .map(|section| section.label())
+                .collect::<Vec<_>>()
+                .join(", ")
+        )
+        .map_err(|_| CliFailure::output_failure())?;
+    }
+    for warning in &normalization.warnings {
+        writeln!(output, "Warning: {}", warning.message)
+            .map_err(|_| CliFailure::output_failure())?;
+    }
+    Ok(())
+}
+
+fn write_resume_enrichment_text(
+    output: &mut impl Write,
+    result: &ResumeEnrichmentResultV1,
+) -> Result<(), CliFailure> {
+    let status = match result.merge.status {
+        ResumeEnrichmentMergeStatusV1::Applied => "applied",
+        ResumeEnrichmentMergeStatusV1::NotApplied => "not applied",
+    };
+    writeln!(output, "Resume external enrichment: {status}")
+        .map_err(|_| CliFailure::output_failure())?;
+    writeln!(
+        output,
+        "Deterministic confidence preserved: {} ({}/100)",
+        match result.baseline.confidence.label {
+            ResumeParseConfidenceLabelV1::Unknown => "unknown",
+            ResumeParseConfidenceLabelV1::Low => "low",
+            ResumeParseConfidenceLabelV1::Medium => "medium",
+            ResumeParseConfidenceLabelV1::High => "high",
+        },
+        result.baseline.confidence.score
+    )
+    .map_err(|_| CliFailure::output_failure())?;
+    for field in &result.merge.field_provenance {
+        writeln!(
+            output,
+            "  - {}: {}",
+            field.field.label(),
+            field.source.label()
+        )
+        .map_err(|_| CliFailure::output_failure())?;
+    }
+    for warning in &result.warnings {
+        writeln!(output, "Warning: {}", warning.message)
+            .map_err(|_| CliFailure::output_failure())?;
+    }
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -370,6 +511,8 @@ mod tests {
 
         assert!(output.contains("core.capabilities [available]"));
         assert!(output.contains("resume.evaluate [available]"));
+        assert!(output.contains("resume.normalize [available]"));
+        assert!(output.contains("resume.enrich [available]"));
         assert!(output.contains("job.match [planned]"));
         assert!(output.contains("network requests: false"));
     }

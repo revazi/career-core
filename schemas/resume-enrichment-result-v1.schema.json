@@ -1,0 +1,106 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/revazi/career-core/main/schemas/resume-enrichment-result-v1.schema.json",
+  "title": "career-core resume enrichment result v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "policy_version", "core_version", "baseline", "assisted_document", "merge", "warnings"],
+  "properties": {
+    "schema_version": {
+      "const": "career.resume_enrichment_result.v1"
+    },
+    "policy_version": {
+      "const": "resume_normalization_enrichment_v1"
+    },
+    "core_version": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "baseline": {
+      "$ref": "resume-normalization-v1.schema.json"
+    },
+    "assisted_document": {
+      "$ref": "resume-normalization-v1.schema.json#/$defs/normalizedDocument"
+    },
+    "merge": {
+      "$ref": "#/$defs/merge"
+    },
+    "warnings": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": {
+        "$ref": "#/$defs/warning"
+      }
+    }
+  },
+  "$defs": {
+    "coreField": {
+      "enum": ["summary", "experience", "education", "skills"]
+    },
+    "fieldProvenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["field", "source"],
+      "properties": {
+        "field": {
+          "$ref": "#/$defs/coreField"
+        },
+        "source": {
+          "enum": ["deterministic", "external_source_grounded_proposal", "not_available"]
+        }
+      }
+    },
+    "merge": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "target_sections", "applied_fields", "field_provenance"],
+      "properties": {
+        "status": {
+          "enum": ["applied", "not_applied"]
+        },
+        "target_sections": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 4,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/coreField"
+          }
+        },
+        "applied_fields": {
+          "type": "array",
+          "maxItems": 4,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/coreField"
+          }
+        },
+        "field_provenance": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "items": {
+            "$ref": "#/$defs/fieldProvenance"
+          }
+        }
+      }
+    },
+    "warning": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "message"],
+      "properties": {
+        "code": {
+          "enum": ["assisted_fields_non_authoritative", "deterministic_confidence_preserved"]
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 400
+        }
+      }
+    }
+  }
+}

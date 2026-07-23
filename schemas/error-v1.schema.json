@@ -22,7 +22,17 @@
         "source_line_count_exceeded",
         "source_line_too_long",
         "document_id_empty",
-        "document_id_too_long"
+        "document_id_too_long",
+        "unsupported_enrichment_input_schema_version",
+        "unsupported_enrichment_proposal_schema_version",
+        "enrichment_not_eligible",
+        "enrichment_proposal_too_large",
+        "enrichment_non_target_populated",
+        "enrichment_field_empty",
+        "enrichment_field_too_long",
+        "enrichment_list_too_long",
+        "enrichment_value_not_grounded",
+        "enrichment_entry_invalid"
       ]
     },
     "message": {
