@@ -49,7 +49,7 @@ artifact="career-v${version}-${target}"
 cargo build --release --locked -p career-cli --target "$target"
 mkdir -p "dist/$artifact"
 cp "target/$target/release/career" "dist/$artifact/career"
-cp LICENSE-MIT LICENSE-APACHE README.md "dist/$artifact/"
+cp LICENSE-MIT LICENSE-APACHE README.md THIRD_PARTY_NOTICES.md "dist/$artifact/"
 ```
 
 Use `career.exe` and a ZIP archive if a future Windows target is separately approved. Do not cross-compile an artifact and label it supported without executing CLI smoke tests on that platform.
@@ -72,6 +72,17 @@ tar -tzf "dist/${artifact}.tar.gz"
 ```
 
 Record the runner image, Rust version, target triple, source commit, and exact command in the release notes. Bit-for-bit reproducibility across different archive implementations is not currently claimed.
+
+### Swift artifact preparation
+
+If Swift/XCFramework publication is separately approved, run on a reviewed Apple Silicon macOS runner with the documented Xcode and Rust toolchains:
+
+```bash
+rustup target add aarch64-apple-ios aarch64-apple-ios-sim
+scripts/verify-swift.sh
+```
+
+Inspect `CareerCoreFFI.xcframework/Info.plist`, verify exactly the approved slices, regenerate checked-in Swift source without a diff, and include `THIRD_PARTY_NOTICES.md`. Do not upload the ignored local XCFramework directly from an unreviewed working tree. Define the package URL, archive format, checksum, tag alignment, signing policy, and supported deployment targets in the separately approved release plan.
 
 ## 4. Generate and verify checksums
 

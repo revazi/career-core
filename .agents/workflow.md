@@ -67,6 +67,15 @@ git diff --check
 
 If the CLI contract changes, also invoke every changed command in canonical, compact, and text modes where supported; parse JSON with an independent parser. For distribution changes, install the CLI into a temporary root from a clean clone and run capability/schema discovery through the installed binary.
 
+For Swift-boundary changes on macOS:
+
+```bash
+rustup target add aarch64-apple-ios aarch64-apple-ios-sim
+scripts/verify-swift.sh
+```
+
+Regeneration must leave checked-in `CareerCore.swift` byte-equivalent. Inspect XCFramework slices, validate checksums, run all Swift tests, and build generic iOS-device and iOS-simulator destinations without signing.
+
 ## Dependency policy
 
 A new dependency requires all of:
@@ -77,7 +86,7 @@ A new dependency requires all of:
 - no simpler standard-library or existing-dependency solution
 - placement in the narrowest package that needs it
 
-Core dependencies face a higher bar than adapter dependencies. No dependency may add telemetry or implicit network behavior.
+Core dependencies face a higher bar than adapter dependencies. No dependency may add telemetry or implicit network behavior. FFI dependencies additionally require MSRV, generated-code, unsafe-boundary, artifact-size, and license review; record distributable third-party notices before publication.
 
 ## Fixture policy
 

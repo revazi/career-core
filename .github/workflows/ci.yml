@@ -17,7 +17,7 @@ jobs:
   rust:
     name: Rust (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 15
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
@@ -137,3 +137,9 @@ jobs:
           for schema in schemas/*.schema.json; do
             python3 -m json.tool "$schema" > /dev/null
           done
+
+      - name: Verify Swift binding and Apple artifacts
+        if: runner.os == 'macOS'
+        run: |
+          rustup target add aarch64-apple-ios aarch64-apple-ios-sim
+          scripts/verify-swift.sh

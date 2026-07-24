@@ -57,3 +57,7 @@ Phase 4A exposed bounded `career.job_input.v1`, `career.job_normalization.v1`, a
 ## D-014 — CLI schemas are reviewed, embedded, and offline
 
 The CLI embeds the repository's reviewed Draft 2020-12 schema files and exposes additive `schema list` and `schema export` commands. It does not infer schemas from Clap or Rust types at runtime and does not search the filesystem or network. Existing `--format json` remains canonical pretty output; `json-pretty` and one-line `json-compact` are additive spellings. Publishing binaries or packages remains a separate approval gate.
+
+## D-015 — Swift uses a narrow pinned UniFFI JSON facade
+
+`career-swift` depends inward on `career-core` and exposes each stable operation as owned versioned JSON input/output plus typed Swift errors. The app may decode those contracts into app-owned `Codable` models; the FFI ABI does not mirror all internal Rust records. Exact UniFFI `0.30.0` is pinned because `0.31+` requires Rust 1.87, above the project MSRV. No handwritten unsafe code is allowed; generated FFI behavior is isolated to the adapter. XCFramework publication, signing, SwiftUI, persistence, and provider behavior remain outside this boundary.

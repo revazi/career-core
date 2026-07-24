@@ -4,7 +4,7 @@
 
 The project is intentionally **not an AI service**. The core performs no network requests and has no LLM dependency. Native applications, command-line tools, and coding-agent integrations can use its versioned evidence and scoring contracts. An opted-in host may submit an external source-grounded proposal for deterministic validation, but provider calls remain outside the authoritative core.
 
-> **Status:** Phase 5 is complete. Deterministic resume/job operations, additive compact output, offline schema discovery, and the source-installation path are available. Release publication and Swift bindings remain separately gated.
+> **Status:** Phase 6 Swift bindings are in development. Deterministic resume/job operations, compact output, offline schema discovery, source installation, and the reviewed local Swift binding boundary are available. Release publication and the SwiftUI product application remain separately gated.
 
 ## Goals
 
@@ -21,6 +21,8 @@ The project is intentionally **not an AI service**. The core performs no network
 .
 ├── src/                         career-core library package
 ├── crates/career-cli/           `career` command-line adapter
+├── crates/career-swift/         narrow UniFFI adapter and pinned bindgen tool
+├── swift/CareerCoreSwift/       local Swift Package wrapper and smoke tests
 ├── schemas/                     versioned public JSON schemas
 ├── fixtures/                    synthetic reviewed golden contracts
 ├── docs/contracts/              public scoring and limit rules
@@ -220,6 +222,18 @@ cargo run --quiet -p career-cli -- \
 
 Low/unknown normalization bounds every category to 50–75, suppresses broad inferred gaps, and makes guidance provisional. Related technologies such as Kubernetes/Docker, PostgreSQL/MySQL, React/Angular, AWS/Azure, and Django/Flask remain non-equivalent. Matching never consumes assisted resume fields, invokes a provider, fetches a URL, or predicts a hiring outcome. See [`docs/contracts/job-match-v1.md`](docs/contracts/job-match-v1.md) for the full scoring, equivalence, confidence, evidence, recommendation, bounds, and reference-parity policy.
 
+## Swift binding boundary
+
+Build the local Apple XCFramework and run exact Rust/Swift parity tests:
+
+```bash
+rustup target add aarch64-apple-ios aarch64-apple-ios-sim
+scripts/build-swift-xcframework.sh
+scripts/verify-swift.sh
+```
+
+`CareerCoreSwift` exposes the stable operations as versioned JSON-in/JSON-out functions with typed Swift errors. The XCFramework contains Apple Silicon macOS, iOS-device, and Apple Silicon iOS-simulator slices; artifacts remain ignored and unpublished. This package is a binding boundary, not the SwiftUI product or persistence layer. See [`docs/swift-bindings.md`](docs/swift-bindings.md) and [`swift/CareerCoreSwift/README.md`](swift/CareerCoreSwift/README.md).
+
 ## Reference implementation
 
 The sibling Django repository at `../resume-ai` is a read-only behavioral reference during the port. It contains mature deterministic normalization, scoring, confidence, matching, fixtures, and regression tests. `career-core` must not import it, execute it at runtime, or claim parity until Rust golden tests prove the behavior.
@@ -254,3 +268,5 @@ Licensed under either of:
 - MIT License ([`LICENSE-MIT`](LICENSE-MIT))
 
 at your option.
+
+The optional Swift adapter uses pinned MPL-2.0 UniFFI components documented in [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).

@@ -42,7 +42,7 @@ Pi loads this `AGENTS.md` automatically. The detailed `.agents/*.md` files are d
 - Matching is conservative; prefer a false negative to an unsafe equivalence.
 - Public JSON contracts are versioned and stable within a major version.
 - Invalid user input returns typed errors; it must not panic.
-- Production library code forbids `unsafe` unless a future phase explicitly approves and documents it.
+- Root production library code forbids `unsafe`. Phase 6 permits only generated UniFFI FFI behavior inside `career-swift`; project-authored Rust must contain no unsafe block and the adapter denies unsafe source.
 - Output ordering must be stable so fixtures and agent consumers are reproducible.
 - Logs and errors must not include full resume or job-description payloads.
 
@@ -50,7 +50,8 @@ Pi loads this `AGENTS.md` automatically. The detailed `.agents/*.md` files are d
 
 - Root package `career-core`: pure domain models and deterministic algorithms.
 - `crates/career-cli`: argument parsing, files/stdin, JSON serialization, exit codes, and human output.
-- Future Swift, Python, or agent adapters depend on `career-core`; the core never depends on adapters.
+- `crates/career-swift`: pinned UniFFI JSON facade, Swift error mapping, and local binding generation only.
+- Future Python or agent adapters depend on `career-core`; the core never depends on adapters.
 - Keep CLI-only dependencies out of the root library package.
 
 ## Django reference repository
@@ -102,6 +103,12 @@ cargo run --quiet -p career-cli -- job normalize \
   --input fixtures/job/phase4a/complete-normalization.input.json
 cargo run --quiet -p career-cli -- job match \
   --input fixtures/job/phase4b/complete-match.input.json
+```
+
+On macOS with Xcode and the reviewed Rust Apple targets installed, also run:
+
+```bash
+scripts/verify-swift.sh
 ```
 
 Also run `git diff --check`. If a public schema changes, validate examples and explain compatibility impact.

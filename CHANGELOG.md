@@ -30,3 +30,5 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Additive `json-pretty` and one-line `json-compact` output modes while preserving canonical `json` output.
 - Offline `career schema list` and `career schema export` commands backed by reviewed schemas embedded in the CLI binary.
 - `career.schema_catalog.v1`, source-install guidance, shell-safe coding-agent examples, Linux/macOS compatibility CI, and a checksum-based release-preparation checklist.
+- Pinned UniFFI `0.30.0` `career-swift` adapter with JSON-in/JSON-out functions for every stable deterministic operation and typed Swift errors.
+- Local `CareerCoreSwift` package, Apple Silicon macOS/iOS/iOS-simulator XCFramework build, exact Swift/Rust fixture parity, smoke executable, and per-file artifact checksums.

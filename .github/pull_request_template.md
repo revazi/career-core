@@ -28,6 +28,7 @@ List exact commands and results.
 - [ ] `cargo run --quiet -p career-cli -- job normalize --input fixtures/job/phase4a/complete-normalization.input.json`
 - [ ] `cargo run --quiet -p career-cli -- job match --input fixtures/job/phase4b/complete-match.input.json`
 - [ ] `git diff --check`
+- [ ] Swift-boundary changes only: `scripts/verify-swift.sh`
 
 ## Security and privacy
 
