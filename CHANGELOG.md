@@ -27,3 +27,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - `career job normalize` with file/stdin input, JSON/text output, bounded synthetic fixtures, and selected deterministic `job_description_normalization_v6` fixture parity.
 - Versioned `career.job_match_input.v1` and `career.job_match.v1` contracts with six weighted categories, source/derived evidence, confidence bounds, strengths, gaps, and deterministic recommendation gates.
 - `career job match` with baseline-only normalization, normalized exact and reviewed same-technology aliases, close-non-equivalent/vague/weak fixtures, and selected `job_match_deterministic_v2` scoring parity.
+- Additive `json-pretty` and one-line `json-compact` output modes while preserving canonical `json` output.
+- Offline `career schema list` and `career schema export` commands backed by reviewed schemas embedded in the CLI binary.
+- `career.schema_catalog.v1`, source-install guidance, shell-safe coding-agent examples, Linux/macOS compatibility CI, and a checksum-based release-preparation checklist.

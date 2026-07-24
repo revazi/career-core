@@ -48,8 +48,12 @@ An agent or application may automatically attempt external normalization enrichm
 
 ## D-012 — Phase 4 stabilizes job normalization before matching
 
-Phase 4A exposes bounded `career.job_input.v1`, `career.job_normalization.v1`, and `career job normalize` without matching, URL fetching, or provider fallback. Phase 4B may consume the reviewed deterministic job-normalization contract only after 4A merges. `job.match` remains planned until its independent scoring, equivalence, evidence, uncertainty, and recommendation gates pass.
+Phase 4A exposed bounded `career.job_input.v1`, `career.job_normalization.v1`, and `career job normalize` without matching, URL fetching, or provider fallback. Phase 4B consumed the reviewed deterministic job-normalization contract only after 4A merged. `job.match` remained planned until its independent scoring, equivalence, evidence, uncertainty, and recommendation gates passed.
 
 ## D-013 — Matching reruns deterministic baselines and gates recommendations
 
 `career job match` accepts original `career.resume_input.v1` and `career.job_input.v1` documents inside `career.job_match_input.v1`. The core reruns both deterministic normalizers, so assisted or caller-forged normalized values cannot enter authoritative matching. Skill matches use normalized equality or the reviewed same-technology alias policy only. Low/unknown confidence or truncation bounds category scores and makes gaps provisional. Recommendation labels are generated from deterministic score, core-category, explicit-gap, and unassessed-qualification gates and cannot be upgraded by external prose.
+
+## D-014 — CLI schemas are reviewed, embedded, and offline
+
+The CLI embeds the repository's reviewed Draft 2020-12 schema files and exposes additive `schema list` and `schema export` commands. It does not infer schemas from Clap or Rust types at runtime and does not search the filesystem or network. Existing `--format json` remains canonical pretty output; `json-pretty` and one-line `json-compact` are additive spellings. Publishing binaries or packages remains a separate approval gate.

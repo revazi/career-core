@@ -1,99 +1,88 @@
 # Current phase
 
-## Most recently completed sub-phase
+## Most recently completed phase
 
-**Phase 4B — Conservative deterministic matching**
+**Phase 5 — Agent-ready CLI and distribution**
 
 ## Status
 
-Complete. PR review and merge are pending. Phase 5 distribution work has not started.
+Complete. PR review and merge are pending. Phase 4B was merged through PR `#6` as `2794884`. Phase 6 Swift bindings and Phase 7 optional adapters have not started.
 
 ## Approved scope
 
-- bounded `career.job_match_input.v1` containing original resume and job inputs
-- baseline-only `career.job_match.v1`
-- six deterministic categories with fixed 30/25/15/10/10/10 weights
-- integer round-half-to-even aggregation
-- normalized exact and reviewed same-technology skill equivalence only
-- confidence-aware raw/published scores and missing-item statuses
-- bounded source/derived evidence, strengths, gaps, and metrics
-- deterministic recommendation thresholds and blocker gates
-- `career job match --input <path|-> --format json|text`
-- public schemas, synthetic risky fixtures, reference projection, docs, agent guidance, and CI goldens
+- preserve the existing command hierarchy and operation semantics
+- explicit pretty JSON, compact JSON, and human-readable output modes
+- embedded offline schema discovery and export commands
+- stable stdout, stderr, input, and exit-code documentation
+- source-checkout and local `cargo install --path` instructions
+- shell-safe invocation guidance for Pi, Claude Code, Codex, and generic agents
+- Linux and macOS CLI compatibility verification
+- reproducible release-build and checksum checklist for future approved binaries
+- Agent Skill and public documentation updates
+- additive CLI integration tests and CI checks
 
 ## Explicitly out of scope
 
-- vacancy URL fetching or company research
-- embeddings, fuzzy similarity, transferable-skill inference, or LLM equivalence
-- provider calls, prompts, API keys, interpretation, merge, fallback, caching, or observability
-- accepting assisted or caller-supplied normalized documents as scoring input
-- persistence, application tracking, cover letters, or resume mutation
-- Swift bindings, SwiftUI, MCP, release binaries, or package-manager distribution
+- changing deterministic normalization, evaluation, analysis, or matching behavior
+- changing existing JSON result schemas or canonical default JSON output
+- publishing crates, creating a GitHub release, or uploading binaries without separate explicit approval
+- package-manager distribution
+- remote execution, telemetry, URL fetching, providers, prompts, or model calls
+- MCP, editor extensions, or provider-specific wrappers
+- persistence, databases, accounts, or application tracking
+- Swift bindings, XCFrameworks, Swift packages, or SwiftUI
 
-## Reference scope
+## Compatibility requirements
 
-Reference policies verified against `../resume-ai/docs/current-phase.md`:
+- existing `--format json` output remains the canonical pretty JSON used by reviewed goldens
+- all existing commands, flags, exit statuses, schemas, and byte-equivalent goldens remain valid
+- compact output is additive and contains exactly one JSON document on stdout
+- schema export is embedded in the installed binary and performs no filesystem or network discovery
+- machine modes write results only to stdout and bounded typed errors only to stderr
+- source payloads and supplied paths remain absent from diagnostics
 
-- `job_match_deterministic_v2`
-- `conservative_skill_equivalence_v1`
-- `job_match_recommendation_safety_v1`
+## Acceptance gate
 
-Primary read-only sources:
+- an agent can discover capabilities and available schemas without reading Rust internals
+- every operation accepts explicit files and stdin as already documented
+- every document/capability operation supports canonical pretty JSON, compact JSON, and text output; schema export remains JSON-only
+- schema catalog and exported schemas are valid Draft 2020-12 JSON
+- local source installation is documented and verified
+- Linux and macOS CI exercise the CLI process contract
+- release preparation is reproducible and checksum-based without publishing an artifact
+- Agent Skill and examples cover all available operations and preserve uncertainty rules
+- formatting, Clippy, tests, locked build, rustdoc, schemas, prior goldens, clean clone, security checks, and GitHub Actions pass
 
-- `accounts/services/job_match_scoring.py`
-- `accounts/services/job_match_skill_equivalence.py`
-- `accounts/services/job_match_recommendation.py`
-- `accounts/services/job_match_prompt_context.py` for bounds only
-- `accounts/services/job_match_response.py` for evidence-shape ideas only
-- `accounts/test_job_match_skill_equivalence.py`
-- `accounts/test_job_match_recommendation.py`
-- `accounts/test_job_match_fixtures.py`
-- `accounts/test_fixtures/job_match/`
-- matching-focused tests in `accounts/test_services.py`
+## Implemented
 
-LLM interpretation, validation, provider fallback, merge, prompts, cache, observability, Django models/APIs, credits, and persistence are excluded.
+- Added explicit `json-pretty` and one-line `json-compact` modes without changing default canonical `json` bytes.
+- Added `career schema list` with `career.schema_catalog.v1` JSON/text output.
+- Added `career schema export --id <contract-id>` with exact canonical or compact embedded schema output.
+- Embedded all 14 reviewed Draft 2020-12 schemas without runtime generation, path lookup, or network access.
+- Added process tests covering every operation in compact mode, exact schema bytes, schema IDs, pretty compatibility, machine-clean errors, and invalid schema IDs.
+- Added source installation, CLI contract, shell-safe agent, distribution, checksum, and release-preparation documentation.
+- Updated the Agent Skill, handbook, changelog, security policy, contribution guidance, and PR checklist.
+- Expanded CI to Linux and macOS, source installation, installed-binary schema export, schema catalog checks, and all prior goldens.
+- Added no dependencies and changed no deterministic core algorithm or existing result schema.
 
-## Implemented so far
+## Verification
 
-- Added typed match input, category, item, metric, confidence, finding, recommendation, warning, and result contracts.
-- Matching independently reruns `resume_normalization_v1` and `job_normalization_v1`; assisted documents cannot enter scores.
-- Ported all six reference category rules and fixed weights with integer half-even rounding.
-- Added exact normalized skill matching plus all reviewed conservative alias groups and explicit version handling.
-- Added complete-word domain signals to avoid Django substring false positives such as `ui` inside `building` or `requirements`.
-- Added canonical skill aliases to domain and keyword membership without fuzzy expansion.
-- Added uncertainty bounds of 50–75 for low/unknown resume or job confidence and normalization truncation.
-- Added stable confirmed, partial, likely-missing, and unverified item statuses.
-- Added bounded top strengths/gaps and suppression of broad inferred gaps for uncertain jobs.
-- Added deterministic recommendation thresholds, a conservative 50-point apply-after core floor, and required-skill/core-evidence/unassessed-qualification blockers.
-- Added `career job match` JSON/text CLI paths, a bounded 1,048,576-byte composite envelope, and marked `job.match` available.
-- Added strict input/output schemas, complete/vague full goldens, and compact alias/adjacent/weak regression projections.
-- Added an executed Django reference projection for the complete fixture and explicit intentional differences.
-- Added focused core, CLI, schema, parity, determinism, safety, limits, and privacy tests.
+- formatting and Clippy pass with warnings denied
+- 107 Rust tests pass with all features and the lockfile
+- locked workspace build and rustdoc with warnings denied pass
+- every prior canonical CLI golden remains byte-equivalent
+- every machine operation emits independently parsed one-line compact JSON
+- all 14 exported canonical schemas are byte-equivalent to reviewed repository files
+- all schemas and `career.schema_catalog.v1` pass Draft 2020-12 validation
+- local and clean-clone `cargo install --path crates/career-cli --locked` succeed; installed binaries run capability and schema discovery outside the checkout
+- CLI help, JSON/text schema catalog, compact errors, input limits, and exit statuses pass
+- CI YAML and relative Markdown links parse; credential and line-ending scans pass
+- a local native release-preparation smoke builds, stages licenses/docs, executes the binary, creates an archive, and verifies its SHA-256 manifest without publishing it
+- clean-clone formatting, Clippy, 107 tests, locked build, rustdoc, installed-binary checks, all prior goldens, and canonical schema export pass
+- Fallow changed-code and security checks report no findings; Fallow does not analyze Rust source
+- `git diff --check` passes
+- GitHub Actions run `30076241222` passes on Linux and macOS, including Rust 1.85, 107 tests per platform, source installation, installed-binary schema export, compact output, and every canonical golden
 
-## Verification completed locally
+## Deferred gate
 
-- `cargo fmt --all --check`
-- `cargo clippy --workspace --all-targets --all-features -- -D warnings`
-- `cargo test --workspace --all-features --locked` — 103 tests passed
-- `cargo build --workspace --all-features --locked`
-- rustdoc with warnings denied
-- capability JSON/text checks expose `job.match` as available
-- all prior resume and job-normalization JSON goldens remain byte-equivalent
-- complete and vague job-match JSON goldens remain byte-equivalent; three compact risky projections pass; vague-job text output is provisional and suppresses top gaps
-- all schemas pass Draft 2020-12 metaschema validation
-- all five match inputs, both full match outputs, and representative prior outputs pass `check-jsonschema`
-- selected complete fixture matches the executed Django projection for all six raw/category scores, overall score, weights, exact skill details, experience metrics, seniority, keywords, and education/certification signals
-- the compact reference projection regenerates byte-for-byte from the Django scorer
-- all 17 equivalence groups and 43 aliases exactly match `conservative_skill_equivalence_v1`
-- exact aliases, explicit versions, close non-equivalents, vague jobs, weak resumes, partial core evidence, unassessed qualifications, Unicode, prompt-like text, limits, and nested typed errors are covered
-- dependency tree contains no network, provider, TLS, async-runtime, or telemetry stack
-- relative Markdown links, README capability JSON, CI YAML, and Agent Skill checks pass
-- credential-pattern scan reports no findings
-- Fallow changed-code and security checks report no findings; Fallow does not currently analyze Rust source for health metrics
-- `git diff --check`
-- clean-clone formatting, Clippy, 103-test, locked-build, rustdoc, capabilities, all prior goldens, and complete/vague match goldens pass
-- GitHub Actions PR run `30021879854` — passed, including Rust 1.85 compatibility, 103 tests, locked build, and all CLI golden checks
-
-## Next phase after approval
-
-Phase 5 will harden agent-facing CLI/distribution only after Phase 4B is fully verified, reviewed, merged, and separately approved.
+Actual release creation, binary upload, package-manager distribution, Swift bindings, and MCP each require separate approval after this phase's review and merge. Phase 6 may begin only after Phase 5 is reviewed, merged, synchronized to local `main`, and separately approved.

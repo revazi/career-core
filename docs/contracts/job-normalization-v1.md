@@ -7,7 +7,7 @@
 Invoke it with:
 
 ```bash
-career job normalize --input <path|-> [--format json|text]
+career job normalize --input <path|-> [--format json|json-pretty|json-compact|text]
 ```
 
 The operation accepts caller-supplied plain text only. It does not fetch vacancy URLs, open documents, call a provider, apply an external proposal, or perform resume-to-job matching. Matching is exposed separately through `career.job_match.v1`.

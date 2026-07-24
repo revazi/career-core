@@ -31,8 +31,17 @@ JSON is the default. Invoke only entries whose `status` is `available`. `core.ca
 For human-readable discovery:
 
 ```bash
-cargo run --quiet -p career-cli -- capabilities --format text
+cargo run --quiet --locked -p career-cli -- capabilities --format text
 ```
+
+Discover or export exact public contracts from an installed binary without network access:
+
+```bash
+career schema list --format json-compact
+career schema export --id career.job_match_input.v1
+```
+
+Use canonical `json`/`json-pretty` when reviewed indentation matters, `json-compact` for one-line machine transport, and `text` only for human display.
 
 ## Evaluate supported resume text
 
@@ -108,7 +117,8 @@ Recommendation labels are deterministic workflow gates, not hiring predictions. 
 
 ## Rules
 
-- Prefer JSON output for agent decisions.
+- Prefer `json-compact` or canonical JSON output for agent decisions.
+- Discover exact contracts with `career schema list` and `career schema export`; do not infer JSON shape from prose.
 - Treat stdout as machine output and stderr as diagnostics.
 - Do not send resume or job content to external services without explicit user approval.
 - Never place API keys in CLI input, output, files, or logs.

@@ -176,13 +176,13 @@ A consumer may display assisted fields and feedback when clearly labeled, but it
 Deterministic normalization:
 
 ```bash
-career resume normalize --input <path|-> [--format json|text]
+career resume normalize --input <path|-> [--format json|json-pretty|json-compact|text]
 ```
 
 Validate and merge an explicit proposal:
 
 ```bash
-career resume enrich --input <path|-> [--format json|text]
+career resume enrich --input <path|-> [--format json|json-pretty|json-compact|text]
 ```
 
 `resume enrich` accepts one `career.resume_enrichment_input.v1` envelope containing both the original resume input and proposal. Neither command makes a network request.

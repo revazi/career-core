@@ -7,7 +7,7 @@
 This is an additive operation:
 
 ```bash
-career resume analyze --input <path|-> [--format json|text]
+career resume analyze --input <path|-> [--format json|json-pretty|json-compact|text]
 ```
 
 The earlier `career resume evaluate` command and `career.resume_evaluation.v1` section-coverage output remain unchanged. Callers must not substitute one contract for the other.

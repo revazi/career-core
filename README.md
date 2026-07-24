@@ -4,7 +4,7 @@
 
 The project is intentionally **not an AI service**. The core performs no network requests and has no LLM dependency. Native applications, command-line tools, and coding-agent integrations can use its versioned evidence and scoring contracts. An opted-in host may submit an external source-grounded proposal for deterministic validation, but provider calls remain outside the authoritative core.
 
-> **Status:** Phase 4 complete. Resume evaluation, normalization, analysis, deterministic job normalization, and conservative resume-to-job matching are available.
+> **Status:** Phase 5 is complete. Deterministic resume/job operations, additive compact output, offline schema discovery, and the source-installation path are available. Release publication and Swift bindings remain separately gated.
 
 ## Goals
 
@@ -44,6 +44,15 @@ cargo clippy --workspace --all-targets --all-features -- -D warnings
 cargo test --workspace --all-features
 cargo build --workspace --all-features --locked
 ```
+
+Install the local CLI from a reviewed checkout:
+
+```bash
+cargo install --path crates/career-cli --locked
+career capabilities --format json-compact
+```
+
+No release binaries or package-manager channels are published yet. See [`docs/distribution.md`](docs/distribution.md) for source installation and future checksum verification.
 
 ## Coding-agent discovery
 
@@ -109,7 +118,16 @@ For concise human output:
 cargo run --quiet -p career-cli -- capabilities --format text
 ```
 
-The project includes an Agent Skills-compatible guide at `.agents/skills/career-core/SKILL.md`. Pi discovers that skill after the repository is trusted. Other coding agents can read the same file or invoke the CLI directly.
+Discover and export exact Draft 2020-12 contracts from the installed binary without network or filesystem lookup:
+
+```bash
+career schema list --format json-compact
+career schema export --id career.job_match_input.v1
+```
+
+`--format json` remains canonical pretty output. `json-pretty` selects it explicitly, `json-compact` emits one JSON document on one line, and `text` is for human display. See [`docs/cli.md`](docs/cli.md) for the stable hierarchy, contract map, stream rules, formats, input limits, and exit statuses.
+
+The project includes an Agent Skills-compatible guide at `.agents/skills/career-core/SKILL.md`. Pi discovers that skill after the repository is trusted. Other coding agents can read the same file or invoke the CLI directly. Shell-safe Pi, Claude Code, Codex, and generic subprocess examples are documented in [`docs/agent-usage.md`](docs/agent-usage.md).
 
 ## Evaluate resume section coverage
 

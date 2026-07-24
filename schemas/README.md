@@ -12,6 +12,7 @@ Rules:
 Current schemas:
 
 - `capabilities-v1.schema.json` — capability discovery
+- `schema-catalog-v1.schema.json` — embedded offline schema discovery from `career schema list`
 - `resume-input-v1.schema.json` — bounded plain-text resume input
 - `resume-evaluation-v1.schema.json` — Phase 1 section-coverage evaluation
 - `resume-analysis-v1.schema.json` — full deterministic resume-readiness scoring, checks, evidence, uncertainty, and actions
@@ -26,3 +27,12 @@ Current schemas:
 - `error-v1.schema.json` — machine-readable core and CLI failures
 
 Composite analysis, enrichment, and matching schemas reference sibling schema files. Offline validators should resolve them from this directory; for `check-jsonschema`, pass `--base-uri "file://$(pwd)/schemas/"` from the repository root.
+
+An installed CLI embeds these exact reviewed files:
+
+```bash
+career schema list --format json-compact
+career schema export --id career.resume_input.v1
+```
+
+The catalog is static and ordered. Schema export performs no source-tree lookup, runtime generation, or network request.
