@@ -6,7 +6,7 @@
 
 ## Status
 
-Implementation and local Apple verification are complete on `feature/swift-binding-v1`. Clean-clone and GitHub Actions verification are pending. Phase 5 was merged through PR `#7` as `2af1964`. The `career-workbench` product application and Phase 7 optional adapters have not started.
+Implementation, local Apple verification, and clean-clone verification are complete on `feature/swift-binding-v1`. GitHub Actions verification is pending. Phase 5 was merged through PR `#7` as `2af1964`. The `career-workbench` product application and Phase 7 optional adapters have not started.
 
 ## Approved scope
 
@@ -99,8 +99,9 @@ Implementation and local Apple verification are complete on `feature/swift-bindi
 - all new dependency licenses were reviewed; MPL components are isolated and recorded in `THIRD_PARTY_NOTICES.md`
 - relative Markdown links, shell syntax, CI YAML, credential scans, and `git diff --check` pass
 - Fallow changed-code and security checks report no findings; Fallow does not analyze Rust or Swift source
+- a clean local clone passes the full Rust, MSRV, Swift, XCFramework, checksum, schema, and prior-golden suite without tracked changes
 
-Clean-clone and GitHub Actions verification remain pending.
+GitHub Actions verification remains pending.
 
 ## Deferred gate
 
