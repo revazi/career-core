@@ -29,4 +29,8 @@ The core library processes untrusted career-document text and structured data lo
 - bound uncertain match scores and label missing/partial evidence as unverified
 - prevent recommendation guidance from exceeding deterministic score, confidence, core-category, and gap gates
 
-The CLI may read only input paths explicitly supplied by the caller and never makes a provider call. Public schemas are reviewed files embedded at compile time; schema discovery does not search caller paths, load plugins, generate code, or use the network. Compact and pretty machine modes preserve stdout/stderr separation and bounded payload-free errors. Hosts that send resumes to an external model must obtain user consent, keep API keys outside core contracts and logs, bound provider context, isolate failures, and label accepted values as assisted.
+The CLI may read only input paths explicitly supplied by the caller and never makes a provider call. Public schemas are reviewed files embedded at compile time; schema discovery does not search caller paths, load plugins, generate code, or use the network. Compact and pretty machine modes preserve stdout/stderr separation and bounded payload-free errors.
+
+The Swift adapter accepts owned JSON strings only, applies pre-parse UTF-8 byte limits, and maps failures into bounded generated Swift errors. It opens no files and performs no platform, persistence, credential, provider, or network behavior. Project-authored Rust contains no unsafe block; FFI allocation and C ABI behavior are isolated to exact UniFFI `0.30.0` generated/runtime code. XCFrameworks and checksums are local ignored artifacts until a separately approved publication review includes [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
+
+Hosts that send resumes to an external model must obtain user consent, keep API keys outside core contracts and logs, bound provider context, isolate failures, and label accepted values as assisted.

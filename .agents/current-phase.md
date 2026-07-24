@@ -1,88 +1,107 @@
 # Current phase
 
-## Most recently completed phase
+## Active phase
 
-**Phase 5 — Agent-ready CLI and distribution**
+**Phase 6 — Swift binding boundary**
 
 ## Status
 
-Complete. PR review and merge are pending. Phase 4B was merged through PR `#6` as `2794884`. Phase 6 Swift bindings and Phase 7 optional adapters have not started.
+Implementation and local Apple verification are complete on `feature/swift-binding-v1`. Clean-clone and GitHub Actions verification are pending. Phase 5 was merged through PR `#7` as `2af1964`. The `career-workbench` product application and Phase 7 optional adapters have not started.
 
 ## Approved scope
 
-- preserve the existing command hierarchy and operation semantics
-- explicit pretty JSON, compact JSON, and human-readable output modes
-- embedded offline schema discovery and export commands
-- stable stdout, stderr, input, and exit-code documentation
-- source-checkout and local `cargo install --path` instructions
-- shell-safe invocation guidance for Pi, Claude Code, Codex, and generic agents
-- Linux and macOS CLI compatibility verification
-- reproducible release-build and checksum checklist for future approved binaries
-- Agent Skill and public documentation updates
-- additive CLI integration tests and CI checks
+- evaluate UniFFI against Rust 1.85, Rust 2024, current stable Swift, and Apple targets
+- add a narrow Swift adapter crate depending inward on `career-core`
+- expose all stable deterministic operations through owned FFI-safe values
+- map malformed JSON, adapter limits, typed core errors, and serialization failures into Swift errors
+- generate deterministic Swift source, C headers, and module metadata
+- build one XCFramework containing Apple Silicon macOS, iOS device, and Apple Silicon iOS simulator static libraries
+- provide a local Swift Package wrapper and minimal smoke executable/tests
+- prove exact fixture parity across the Rust CLI and Swift calls
+- add reproducible local build/checksum guidance and macOS CI verification
+- isolate and document all generated FFI unsafe behavior
 
 ## Explicitly out of scope
 
-- changing deterministic normalization, evaluation, analysis, or matching behavior
-- changing existing JSON result schemas or canonical default JSON output
-- publishing crates, creating a GitHub release, or uploading binaries without separate explicit approval
-- package-manager distribution
-- remote execution, telemetry, URL fetching, providers, prompts, or model calls
-- MCP, editor extensions, or provider-specific wrappers
-- persistence, databases, accounts, or application tracking
-- Swift bindings, XCFrameworks, Swift packages, or SwiftUI
+- SwiftUI product screens or navigation
+- persistence, SQLite, SwiftData, Core Data, migrations, or application tracking
+- document pickers, PDF/DOCX extraction, OCR, or visual layout inspection
+- Keychain, provider clients, prompts, model calls, consent UI, or network access
+- App Store packaging, signing, notarization, TestFlight, or cloud sync
+- publishing a Swift package, GitHub release, XCFramework, crate, or binary artifact
+- changing deterministic core algorithms, existing JSON contracts, CLI behavior, or schemas
+- MCP, Python, WASM, editor extensions, or other Phase 7 adapters
 
-## Compatibility requirements
+## Compatibility and boundary requirements
 
-- existing `--format json` output remains the canonical pretty JSON used by reviewed goldens
-- all existing commands, flags, exit statuses, schemas, and byte-equivalent goldens remain valid
-- compact output is additive and contains exactly one JSON document on stdout
-- schema export is embedded in the installed binary and performs no filesystem or network discovery
-- machine modes write results only to stdout and bounded typed errors only to stderr
-- source payloads and supplied paths remain absent from diagnostics
+- `career-core` remains unaware of UniFFI, Swift, Xcode, files, and platform state
+- the adapter accepts and returns canonical versioned JSON strings so Swift does not mirror the entire internal Rust type graph at the FFI boundary
+- the adapter applies the existing CLI JSON-envelope byte ceilings before parsing
+- successful JSON includes the canonical pretty representation and trailing newline used by CLI goldens
+- assisted resume values remain separate and cannot enter baseline analysis or matching
+- generated Swift errors contain bounded codes/messages/field paths and never source payloads
+- no handwritten `unsafe` is allowed; any unsafe expansion must be limited to pinned UniFFI scaffolding and documented
+- Apple deployment targets and package versioning are explicit and reproducible
+
+## UniFFI evaluation
+
+- UniFFI `0.32.x` and `0.31.x` require Rust 1.87 and are incompatible with the project MSRV.
+- UniFFI `0.30.0` supports Rust 2024 with an upstream MSRV below Rust 1.85 and includes deterministic Swift initialization ordering.
+- The adapter pins exact UniFFI `0.30.0`; newer minor versions require an explicit MSRV and generated-output review.
+- Proc-macro/library mode avoids a duplicate UDL interface while keeping the exported surface narrow.
+- UniFFI is MPL-2.0; it remains adapter-only and does not change the licensing of project source files.
 
 ## Acceptance gate
 
-- an agent can discover capabilities and available schemas without reading Rust internals
-- every operation accepts explicit files and stdin as already documented
-- every document/capability operation supports canonical pretty JSON, compact JSON, and text output; schema export remains JSON-only
-- schema catalog and exported schemas are valid Draft 2020-12 JSON
-- local source installation is documented and verified
-- Linux and macOS CI exercise the CLI process contract
-- release preparation is reproducible and checksum-based without publishing an artifact
-- Agent Skill and examples cover all available operations and preserve uncertainty rules
-- formatting, Clippy, tests, locked build, rustdoc, schemas, prior goldens, clean clone, security checks, and GitHub Actions pass
+- Rust 1.85 builds the entire workspace including the Swift adapter and pinned bindgen tool
+- generated Swift source/header/module map is deterministic and reviewable
+- Swift Package tests call every stable core operation and match canonical fixture bytes
+- invalid, oversized, and core-rejected inputs become typed Swift errors without payload echo
+- one XCFramework contains valid macOS arm64, iOS arm64, and iOS-simulator arm64 slices
+- Swift Package builds for macOS, generic iOS device, and generic iOS simulator destinations
+- no core source or existing CLI/schema/golden output changes
+- checksums and version metadata for locally generated Apple artifacts are reproducible
+- formatting, Clippy, Rust tests, Swift tests, Apple builds, clean clone, security checks, and GitHub Actions pass
 
 ## Implemented
 
-- Added explicit `json-pretty` and one-line `json-compact` modes without changing default canonical `json` bytes.
-- Added `career schema list` with `career.schema_catalog.v1` JSON/text output.
-- Added `career schema export --id <contract-id>` with exact canonical or compact embedded schema output.
-- Embedded all 14 reviewed Draft 2020-12 schemas without runtime generation, path lookup, or network access.
-- Added process tests covering every operation in compact mode, exact schema bytes, schema IDs, pretty compatibility, machine-clean errors, and invalid schema IDs.
-- Added source installation, CLI contract, shell-safe agent, distribution, checksum, and release-preparation documentation.
-- Updated the Agent Skill, handbook, changelog, security policy, contribution guidance, and PR checklist.
-- Expanded CI to Linux and macOS, source installation, installed-binary schema export, schema catalog checks, and all prior goldens.
-- Added no dependencies and changed no deterministic core algorithm or existing result schema.
+- Added adapter-only `career-swift` with exact UniFFI `0.30.0`, proc-macro/library-mode generation, and no core dependency reversal.
+- Added seven JSON facade functions covering capability discovery and every stable input-taking deterministic operation.
+- Added typed `InvalidJson`, `InputTooLarge`, `InvalidInput`, and `OutputSerialization` Swift errors.
+- Added CLI-equivalent 262,144-byte single-input and 1,048,576-byte match-envelope limits before parsing.
+- Added exact canonical pretty JSON plus trailing-newline output parity.
+- Added reviewed generated `CareerCore.swift`, local Swift Package, smoke executable, and five Swift tests.
+- Added reproducible build/verify scripts for macOS arm64, iOS arm64, and iOS-simulator arm64 static libraries and XCFramework assembly.
+- Added canonical artifact metadata, deterministic XCFramework plist ordering, and per-file SHA-256 manifests.
+- Added arm64 iOS device/simulator link smokes plus generic Xcode package builds.
+- Added UniFFI/MSRV/module-map evaluation, unsafe isolation, MPL notices, integration docs, release guidance, and macOS CI coverage.
+- Added no SwiftUI, persistence, extraction, provider, network, signing, or publication behavior.
 
-## Verification
+## Local verification
 
-- formatting and Clippy pass with warnings denied
-- 107 Rust tests pass with all features and the lockfile
+- formatting and Clippy pass across the workspace with warnings denied
+- 109 Rust tests pass with all features and the lockfile
 - locked workspace build and rustdoc with warnings denied pass
-- every prior canonical CLI golden remains byte-equivalent
-- every machine operation emits independently parsed one-line compact JSON
-- all 14 exported canonical schemas are byte-equivalent to reviewed repository files
-- all schemas and `career.schema_catalog.v1` pass Draft 2020-12 validation
-- local and clean-clone `cargo install --path crates/career-cli --locked` succeed; installed binaries run capability and schema discovery outside the checkout
-- CLI help, JSON/text schema catalog, compact errors, input limits, and exit statuses pass
-- CI YAML and relative Markdown links parse; credential and line-ending scans pass
-- a local native release-preparation smoke builds, stages licenses/docs, executes the binary, creates an archive, and verifies its SHA-256 manifest without publishing it
-- clean-clone formatting, Clippy, 107 tests, locked build, rustdoc, installed-binary checks, all prior goldens, and canonical schema export pass
-- Fallow changed-code and security checks report no findings; Fallow does not analyze Rust source
-- `git diff --check` passes
-- GitHub Actions run `30076241222` passes on Linux and macOS, including Rust 1.85, 107 tests per platform, source installation, installed-binary schema export, compact output, and every canonical golden
+- Rust 1.85 builds all targets/features, including the pinned bindgen tool
+- five Swift tests pass and execute every stable operation against canonical Rust fixture bytes
+- Swift smoke capabilities output is byte-equivalent to CLI output
+- malformed, oversized, and core-rejected inputs map to typed source-payload-free Swift errors
+- checked-in generated Swift source is byte-equivalent after regeneration
+- XCFramework metadata contains exactly macOS arm64, iOS arm64, and iOS-simulator arm64
+- artifact metadata records package `0.1.0`, UniFFI `0.30.0`, deployment targets, and Rust targets
+- SHA-256 manifests validate and match across no-change rebuilds and a fresh Cargo target directory
+- arm64 iOS device/simulator Swift link smokes contain exported UniFFI symbols
+- macOS Swift tests plus generic iOS-device and iOS-simulator Xcode builds pass
+- every prior CLI/schema/golden test remains unchanged and green
+- `career-core` and `career-cli` dependency trees contain no UniFFI dependency
+- no provider, TLS, async-runtime, telemetry, or network stack was added
+- project-authored Rust contains no unsafe block; `career-swift` denies unsafe source
+- all new dependency licenses were reviewed; MPL components are isolated and recorded in `THIRD_PARTY_NOTICES.md`
+- relative Markdown links, shell syntax, CI YAML, credential scans, and `git diff --check` pass
+- Fallow changed-code and security checks report no findings; Fallow does not analyze Rust or Swift source
+
+Clean-clone and GitHub Actions verification remain pending.
 
 ## Deferred gate
 
-Actual release creation, binary upload, package-manager distribution, Swift bindings, and MCP each require separate approval after this phase's review and merge. Phase 6 may begin only after Phase 5 is reviewed, merged, synchronized to local `main`, and separately approved.
+The actual SwiftUI application belongs in the separate future `career-workbench` repository after this binding is reviewed and merged. Artifact publication, signing, App Store work, and every Phase 7 adapter require separate approval.

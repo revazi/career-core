@@ -4,7 +4,7 @@
 
 ```text
 career-cli ───────► career-core
-future Swift API ─► career-core
+career-swift ─────► career-core
 future adapters ──► career-core
 
 career-core ─X─► adapters, UI, persistence, network, LLMs
@@ -157,8 +157,12 @@ LLM/provider execution is never a core parity target. Proposal bounds, grounding
 
 Resume-analysis parity is defined at the scoring-rule and equivalent-normalized-fixture layers. Rust raw-text end-to-end output may differ when `resume_normalization_v1` intentionally differs from Django normalization. Public analysis results identify both the Rust policy and the selected Django reference policy.
 
-## Future Swift boundary
+## Swift boundary
 
-Swift bindings belong in an adapter crate introduced only in the Swift phase. Prefer a small stable facade over exposing internal Rust types directly. The Swift adapter must translate core errors and owned contract types without moving platform behavior into the core.
+`crates/career-swift` is an adapter depending inward on `career-core`. Its narrow UniFFI facade accepts and returns owned canonical JSON strings using the existing versioned schemas. This avoids making the complete internal Rust type graph an FFI ABI while allowing a future Swift host to decode app-owned `Codable` values.
 
-No FFI dependency or `unsafe` exception is approved during the current phases. A future Swift host owns Keychain access, consent settings, provider clients, and network calls; it submits only the proposal contract to the core.
+The adapter maps malformed JSON, envelope limits, typed core failures, and serialization failures into generated Swift errors. It applies the same pre-parse byte ceilings as the CLI. It does not open files, inspect platform state, persist values, or perform network/provider behavior.
+
+Project-authored Rust code contains no unsafe block. `career-swift` denies unsafe source; generated C ABI scaffolding and memory transport are isolated inside exact UniFFI `0.30.0` macros/runtime. The root `career-core` crate remains `#![forbid(unsafe_code)]` and has no FFI dependency.
+
+The future Swift host owns SwiftUI, database access, document handling, Keychain, consent settings, provider clients, and network calls. It may submit only versioned original inputs or explicit proposal contracts; assisted values remain isolated from authoritative scoring.

@@ -4,7 +4,7 @@ Thank you for helping build `career-core`.
 
 ## Scope
 
-The project is a deterministic, local-first Rust library. Keep LLM/provider calls, API keys, prompts, UI, persistence, remote fetching, billing, and platform-specific behavior outside the core package. Provider-neutral external proposals are untrusted input and must preserve the deterministic baseline.
+The project is a deterministic, local-first Rust library with narrow CLI and Swift adapters. Keep LLM/provider calls, API keys, prompts, UI, persistence, remote fetching, billing, and platform-specific behavior outside the core package. Provider-neutral external proposals are untrusted input and must preserve the deterministic baseline.
 
 Read [`AGENTS.md`](AGENTS.md) and the active phase in [`.agents/current-phase.md`](.agents/current-phase.md) before making changes.
 
@@ -43,6 +43,13 @@ cargo run --quiet -p career-cli -- job match \
 git diff --check
 ```
 
+Swift-boundary changes additionally require a full Xcode installation and:
+
+```bash
+rustup target add aarch64-apple-ios aarch64-apple-ios-sim
+scripts/verify-swift.sh
+```
+
 ## Contributions
 
 - Keep each pull request limited to one phase-sized task.
@@ -52,6 +59,7 @@ git diff --check
 - Do not add real resumes, personal data, API keys, or proprietary job descriptions to fixtures.
 - Record source provenance for fixtures adapted from the sibling Django reference repository.
 - Do not add dependencies without documenting why the standard library and existing dependencies are insufficient.
+- For FFI dependencies, document MSRV, generated code, unsafe isolation, licenses, artifact targets, and checksum impact.
 
 ## Commits and pull requests
 

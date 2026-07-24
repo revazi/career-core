@@ -1,0 +1,28 @@
+[package]
+name = "career-swift"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+license.workspace = true
+description = "Narrow UniFFI adapter exposing career-core to Swift"
+publish = false
+
+[lib]
+name = "career_swift"
+crate-type = ["rlib", "staticlib"]
+
+[[bin]]
+name = "career-swift-bindgen"
+path = "src/bin/bindgen.rs"
+required-features = ["bindgen"]
+
+[features]
+default = []
+bindgen = ["uniffi/cli"]
+
+[dependencies]
+career-core.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+uniffi.workspace = true
