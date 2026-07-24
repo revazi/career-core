@@ -6,7 +6,7 @@
 
 ## Status
 
-Implementation and local macOS verification are complete on `feature/agent-cli-distribution-v1`. Clean-clone and GitHub Linux/macOS CI verification are pending. Phase 4B was merged through PR `#6` as `2794884`. Phase 6 Swift bindings and Phase 7 optional adapters have not started.
+Implementation, local macOS verification, and clean-clone verification are complete on `feature/agent-cli-distribution-v1`. GitHub Linux/macOS CI verification is pending. Phase 4B was merged through PR `#6` as `2794884`. Phase 6 Swift bindings and Phase 7 optional adapters have not started.
 
 ## Approved scope
 
@@ -74,13 +74,15 @@ Implementation and local macOS verification are complete on `feature/agent-cli-d
 - every machine operation emits independently parsed one-line compact JSON
 - all 14 exported canonical schemas are byte-equivalent to reviewed repository files
 - all schemas and `career.schema_catalog.v1` pass Draft 2020-12 validation
-- local `cargo install --path crates/career-cli --locked` succeeds; the installed binary runs capability and schema discovery
+- local and clean-clone `cargo install --path crates/career-cli --locked` succeed; installed binaries run capability and schema discovery outside the checkout
 - CLI help, JSON/text schema catalog, compact errors, input limits, and exit statuses pass
 - CI YAML and relative Markdown links parse; credential and line-ending scans pass
+- a local native release-preparation smoke builds, stages licenses/docs, executes the binary, creates an archive, and verifies its SHA-256 manifest without publishing it
+- clean-clone formatting, Clippy, 107 tests, locked build, rustdoc, installed-binary checks, all prior goldens, and canonical schema export pass
 - Fallow changed-code and security checks report no findings; Fallow does not analyze Rust source
 - `git diff --check` passes
 
-Clean-clone verification, Linux execution, GitHub macOS execution, and Rust 1.85 compatibility remain pending.
+Linux execution, GitHub macOS execution, and Rust 1.85 compatibility remain pending until the branch is pushed.
 
 ## Deferred gate
 
