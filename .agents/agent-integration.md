@@ -6,6 +6,13 @@ The `career` executable is the primary agent interface. A CLI is portable across
 
 Pi specifically favors well-documented CLI tools and Agent Skills. MCP is not required for the initial integration.
 
+The installed CLI embeds reviewed Draft 2020-12 schemas. Agents can discover exact contracts without a source checkout or network request:
+
+```bash
+career schema list --format json-compact
+career schema export --id career.job_match_input.v1
+```
+
 ## Discovery first
 
 Agents must begin with:
@@ -26,7 +33,8 @@ JSON is the default. Only capabilities with `status: "available"` may be invoked
 
 All machine commands follow these rules as they are introduced:
 
-- JSON or JSONL results go to stdout.
+- One JSON result goes to stdout; `json-compact` keeps it on one line.
+- `json` is compatibility-preserving canonical pretty output; `json-pretty` is explicit pretty output; `text` is human-only.
 - Diagnostics go to stderr.
 - Success exits `0`.
 - CLI usage exits `2`, input I/O/byte-limit failures exit `3`, invalid JSON exits `4`, core validation exits `5`, and output failures exit `6`.
@@ -64,7 +72,7 @@ Pi project skills load only after the repository is trusted. Use `/trust`, resta
 ## Available Phase 1 operation
 
 ```bash
-career resume evaluate --input <path|-> [--format json|text]
+career resume evaluate --input <path|-> [--format json|json-pretty|json-compact|text]
 ```
 
 The input and result contracts are `career.resume_input.v1` and `career.resume_evaluation.v1`. This operation evaluates core-section header coverage only. Agent explanations must retain the limited-scope warning and must not label this score as complete resume quality or ATS compatibility.
@@ -72,7 +80,7 @@ The input and result contracts are `career.resume_input.v1` and `career.resume_e
 ## Available Phase 3 operation
 
 ```bash
-career resume analyze --input <path|-> [--format json|text]
+career resume analyze --input <path|-> [--format json|json-pretty|json-compact|text]
 ```
 
 Input is `career.resume_input.v1`; output is `career.resume_analysis.v1`. This is the full deterministic resume-readiness operation. It always scores `resume_normalization_v1` deterministic baseline facts and cannot consume an assisted document.
@@ -90,8 +98,8 @@ Agents must:
 ## Available Phase 2 operations
 
 ```bash
-career resume normalize --input <path|-> [--format json|text]
-career resume enrich --input <path|-> [--format json|text]
+career resume normalize --input <path|-> [--format json|json-pretty|json-compact|text]
+career resume enrich --input <path|-> [--format json|json-pretty|json-compact|text]
 ```
 
 `resume normalize` returns `career.resume_normalization.v1`, including deterministic facts, source spans, confidence, field statuses, warnings, and an `enrichment_request`.
@@ -109,7 +117,7 @@ The agent then submits one `career.resume_enrichment_input.v1` envelope to `resu
 ## Available Phase 4 operations
 
 ```bash
-career job normalize --input <path|-> [--format json|text]
+career job normalize --input <path|-> [--format json|json-pretty|json-compact|text]
 ```
 
 Input is `career.job_input.v1`; output is `career.job_normalization.v1`. The command accepts plain text only and never fetches the source URL.
@@ -126,7 +134,7 @@ Provider fallback and external-proposal job enrichment are not part of Phase 4.
 Match one original resume input and one original job input:
 
 ```bash
-career job match --input <path|-> [--format json|text]
+career job match --input <path|-> [--format json|json-pretty|json-compact|text]
 ```
 
 Input is `career.job_match_input.v1`; output is `career.job_match.v1`. Matching independently reruns both deterministic normalizers and cannot consume assisted documents.
@@ -146,12 +154,12 @@ Low/unknown normalization or truncation bounds all category scores to 50–75, m
 
 ## Distribution stages
 
-1. source checkout via `cargo run`
+1. source checkout via `cargo run --locked`
 2. local install via `cargo install --path crates/career-cli --locked`
-3. checksummed release binaries after release approval
+3. checksummed release binaries only after explicit release approval
 4. package-manager distribution only with a maintenance plan
 
-Do not tell users to pipe remote scripts into a shell.
+Source installation, future checksum verification, and the release-preparation gate are documented under `docs/`. Do not tell users to pipe remote scripts into a shell.
 
 ## Future MCP decision gate
 

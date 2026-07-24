@@ -3,6 +3,12 @@ use std::io::Write;
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
 
+fn schema_path(name: &str) -> PathBuf {
+    PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("../../schemas")
+        .join(name)
+}
+
 fn fixture_path(name: &str) -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("../../fixtures/resume/phase1")
@@ -90,6 +96,16 @@ fn invalid_arguments_return_machine_error_and_help_succeeds() {
     let error: serde_json::Value =
         serde_json::from_slice(&invalid.stderr).expect("stderr should contain JSON");
     assert_eq!(error["code"], "invalid_arguments");
+
+    let invalid_schema = Command::new(env!("CARGO_BIN_EXE_career"))
+        .args(["schema", "export", "--id", "career.unsupported.v1"])
+        .output()
+        .expect("career binary should run");
+    assert_eq!(invalid_schema.status.code(), Some(2));
+    assert!(invalid_schema.stdout.is_empty());
+    let schema_error: serde_json::Value =
+        serde_json::from_slice(&invalid_schema.stderr).expect("stderr should contain JSON");
+    assert_eq!(schema_error["code"], "invalid_arguments");
 
     let help = Command::new(env!("CARGO_BIN_EXE_career"))
         .arg("--help")
@@ -696,4 +712,216 @@ fn missing_file_returns_bounded_io_error() {
         serde_json::from_slice(&output.stderr).expect("stderr should contain JSON");
     assert_eq!(error["code"], "input_read_failed");
     assert!(!String::from_utf8_lossy(&output.stderr).contains("/path/that"));
+}
+
+#[test]
+fn embedded_schema_catalog_lists_and_exports_every_public_schema() {
+    let catalog_output = Command::new(env!("CARGO_BIN_EXE_career"))
+        .args(["schema", "list"])
+        .output()
+        .expect("career binary should run");
+    assert!(catalog_output.status.success());
+    assert!(catalog_output.stderr.is_empty());
+
+    let catalog: serde_json::Value =
+        serde_json::from_slice(&catalog_output.stdout).expect("catalog should be JSON");
+    assert_eq!(catalog["schema_version"], "career.schema_catalog.v1");
+    let schemas = catalog["schemas"]
+        .as_array()
+        .expect("catalog schemas should be an array");
+    let schema_ids = schemas
+        .iter()
+        .map(|entry| entry["id"].as_str().expect("schema ID should be a string"))
+        .collect::<Vec<_>>();
+    assert_eq!(
+        schema_ids,
+        vec![
+            "career.capabilities.v1",
+            "career.error.v1",
+            "career.job_input.v1",
+            "career.job_match.v1",
+            "career.job_match_input.v1",
+            "career.job_normalization.v1",
+            "career.resume_analysis.v1",
+            "career.resume_enrichment_input.v1",
+            "career.resume_enrichment_proposal.v1",
+            "career.resume_enrichment_result.v1",
+            "career.resume_evaluation.v1",
+            "career.resume_input.v1",
+            "career.resume_normalization.v1",
+            "career.schema_catalog.v1",
+        ]
+    );
+
+    for entry in schemas {
+        let id = entry["id"].as_str().expect("schema ID should be a string");
+        let output = Command::new(env!("CARGO_BIN_EXE_career"))
+            .args(["schema", "export", "--id", id])
+            .output()
+            .expect("career binary should run");
+        assert!(output.status.success(), "schema {id} should export");
+        assert!(output.stderr.is_empty());
+        let file_name = entry["file_name"]
+            .as_str()
+            .expect("schema file name should be a string");
+        assert_eq!(
+            output.stdout,
+            fs::read(schema_path(file_name)).expect("reviewed schema should be readable"),
+            "schema export should preserve reviewed bytes for {id}"
+        );
+        let schema: serde_json::Value =
+            serde_json::from_slice(&output.stdout).expect("export should be JSON");
+        assert_eq!(
+            schema["$schema"],
+            "https://json-schema.org/draft/2020-12/schema"
+        );
+        assert_eq!(schema["type"], "object");
+        assert_eq!(schema["title"], entry["title"]);
+        assert_eq!(schema["properties"]["schema_version"]["const"], id);
+    }
+
+    let text = Command::new(env!("CARGO_BIN_EXE_career"))
+        .args(["schema", "list", "--format", "text"])
+        .output()
+        .expect("career binary should run");
+    assert!(text.status.success());
+    assert!(String::from_utf8_lossy(&text.stdout).contains("career.job_match.v1"));
+}
+
+#[test]
+fn explicit_pretty_json_preserves_canonical_default_output() {
+    let default_output = Command::new(env!("CARGO_BIN_EXE_career"))
+        .arg("capabilities")
+        .output()
+        .expect("career binary should run");
+    let explicit_output = Command::new(env!("CARGO_BIN_EXE_career"))
+        .args(["capabilities", "--format", "json-pretty"])
+        .output()
+        .expect("career binary should run");
+
+    assert!(default_output.status.success());
+    assert!(explicit_output.status.success());
+    assert_eq!(explicit_output.stdout, default_output.stdout);
+    assert_eq!(explicit_output.stderr, default_output.stderr);
+}
+
+#[test]
+fn every_machine_operation_supports_one_line_compact_json() {
+    let commands = vec![
+        vec!["capabilities".to_owned()],
+        vec!["schema".to_owned(), "list".to_owned()],
+        vec![
+            "schema".to_owned(),
+            "export".to_owned(),
+            "--id".to_owned(),
+            "career.job_match.v1".to_owned(),
+        ],
+        vec![
+            "resume".to_owned(),
+            "evaluate".to_owned(),
+            "--input".to_owned(),
+            fixture_path("complete-sections.input.json")
+                .to_string_lossy()
+                .into_owned(),
+        ],
+        vec![
+            "resume".to_owned(),
+            "analyze".to_owned(),
+            "--input".to_owned(),
+            phase3_fixture_path("complete-analysis.input.json")
+                .to_string_lossy()
+                .into_owned(),
+        ],
+        vec![
+            "resume".to_owned(),
+            "normalize".to_owned(),
+            "--input".to_owned(),
+            phase2_fixture_path("complete-normalization.input.json")
+                .to_string_lossy()
+                .into_owned(),
+        ],
+        vec![
+            "resume".to_owned(),
+            "enrich".to_owned(),
+            "--input".to_owned(),
+            phase2_fixture_path("messy-unlabeled.enrichment-input.json")
+                .to_string_lossy()
+                .into_owned(),
+        ],
+        vec![
+            "job".to_owned(),
+            "normalize".to_owned(),
+            "--input".to_owned(),
+            phase4a_fixture_path("complete-normalization.input.json")
+                .to_string_lossy()
+                .into_owned(),
+        ],
+        vec![
+            "job".to_owned(),
+            "match".to_owned(),
+            "--input".to_owned(),
+            phase4b_fixture_path("complete-match.input.json")
+                .to_string_lossy()
+                .into_owned(),
+        ],
+    ];
+
+    for mut arguments in commands {
+        let command_name = arguments.join(" ");
+        arguments.extend(["--format".to_owned(), "json-compact".to_owned()]);
+        let output = Command::new(env!("CARGO_BIN_EXE_career"))
+            .args(&arguments)
+            .output()
+            .expect("career binary should run");
+        assert!(
+            output.status.success(),
+            "compact command failed: {command_name}"
+        );
+        assert!(output.stderr.is_empty());
+        serde_json::from_slice::<serde_json::Value>(&output.stdout).unwrap_or_else(|error| {
+            panic!("compact output was not JSON for {command_name}: {error}")
+        });
+        assert_eq!(
+            output.stdout.iter().filter(|byte| **byte == b'\n').count(),
+            1,
+            "compact output should be one line for {command_name}"
+        );
+    }
+}
+
+#[test]
+fn compact_json_errors_remain_machine_clean() {
+    let mut child = Command::new(env!("CARGO_BIN_EXE_career"))
+        .args([
+            "resume",
+            "evaluate",
+            "--input",
+            "-",
+            "--format",
+            "json-compact",
+        ])
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .expect("career binary should start");
+    child
+        .stdin
+        .take()
+        .expect("stdin should be piped")
+        .write_all(br#"{"schema_version":"career.resume_input.v1","text":}"#)
+        .expect("malformed input should be written");
+    let output = child
+        .wait_with_output()
+        .expect("career binary should finish");
+
+    assert_eq!(output.status.code(), Some(4));
+    assert!(output.stdout.is_empty());
+    let error: serde_json::Value =
+        serde_json::from_slice(&output.stderr).expect("stderr should contain JSON");
+    assert_eq!(error["code"], "invalid_json");
+    assert_eq!(
+        output.stderr.iter().filter(|byte| **byte == b'\n').count(),
+        1
+    );
 }

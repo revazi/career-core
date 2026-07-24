@@ -47,6 +47,9 @@ cargo clippy --workspace --all-targets --all-features -- -D warnings
 cargo test --workspace --all-features
 cargo build --workspace --all-features --locked
 cargo run --quiet -p career-cli -- capabilities
+cargo run --quiet -p career-cli -- schema list
+cargo run --quiet -p career-cli -- schema export \
+  --id career.job_match.v1 --format json-compact
 cargo run --quiet -p career-cli -- resume evaluate \
   --input fixtures/resume/phase1/complete-sections.input.json
 cargo run --quiet -p career-cli -- resume analyze \
@@ -62,7 +65,7 @@ cargo run --quiet -p career-cli -- job match \
 git diff --check
 ```
 
-If the CLI contract changes, also invoke every changed command in JSON and text modes and parse JSON with an independent parser.
+If the CLI contract changes, also invoke every changed command in canonical, compact, and text modes where supported; parse JSON with an independent parser. For distribution changes, install the CLI into a temporary root from a clean clone and run capability/schema discovery through the installed binary.
 
 ## Dependency policy
 

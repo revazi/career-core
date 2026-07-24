@@ -15,9 +15,15 @@ concurrency:
 
 jobs:
   rust:
-    name: Rust
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
+    name: Rust (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-14
 
     steps:
       - name: Check out repository
@@ -42,15 +48,41 @@ jobs:
         run: cargo build --workspace --all-features --locked
 
       - name: Verify minimum supported Rust version
+        if: runner.os == 'Linux'
         run: |
           rustup toolchain install 1.85.0 --profile minimal --no-self-update
           cargo +1.85.0 check --workspace --all-targets --all-features --locked
+
+      - name: Verify source installation
+        run: |
+          cargo install --path crates/career-cli --locked --root "$RUNNER_TEMP/career-install"
+          "$RUNNER_TEMP/career-install/bin/career" capabilities --format json-compact \
+            > "$RUNNER_TEMP/installed-capabilities.json"
+          python3 -m json.tool "$RUNNER_TEMP/installed-capabilities.json" > /dev/null
+          (
+            cd "$RUNNER_TEMP"
+            "$RUNNER_TEMP/career-install/bin/career" schema export \
+              --id career.job_match.v1 --format json-compact \
+              > installed-job-match-schema.json
+          )
+          python3 -m json.tool "$RUNNER_TEMP/installed-job-match-schema.json" > /dev/null
 
       - name: Verify agent JSON contracts
         run: |
           cargo run --quiet --locked -p career-cli -- capabilities > /tmp/capabilities.json
           python3 -m json.tool /tmp/capabilities.json > /dev/null
           grep -q '"schema_version": "career.capabilities.v1"' /tmp/capabilities.json
+
+          cargo run --quiet --locked -p career-cli -- schema list \
+            > /tmp/schema-catalog.json
+          python3 -m json.tool /tmp/schema-catalog.json > /dev/null
+          grep -q '"schema_version": "career.schema_catalog.v1"' /tmp/schema-catalog.json
+
+          cargo run --quiet --locked -p career-cli -- \
+            schema export --id career.job_match.v1 --format json-compact \
+            > /tmp/job-match-schema.json
+          python3 -m json.tool /tmp/job-match-schema.json > /dev/null
+          test "$(wc -l < /tmp/job-match-schema.json | tr -d ' ')" = "1"
 
           cargo run --quiet --locked -p career-cli -- \
             resume evaluate \

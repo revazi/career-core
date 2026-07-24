@@ -1,5 +1,7 @@
 #![forbid(unsafe_code)]
 
+mod schema;
+
 use std::fs::File;
 use std::io::{self, Read, Write};
 use std::path::PathBuf;
@@ -17,6 +19,7 @@ use career_core::{
     evaluate_resume, match_job, normalize_job, normalize_resume,
 };
 use clap::{Parser, Subcommand, ValueEnum, error::ErrorKind};
+use schema::{SchemaCatalogV1, SchemaId, embedded_schema, schema_catalog};
 use serde_json::json;
 
 const MAX_CLI_INPUT_BYTES: usize = 262_144;
@@ -45,6 +48,11 @@ enum Command {
         #[arg(long, value_enum, default_value_t = OutputFormat::Json)]
         format: OutputFormat,
     },
+    /// Discover or export embedded public JSON schemas.
+    Schema {
+        #[command(subcommand)]
+        command: SchemaCommand,
+    },
     /// Evaluate, analyze, normalize, or enrich resume input.
     Resume {
         #[command(subcommand)]
@@ -55,6 +63,42 @@ enum Command {
         #[command(subcommand)]
         command: JobCommand,
     },
+}
+
+#[derive(Debug, Subcommand)]
+enum SchemaCommand {
+    /// List versioned public schemas embedded in this binary.
+    List {
+        /// Select canonical pretty JSON, compact JSON, or concise text.
+        #[arg(long, value_enum, default_value_t = OutputFormat::Json)]
+        format: OutputFormat,
+    },
+    /// Export one embedded JSON Schema document by contract ID.
+    Export {
+        /// Exact contract ID reported by `career schema list`.
+        #[arg(long, value_enum)]
+        id: SchemaId,
+        /// Select canonical pretty JSON or one-line compact JSON.
+        #[arg(long, value_enum, default_value_t = JsonOutputFormat::Json)]
+        format: JsonOutputFormat,
+    },
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq, ValueEnum)]
+enum JsonOutputFormat {
+    Json,
+    JsonPretty,
+    JsonCompact,
+}
+
+impl From<JsonOutputFormat> for OutputFormat {
+    fn from(value: JsonOutputFormat) -> Self {
+        match value {
+            JsonOutputFormat::Json => Self::Json,
+            JsonOutputFormat::JsonPretty => Self::JsonPretty,
+            JsonOutputFormat::JsonCompact => Self::JsonCompact,
+        }
+    }
 }
 
 #[derive(Debug, Subcommand)]
@@ -121,8 +165,20 @@ enum JobCommand {
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, ValueEnum)]
 enum OutputFormat {
+    /// Canonical pretty JSON; preserved as the default for compatibility.
     Json,
+    /// Explicit alias for canonical pretty JSON.
+    JsonPretty,
+    /// One JSON document on one line.
+    JsonCompact,
+    /// Concise human-readable output.
     Text,
+}
+
+impl OutputFormat {
+    const fn is_compact(self) -> bool {
+        matches!(self, Self::JsonCompact)
+    }
 }
 
 #[derive(Debug)]
@@ -196,38 +252,13 @@ impl CliFailure {
     }
 
     fn report(&self, format: OutputFormat, error_output: &mut impl Write) {
-        let result = match (self, format) {
-            (
-                Self::Adapter {
-                    code,
-                    message,
-                    field_path,
-                    ..
-                },
-                OutputFormat::Json,
-            ) => {
-                let document = json!({
-                    "schema_version": ERROR_SCHEMA_VERSION,
-                    "code": code,
-                    "message": message,
-                    "field_path": field_path,
-                });
-                serde_json::to_writer_pretty(&mut *error_output, &document)
-                    .and_then(|()| writeln!(error_output).map_err(serde_json::Error::io))
-            }
-            (Self::Core(error), OutputFormat::Json) => {
-                serde_json::to_writer_pretty(&mut *error_output, error)
-                    .and_then(|()| writeln!(error_output).map_err(serde_json::Error::io))
-            }
-            (
-                Self::Adapter {
-                    code,
-                    message,
-                    field_path,
-                    ..
-                },
-                OutputFormat::Text,
-            ) => writeln!(
+        let result = match self {
+            Self::Adapter {
+                code,
+                message,
+                field_path,
+                ..
+            } if format == OutputFormat::Text => writeln!(
                 error_output,
                 "career [{code}]: {message}{}",
                 field_path
@@ -235,7 +266,7 @@ impl CliFailure {
                     .unwrap_or_default()
             )
             .map_err(serde_json::Error::io),
-            (Self::Core(error), OutputFormat::Text) => writeln!(
+            Self::Core(error) if format == OutputFormat::Text => writeln!(
                 error_output,
                 "career [{}]: {} (field: {})",
                 error.code.as_str(),
@@ -243,6 +274,21 @@ impl CliFailure {
                 error.field_path
             )
             .map_err(serde_json::Error::io),
+            Self::Adapter {
+                code,
+                message,
+                field_path,
+                ..
+            } => {
+                let document = json!({
+                    "schema_version": ERROR_SCHEMA_VERSION,
+                    "code": code,
+                    "message": message,
+                    "field_path": field_path,
+                });
+                serialize_json_line(error_output, &document, format)
+            }
+            Self::Core(error) => serialize_json_line(error_output, error, format),
         };
 
         let _ = result;
@@ -287,6 +333,10 @@ impl Cli {
     fn output_format(&self) -> OutputFormat {
         match &self.command {
             Command::Capabilities { format } => *format,
+            Command::Schema { command } => match command {
+                SchemaCommand::List { format } => *format,
+                SchemaCommand::Export { format, .. } => (*format).into(),
+            },
             Command::Resume { command } => match command {
                 ResumeCommand::Evaluate { format, .. }
                 | ResumeCommand::Analyze { format, .. }
@@ -309,10 +359,22 @@ fn run(
         Command::Capabilities { format } => {
             let document = capabilities();
             match format {
-                OutputFormat::Json => write_json(output, &document),
                 OutputFormat::Text => write_capabilities_text(output, &document),
+                _ => write_json(output, &document, format),
             }
         }
+        Command::Schema {
+            command: SchemaCommand::List { format },
+        } => {
+            let catalog = schema_catalog();
+            match format {
+                OutputFormat::Text => write_schema_catalog_text(output, &catalog),
+                _ => write_json(output, &catalog, format),
+            }
+        }
+        Command::Schema {
+            command: SchemaCommand::Export { id, format },
+        } => write_embedded_schema(output, id, format.into()),
         Command::Resume {
             command: ResumeCommand::Evaluate { input, format },
         } => {
@@ -321,8 +383,8 @@ fn run(
                 .map_err(|error| CliFailure::invalid_json(&error, "career.resume_input.v1"))?;
             let evaluation = evaluate_resume(&resume_input).map_err(CliFailure::Core)?;
             match format {
-                OutputFormat::Json => write_json(output, &evaluation),
                 OutputFormat::Text => write_resume_evaluation_text(output, &evaluation),
+                _ => write_json(output, &evaluation, format),
             }
         }
         Command::Resume {
@@ -333,8 +395,8 @@ fn run(
                 .map_err(|error| CliFailure::invalid_json(&error, "career.resume_input.v1"))?;
             let analysis = analyze_resume(&resume_input).map_err(CliFailure::Core)?;
             match format {
-                OutputFormat::Json => write_json(output, &analysis),
                 OutputFormat::Text => write_resume_analysis_text(output, &analysis),
+                _ => write_json(output, &analysis, format),
             }
         }
         Command::Resume {
@@ -345,8 +407,8 @@ fn run(
                 .map_err(|error| CliFailure::invalid_json(&error, "career.resume_input.v1"))?;
             let normalization = normalize_resume(&resume_input).map_err(CliFailure::Core)?;
             match format {
-                OutputFormat::Json => write_json(output, &normalization),
                 OutputFormat::Text => write_resume_normalization_text(output, &normalization),
+                _ => write_json(output, &normalization, format),
             }
         }
         Command::Resume {
@@ -359,8 +421,8 @@ fn run(
                 })?;
             let result = apply_resume_enrichment(&enrichment_input).map_err(CliFailure::Core)?;
             match format {
-                OutputFormat::Json => write_json(output, &result),
                 OutputFormat::Text => write_resume_enrichment_text(output, &result),
+                _ => write_json(output, &result, format),
             }
         }
         Command::Job {
@@ -371,8 +433,8 @@ fn run(
                 .map_err(|error| CliFailure::invalid_json(&error, "career.job_input.v1"))?;
             let normalization = normalize_job(&job_input).map_err(CliFailure::Core)?;
             match format {
-                OutputFormat::Json => write_json(output, &normalization),
                 OutputFormat::Text => write_job_normalization_text(output, &normalization),
+                _ => write_json(output, &normalization, format),
             }
         }
         Command::Job {
@@ -388,8 +450,8 @@ fn run(
                 .map_err(|error| CliFailure::invalid_json(&error, "career.job_match_input.v1"))?;
             let result = match_job(&match_input).map_err(CliFailure::Core)?;
             match format {
-                OutputFormat::Json => write_json(output, &result),
                 OutputFormat::Text => write_job_match_text(output, &result),
+                _ => write_json(output, &result, format),
             }
         }
     }
@@ -436,10 +498,64 @@ fn read_bounded(
     Ok(bytes)
 }
 
-fn write_json(output: &mut impl Write, document: &impl serde::Serialize) -> Result<(), CliFailure> {
-    serde_json::to_writer_pretty(&mut *output, document)
+fn serialize_json_line(
+    output: &mut impl Write,
+    document: &impl serde::Serialize,
+    format: OutputFormat,
+) -> Result<(), serde_json::Error> {
+    if format.is_compact() {
+        serde_json::to_writer(&mut *output, document)?;
+    } else {
+        serde_json::to_writer_pretty(&mut *output, document)?;
+    }
+    writeln!(output).map_err(serde_json::Error::io)
+}
+
+fn write_json(
+    output: &mut impl Write,
+    document: &impl serde::Serialize,
+    format: OutputFormat,
+) -> Result<(), CliFailure> {
+    serialize_json_line(output, document, format).map_err(|_| CliFailure::output_failure())
+}
+
+fn write_embedded_schema(
+    output: &mut impl Write,
+    id: SchemaId,
+    format: OutputFormat,
+) -> Result<(), CliFailure> {
+    let schema = embedded_schema(id);
+    if format.is_compact() {
+        let document = serde_json::from_str::<serde_json::Value>(schema.document)
+            .map_err(|_| CliFailure::output_failure())?;
+        return write_json(output, &document, format);
+    }
+
+    output
+        .write_all(schema.document.as_bytes())
         .map_err(|_| CliFailure::output_failure())?;
-    writeln!(output).map_err(|_| CliFailure::output_failure())
+    if schema.document.ends_with('\n') {
+        Ok(())
+    } else {
+        writeln!(output).map_err(|_| CliFailure::output_failure())
+    }
+}
+
+fn write_schema_catalog_text(
+    output: &mut impl Write,
+    catalog: &SchemaCatalogV1,
+) -> Result<(), CliFailure> {
+    writeln!(output, "Embedded JSON schemas ({})", catalog.schema_version)
+        .map_err(|_| CliFailure::output_failure())?;
+    for schema in &catalog.schemas {
+        writeln!(
+            output,
+            "  - {} ({}): {}",
+            schema.id, schema.file_name, schema.title
+        )
+        .map_err(|_| CliFailure::output_failure())?;
+    }
+    Ok(())
 }
 
 fn write_capabilities_text(

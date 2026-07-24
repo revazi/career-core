@@ -25,6 +25,9 @@ cargo clippy --workspace --all-targets --all-features -- -D warnings
 cargo test --workspace --all-features
 cargo build --workspace --all-features --locked
 cargo run --quiet -p career-cli -- capabilities
+cargo run --quiet -p career-cli -- schema list
+cargo run --quiet -p career-cli -- schema export \
+  --id career.job_match.v1 --format json-compact
 cargo run --quiet -p career-cli -- resume evaluate \
   --input fixtures/resume/phase1/complete-sections.input.json
 cargo run --quiet -p career-cli -- resume analyze \
@@ -44,7 +47,7 @@ git diff --check
 
 - Keep each pull request limited to one phase-sized task.
 - Add tests before or with behavior changes.
-- Treat JSON fields, enum values, score rules, evidence identifiers, and exit codes as contracts.
+- Treat JSON fields, enum values, score rules, evidence identifiers, schema catalog entries, output formats, and exit codes as contracts.
 - Explain compatibility impact for every contract change.
 - Do not add real resumes, personal data, API keys, or proprietary job descriptions to fixtures.
 - Record source provenance for fixtures adapted from the sibling Django reference repository.
