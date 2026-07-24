@@ -4,7 +4,7 @@
 
 The project is intentionally **not an AI service**. The core performs no network requests and has no LLM dependency. Native applications, command-line tools, and coding-agent integrations can use its versioned evidence and scoring contracts. An opted-in host may submit an external source-grounded proposal for deterministic validation, but provider calls remain outside the authoritative core.
 
-> **Status:** Phase 4 is complete. Resume evaluation, normalization, analysis, deterministic job normalization, and conservative resume-to-job matching are available. Phase 5 is hardening the additive agent-facing CLI and source distribution path.
+> **Status:** Phase 5 is complete. Deterministic resume/job operations, additive compact output, offline schema discovery, and the source-installation path are available. Release publication and Swift bindings remain separately gated.
 
 ## Goals
 

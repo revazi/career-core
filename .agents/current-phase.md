@@ -1,12 +1,12 @@
 # Current phase
 
-## Active phase
+## Most recently completed phase
 
 **Phase 5 — Agent-ready CLI and distribution**
 
 ## Status
 
-Implementation, local macOS verification, and clean-clone verification are complete on `feature/agent-cli-distribution-v1`. GitHub Linux/macOS CI verification is pending. Phase 4B was merged through PR `#6` as `2794884`. Phase 6 Swift bindings and Phase 7 optional adapters have not started.
+Complete. PR review and merge are pending. Phase 4B was merged through PR `#6` as `2794884`. Phase 6 Swift bindings and Phase 7 optional adapters have not started.
 
 ## Approved scope
 
@@ -65,7 +65,7 @@ Implementation, local macOS verification, and clean-clone verification are compl
 - Expanded CI to Linux and macOS, source installation, installed-binary schema export, schema catalog checks, and all prior goldens.
 - Added no dependencies and changed no deterministic core algorithm or existing result schema.
 
-## Local verification
+## Verification
 
 - formatting and Clippy pass with warnings denied
 - 107 Rust tests pass with all features and the lockfile
@@ -81,9 +81,8 @@ Implementation, local macOS verification, and clean-clone verification are compl
 - clean-clone formatting, Clippy, 107 tests, locked build, rustdoc, installed-binary checks, all prior goldens, and canonical schema export pass
 - Fallow changed-code and security checks report no findings; Fallow does not analyze Rust source
 - `git diff --check` passes
-
-Linux execution, GitHub macOS execution, and Rust 1.85 compatibility remain pending until the branch is pushed.
+- GitHub Actions run `30076241222` passes on Linux and macOS, including Rust 1.85, 107 tests per platform, source installation, installed-binary schema export, compact output, and every canonical golden
 
 ## Deferred gate
 
-Actual release creation, binary upload, package-manager distribution, Swift bindings, and MCP each require separate approval after this phase's review and merge.
+Actual release creation, binary upload, package-manager distribution, Swift bindings, and MCP each require separate approval after this phase's review and merge. Phase 6 may begin only after Phase 5 is reviewed, merged, synchronized to local `main`, and separately approved.
