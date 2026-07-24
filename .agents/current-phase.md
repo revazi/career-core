@@ -2,13 +2,13 @@
 
 ## Active phase
 
-**Phase 6 — Swift binding boundary**
+**No active implementation phase**
 
 ## Status
 
-Acceptance checks are complete on `feature/swift-binding-v1` and PR `#8`; CI run `30083674149` passed on Linux and macOS. Phase 6 remains active until review and explicit merge approval. Phase 5 was merged through PR `#7` as `2af1964`. The `career-workbench` product application and Phase 7 optional adapters have not started.
+Phase 6 — Swift binding boundary was completed and squash-merged through PR `#8` as `eb6960c`. Final PR-head CI run `30083962027` passed on Linux and macOS. Phases 0–6 are complete. The separate `career-workbench` product application and Phase 7 optional adapters have not started; either requires a new explicit gate.
 
-## Approved scope
+## Completed Phase 6 scope
 
 - evaluate UniFFI against Rust 1.85, Rust 2024, current stable Swift, and Apple targets
 - add a narrow Swift adapter crate depending inward on `career-core`
@@ -51,7 +51,7 @@ Acceptance checks are complete on `feature/swift-binding-v1` and PR `#8`; CI run
 - Proc-macro/library mode avoids a duplicate UDL interface while keeping the exported surface narrow.
 - UniFFI is MPL-2.0; it remains adapter-only and does not change the licensing of project source files.
 
-## Acceptance gate
+## Acceptance gate (passed)
 
 - Rust 1.85 builds the entire workspace including the Swift adapter and pinned bindgen tool
 - generated Swift source/header/module map is deterministic and reviewable
@@ -77,7 +77,7 @@ Acceptance checks are complete on `feature/swift-binding-v1` and PR `#8`; CI run
 - Added UniFFI/MSRV/module-map evaluation, unsafe isolation, MPL notices, integration docs, release guidance, and macOS CI coverage.
 - Added no SwiftUI, persistence, extraction, provider, network, signing, or publication behavior.
 
-## Local verification
+## Verification
 
 - formatting and Clippy pass across the workspace with warnings denied
 - 109 Rust tests pass with all features and the lockfile
@@ -100,10 +100,8 @@ Acceptance checks are complete on `feature/swift-binding-v1` and PR `#8`; CI run
 - relative Markdown links, shell syntax, CI YAML, credential scans, and `git diff --check` pass
 - Fallow changed-code and security checks report no findings; Fallow does not analyze Rust or Swift source
 - a clean local clone passes the full Rust, MSRV, Swift, XCFramework, checksum, schema, and prior-golden suite without tracked changes
-- GitHub Actions run `30083674149` passes on Ubuntu and macOS, including 109 Rust tests per platform and the complete macOS Swift verification script
-
-PR `#8` awaits review and explicit merge approval.
+- final PR-head GitHub Actions run `30083962027` passed on Ubuntu and macOS, including 109 Rust tests per platform and the complete macOS Swift verification script
 
 ## Deferred gate
 
-The actual SwiftUI application belongs in the separate future `career-workbench` repository after this binding is reviewed and merged. Artifact publication, signing, App Store work, and every Phase 7 adapter require separate approval.
+The actual SwiftUI application belongs in the separate future `career-workbench` repository. Creating that repository or implementing its first foundation phase requires explicit approval. Artifact publication, signing, App Store work, and every Phase 7 adapter also require separate approval.

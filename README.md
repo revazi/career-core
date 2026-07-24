@@ -4,7 +4,7 @@
 
 The project is intentionally **not an AI service**. The core performs no network requests and has no LLM dependency. Native applications, command-line tools, and coding-agent integrations can use its versioned evidence and scoring contracts. An opted-in host may submit an external source-grounded proposal for deterministic validation, but provider calls remain outside the authoritative core.
 
-> **Status:** Phase 6 Swift bindings are in development. Deterministic resume/job operations, compact output, offline schema discovery, source installation, and the reviewed local Swift binding boundary are available. Release publication and the SwiftUI product application remain separately gated.
+> **Status:** Phases 0–6 are complete. Deterministic resume/job operations, compact output, offline schema discovery, source installation, and the reviewed local Swift binding boundary are available. Release publication, the SwiftUI product application, and optional adapters remain separately gated.
 
 ## Goals
 
@@ -12,7 +12,7 @@ The project is intentionally **not an AI service**. The core performs no network
 - explainable scores with bounded evidence and warnings
 - conservative matching that prefers false negatives over unsafe equivalence
 - stable JSON contracts suitable for CLIs and coding agents
-- a portable Rust library suitable for future Swift bindings
+- a portable Rust library with a reviewed local Swift binding boundary
 - local-first operation with no telemetry or implicit network access
 
 ## Repository layout
