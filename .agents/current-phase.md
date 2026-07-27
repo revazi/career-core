@@ -47,8 +47,11 @@ Passed locally on 2026-07-27:
 - generated Swift source is deterministic; five Swift package tests cover all eight input-taking operations with exact Rust golden bytes
 - macOS/iOS/iOS-simulator XCFramework assembly, checksums, link smokes, and generic device/simulator builds through `scripts/verify-swift.sh`
 - `git diff --check`
+- Rust 1.85.0 `cargo check` across the workspace, all targets, and all features with the lockfile
+- a fresh local clone at `df85166` passed formatting, Clippy, all 119 Rust test entries, locked all-feature build, Rust 1.85 checking, complete Swift/XCFramework verification, deterministic generated source, and a clean final worktree
+- Fallow 3.9.1 audit/all/security reported zero findings, qualified because the analyzer recognized no Rust or Swift source files
 
-Still required before Phase 7 merge: Rust 1.85 MSRV verification, clean-clone verification, final security/audit scans, GitHub CI, and explicit merge approval.
+Still required before Phase 7 merge: GitHub CI and explicit merge approval.
 
 ## Previous completed phase
 
