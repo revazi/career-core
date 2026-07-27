@@ -31,12 +31,22 @@ pub(crate) enum SchemaId {
     ResumeInputV1,
     #[value(name = "career.resume_normalization.v1")]
     ResumeNormalizationV1,
+    #[value(name = "career.resume_variant_materialization_input.v1")]
+    ResumeVariantMaterializationInputV1,
+    #[value(name = "career.resume_variant_proposal.v1")]
+    ResumeVariantProposalV1,
+    #[value(name = "career.resume_variant_review.v1")]
+    ResumeVariantReviewV1,
+    #[value(name = "career.resume_variant_review_input.v1")]
+    ResumeVariantReviewInputV1,
+    #[value(name = "career.resume_variant.v1")]
+    ResumeVariantV1,
     #[value(name = "career.schema_catalog.v1")]
     SchemaCatalogV1,
 }
 
 impl SchemaId {
-    pub(crate) const ALL: [Self; 14] = [
+    pub(crate) const ALL: [Self; 19] = [
         Self::CapabilitiesV1,
         Self::ErrorV1,
         Self::JobInputV1,
@@ -50,6 +60,11 @@ impl SchemaId {
         Self::ResumeEvaluationV1,
         Self::ResumeInputV1,
         Self::ResumeNormalizationV1,
+        Self::ResumeVariantMaterializationInputV1,
+        Self::ResumeVariantProposalV1,
+        Self::ResumeVariantReviewV1,
+        Self::ResumeVariantReviewInputV1,
+        Self::ResumeVariantV1,
         Self::SchemaCatalogV1,
     ];
 }
@@ -171,6 +186,38 @@ pub(crate) const fn embedded_schema(id: SchemaId) -> EmbeddedSchema {
             file_name: "resume-normalization-v1.schema.json",
             title: "career-core resume normalization v1",
             document: include_str!("../../../schemas/resume-normalization-v1.schema.json"),
+        },
+        SchemaId::ResumeVariantMaterializationInputV1 => EmbeddedSchema {
+            id: "career.resume_variant_materialization_input.v1",
+            file_name: "resume-variant-materialization-input-v1.schema.json",
+            title: "career-core assisted resume variant materialization input v1",
+            document: include_str!(
+                "../../../schemas/resume-variant-materialization-input-v1.schema.json"
+            ),
+        },
+        SchemaId::ResumeVariantProposalV1 => EmbeddedSchema {
+            id: "career.resume_variant_proposal.v1",
+            file_name: "resume-variant-proposal-v1.schema.json",
+            title: "career-core assisted resume variant proposal v1",
+            document: include_str!("../../../schemas/resume-variant-proposal-v1.schema.json"),
+        },
+        SchemaId::ResumeVariantReviewV1 => EmbeddedSchema {
+            id: "career.resume_variant_review.v1",
+            file_name: "resume-variant-review-v1.schema.json",
+            title: "career-core assisted resume variant review v1",
+            document: include_str!("../../../schemas/resume-variant-review-v1.schema.json"),
+        },
+        SchemaId::ResumeVariantReviewInputV1 => EmbeddedSchema {
+            id: "career.resume_variant_review_input.v1",
+            file_name: "resume-variant-review-input-v1.schema.json",
+            title: "career-core assisted resume variant review input v1",
+            document: include_str!("../../../schemas/resume-variant-review-input-v1.schema.json"),
+        },
+        SchemaId::ResumeVariantV1 => EmbeddedSchema {
+            id: "career.resume_variant.v1",
+            file_name: "resume-variant-v1.schema.json",
+            title: "career-core assisted resume variant v1",
+            document: include_str!("../../../schemas/resume-variant-v1.schema.json"),
         },
         SchemaId::SchemaCatalogV1 => EmbeddedSchema {
             id: "career.schema_catalog.v1",

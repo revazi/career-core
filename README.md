@@ -4,7 +4,7 @@
 
 The project is intentionally **not an AI service**. The core performs no network requests and has no LLM dependency. Native applications, command-line tools, and coding-agent integrations can use its versioned evidence and scoring contracts. An opted-in host may submit an external source-grounded proposal for deterministic validation, but provider calls remain outside the authoritative core.
 
-> **Status:** Phases 0–6 are complete. Deterministic resume/job operations, compact output, offline schema discovery, source installation, and the reviewed local Swift binding boundary are available. Release publication, the SwiftUI product application, and optional adapters remain separately gated.
+> **Status:** Phases 0–6 are complete. Phase 7 evidence-linked assisted resume-variant review/materialization is active. Deterministic resume/job operations, compact output, offline schema discovery, source installation, and the reviewed local Swift binding boundary are available. Release publication, the SwiftUI product application, and optional adapters remain separately gated.
 
 ## Goals
 
@@ -97,6 +97,16 @@ JSON is the default output:
       "id": "resume.enrich",
       "status": "available",
       "summary": "Validate and conservatively merge an explicit source-grounded external proposal without network access."
+    },
+    {
+      "id": "resume.variant.review",
+      "status": "available",
+      "summary": "Review bounded evidence-linked external resume changes without certifying generated prose."
+    },
+    {
+      "id": "resume.variant.materialize",
+      "status": "available",
+      "summary": "Revalidate and deterministically materialize only explicitly selected assisted resume changes."
     },
     {
       "id": "job.normalize",
@@ -195,6 +205,24 @@ cargo run --quiet -p career-cli -- \
 ```
 
 The enrichment result preserves the complete deterministic `baseline` and exposes accepted values only in `assisted_document`. Assisted fields never replace deterministic confidence or authoritative scoring input. See [`docs/contracts/resume-normalization-v1.md`](docs/contracts/resume-normalization-v1.md) for contracts, limits, grounding rules, host orchestration, provenance, and intentional Django differences.
+
+## Review and materialize assisted resume variants
+
+Review at most 50 evidence-linked external changes without a provider call:
+
+```bash
+cargo run --quiet -p career-cli -- \
+  resume variant-review --input fixtures/resume/phase7/complete-variant-review.input.json
+```
+
+After a user selects canonical change identifiers, revalidate the complete proposal and materialize only that subset:
+
+```bash
+cargo run --quiet -p career-cli -- \
+  resume variant-materialize --input fixtures/resume/phase7/selected-variant-materialization.input.json
+```
+
+The core validates exact line targets, exact evidence occurrence, bounds, ordering, overlap, and selected identifiers. It does not certify generated wording as factually entailed. Output preserves the exact baseline, labels the candidate assisted/non-authoritative, and cannot enter deterministic analysis or matching. See [`docs/contracts/resume-variant-v1.md`](docs/contracts/resume-variant-v1.md) for the full policy.
 
 ## Normalize job descriptions
 

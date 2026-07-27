@@ -1,0 +1,57 @@
+{
+  "schema_version": "career.resume_variant_materialization_input.v1",
+  "expected_review_policy_version": "resume_variant_review_v1",
+  "review_input": {
+    "schema_version": "career.resume_variant_review_input.v1",
+    "resume": {
+      "schema_version": "career.resume_input.v1",
+      "text": "Morgan Lee\nSUMMARY\nProduct engineer building native apps.\nEXPERIENCE\nEngineer at Northstar Labs\nBuilt macOS workflows with Swift.\nSKILLS\nSwift, macOS, testing",
+      "metadata": {
+        "document_id": "synthetic-resume-phase7"
+      }
+    },
+    "vacancy": {
+      "schema_version": "career.job_input.v1",
+      "text": "We need a product engineer with SwiftUI, macOS, accessibility, and cross-functional delivery experience.",
+      "metadata": {
+        "document_id": "synthetic-vacancy-phase7"
+      }
+    },
+    "proposal": {
+      "schema_version": "career.resume_variant_proposal.v1",
+      "changes": [
+        {
+          "section": "summary",
+          "start_line": 3,
+          "end_line": 3,
+          "original_text": "Product engineer building native apps.",
+          "proposed_text": "Product engineer building native Apple-platform apps with SwiftUI.",
+          "resume_evidence": [
+            "Product engineer building native apps."
+          ],
+          "vacancy_evidence": [
+            "product engineer",
+            "SwiftUI"
+          ]
+        },
+        {
+          "section": "experience",
+          "start_line": 6,
+          "end_line": 6,
+          "original_text": "Built macOS workflows with Swift.",
+          "proposed_text": "Built native macOS workflows with Swift and SwiftUI.",
+          "resume_evidence": [
+            "Built macOS workflows with Swift."
+          ],
+          "vacancy_evidence": [
+            "SwiftUI",
+            "macOS"
+          ]
+        }
+      ]
+    }
+  },
+  "selected_change_ids": [
+    "change-0002"
+  ]
+}

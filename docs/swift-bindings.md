@@ -3,7 +3,7 @@
 Phase 6 exposes stable deterministic operations to a future native application without moving Apple-platform behavior into `career-core`.
 
 ```text
-career-workbench (future)
+career-workbench
         │
         ▼
 CareerCoreSwift package
@@ -24,6 +24,8 @@ career-core
 - `resume_analyze_json`
 - `resume_normalize_json`
 - `resume_enrich_json`
+- `resume_variant_review_json`
+- `resume_variant_materialize_json`
 - `job_normalize_json`
 - `job_match_json`
 
@@ -44,7 +46,7 @@ The facade does not accept normalized or assisted documents for authoritative an
 Before JSON parsing, the adapter applies the same envelope ceilings as the CLI:
 
 - 262,144 UTF-8 bytes for single-document and enrichment operations
-- 1,048,576 UTF-8 bytes for job matching
+- 1,048,576 UTF-8 bytes for job matching and resume-variant review/materialization
 
 UniFFI maps `CareerSwiftError` into typed Swift errors:
 
@@ -116,7 +118,7 @@ Verification covers:
 - version/deployment/target metadata and per-file SHA-256 manifest verification
 - macOS Swift Package compilation and five Swift tests
 - exact Swift/Rust capabilities bytes
-- exact output parity for all six input-taking operations
+- exact output parity for all eight input-taking operations
 - typed malformed, oversized, and core-validation errors
 - arm64 iOS-device and simulator link smokes containing the exported Rust symbols
 - generic iOS-device and iOS-simulator Swift Package builds without signing
@@ -125,7 +127,7 @@ Phase 6 creates no release and uploads no artifact. Publishing, signing, notariz
 
 ## Product boundary
 
-The future `career-workbench` repository owns:
+The separate `career-workbench` repository owns:
 
 - SwiftUI and navigation
 - local database and migrations

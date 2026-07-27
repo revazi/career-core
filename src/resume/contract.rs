@@ -180,6 +180,16 @@ pub enum ResumeEvaluationErrorCodeV1 {
     EnrichmentListTooLong,
     EnrichmentValueNotGrounded,
     EnrichmentEntryInvalid,
+    UnsupportedVariantReviewInputSchemaVersion,
+    UnsupportedVariantProposalSchemaVersion,
+    UnsupportedVariantMaterializationInputSchemaVersion,
+    UnsupportedVariantPolicyVersion,
+    VariantProposalTooLarge,
+    VariantChangeListTooLong,
+    VariantPreviewInvalid,
+    VariantSelectionEmpty,
+    VariantSelectionTooLong,
+    VariantSelectionInvalid,
 }
 
 impl ResumeEvaluationErrorCodeV1 {
@@ -207,6 +217,22 @@ impl ResumeEvaluationErrorCodeV1 {
             Self::EnrichmentListTooLong => "enrichment_list_too_long",
             Self::EnrichmentValueNotGrounded => "enrichment_value_not_grounded",
             Self::EnrichmentEntryInvalid => "enrichment_entry_invalid",
+            Self::UnsupportedVariantReviewInputSchemaVersion => {
+                "unsupported_variant_review_input_schema_version"
+            }
+            Self::UnsupportedVariantProposalSchemaVersion => {
+                "unsupported_variant_proposal_schema_version"
+            }
+            Self::UnsupportedVariantMaterializationInputSchemaVersion => {
+                "unsupported_variant_materialization_input_schema_version"
+            }
+            Self::UnsupportedVariantPolicyVersion => "unsupported_variant_policy_version",
+            Self::VariantProposalTooLarge => "variant_proposal_too_large",
+            Self::VariantChangeListTooLong => "variant_change_list_too_long",
+            Self::VariantPreviewInvalid => "variant_preview_invalid",
+            Self::VariantSelectionEmpty => "variant_selection_empty",
+            Self::VariantSelectionTooLong => "variant_selection_too_long",
+            Self::VariantSelectionInvalid => "variant_selection_invalid",
         }
     }
 }

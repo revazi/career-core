@@ -20,7 +20,9 @@ The core library processes untrusted career-document text and structured data lo
 - keep output bounded and deterministic
 - treat external normalization proposals as untrusted data requiring exact shape, limits, eligible targets, and source grounding
 - preserve deterministic output when assisted validation fails
-- score only the deterministic normalization baseline and never assisted proposal values
+- treat resume-variant targets, evidence, generated replacements, and selected identifiers as untrusted; discard ambiguous/overlapping changes and never claim evidence occurrence proves factual entailment
+- materialize only revalidated explicitly selected canonical changes while preserving the exact baseline and every unselected range
+- score only the deterministic normalization baseline and never assisted proposal or variant values
 - label parser uncertainty and general ATS-readiness limitations without claiming proprietary ranking behavior
 - treat job fields not detected by lexical classification as unverified rather than confirmed absent
 - require caller-supplied job text and never fetch vacancy URLs from the core

@@ -6,8 +6,9 @@ use std::fmt;
 
 use career_core::{
     CareerErrorV1, JobInputV1, JobMatchInputV1, ResumeEnrichmentInputV1, ResumeInputV1,
-    analyze_resume, apply_resume_enrichment, capabilities, evaluate_resume, match_job,
-    normalize_job, normalize_resume,
+    ResumeVariantMaterializationInputV1, ResumeVariantReviewInputV1, analyze_resume,
+    apply_resume_enrichment, capabilities, evaluate_resume, match_job, materialize_resume_variant,
+    normalize_job, normalize_resume, review_resume_variant,
 };
 use serde::Serialize;
 use serde::de::DeserializeOwned;
@@ -102,6 +103,28 @@ pub fn resume_enrich_json(input_json: String) -> Result<String, CareerSwiftError
         MAX_SINGLE_INPUT_BYTES,
     )?;
     serialize_json(&apply_resume_enrichment(&input).map_err(map_core_error)?)
+}
+
+/// Reviews `career.resume_variant_review_input.v1` and returns canonical review JSON.
+#[uniffi::export]
+pub fn resume_variant_review_json(input_json: String) -> Result<String, CareerSwiftError> {
+    let input = parse_input::<ResumeVariantReviewInputV1>(
+        &input_json,
+        "career.resume_variant_review_input.v1",
+        MAX_MATCH_INPUT_BYTES,
+    )?;
+    serialize_json(&review_resume_variant(&input).map_err(map_core_error)?)
+}
+
+/// Materializes `career.resume_variant_materialization_input.v1` as canonical JSON.
+#[uniffi::export]
+pub fn resume_variant_materialize_json(input_json: String) -> Result<String, CareerSwiftError> {
+    let input = parse_input::<ResumeVariantMaterializationInputV1>(
+        &input_json,
+        "career.resume_variant_materialization_input.v1",
+        MAX_MATCH_INPUT_BYTES,
+    )?;
+    serialize_json(&materialize_resume_variant(&input).map_err(map_core_error)?)
 }
 
 /// Normalizes `career.job_input.v1` and returns canonical normalization JSON.
@@ -200,6 +223,22 @@ mod tests {
                     "../../../fixtures/resume/phase2/messy-unlabeled.enrichment-expected.json"
                 ),
                 resume_enrich_json,
+            ),
+            (
+                include_str!("../../../fixtures/resume/phase7/complete-variant-review.input.json"),
+                include_str!(
+                    "../../../fixtures/resume/phase7/complete-variant-review.expected.json"
+                ),
+                resume_variant_review_json,
+            ),
+            (
+                include_str!(
+                    "../../../fixtures/resume/phase7/selected-variant-materialization.input.json"
+                ),
+                include_str!(
+                    "../../../fixtures/resume/phase7/selected-variant-materialization.expected.json"
+                ),
+                resume_variant_materialize_json,
             ),
             (
                 include_str!("../../../fixtures/job/phase4a/complete-normalization.input.json"),

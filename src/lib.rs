@@ -80,6 +80,18 @@ pub fn capabilities() -> Capabilities {
                     .to_owned(),
             },
             Capability {
+                id: "resume.variant.review".to_owned(),
+                status: CapabilityStatus::Available,
+                summary: "Review bounded evidence-linked external resume changes without certifying generated prose."
+                    .to_owned(),
+            },
+            Capability {
+                id: "resume.variant.materialize".to_owned(),
+                status: CapabilityStatus::Available,
+                summary: "Revalidate and deterministically materialize only explicitly selected assisted resume changes."
+                    .to_owned(),
+            },
+            Capability {
                 id: "job.normalize".to_owned(),
                 status: CapabilityStatus::Available,
                 summary: "Normalize bounded job-description text into source-grounded deterministic facts and confidence."
@@ -128,6 +140,8 @@ mod tests {
                 "resume.analyze",
                 "resume.normalize",
                 "resume.enrich",
+                "resume.variant.review",
+                "resume.variant.materialize",
                 "job.normalize",
                 "job.match",
             ]

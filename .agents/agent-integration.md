@@ -114,6 +114,24 @@ The agent then submits one `career.resume_enrichment_input.v1` envelope to `resu
 
 `resume enrich` performs no model call. It returns the unchanged deterministic normalization under `baseline` and accepted values under `assisted_document`. Authoritative scores must consume the baseline. `resume analyze` enforces this by accepting only the original resume input and independently rerunning deterministic normalization. If the external model or validation fails, the agent must continue with the deterministic normalization rather than treating the operation as failed.
 
+## Available Phase 7 operations
+
+Review a bounded external proposal without invoking a provider:
+
+```bash
+career resume variant-review --input <path|-> [--format json|json-pretty|json-compact|text]
+```
+
+Input is `career.resume_variant_review_input.v1`; output is `career.resume_variant_review.v1`. The operation retains at most 50 canonical non-overlapping changes with core-assigned identifiers and may discard invalid changes using bounded codes. Exact evidence occurrence proves only occurrence, not factual entailment. Agents must preserve all non-authoritative warnings and must not present retained generated wording as core-certified fact.
+
+After the user explicitly selects canonical identifiers, materialize only that subset:
+
+```bash
+career resume variant-materialize --input <path|-> [--format json|json-pretty|json-compact|text]
+```
+
+Input is `career.resume_variant_materialization_input.v1`; output is `career.resume_variant.v1`. Materialization revalidates the complete proposal and selection, preserves the exact baseline, and changes only selected targets. The assisted result cannot enter `resume analyze` or `job match`. Agents must not repair discarded changes, select changes automatically, or overwrite the original resume.
+
 ## Available Phase 4 operations
 
 ```bash

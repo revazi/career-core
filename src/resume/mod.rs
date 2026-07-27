@@ -8,6 +8,8 @@ mod normalization;
 mod normalization_contract;
 mod sections;
 mod validation;
+mod variant;
+mod variant_contract;
 
 pub use analysis::analyze_resume;
 pub use analysis_contract::*;
@@ -26,3 +28,5 @@ pub use enrichment_contract::*;
 pub use evaluation::evaluate_resume;
 pub use normalization::normalize_resume;
 pub use normalization_contract::*;
+pub use variant::{materialize_resume_variant, review_resume_variant};
+pub use variant_contract::*;

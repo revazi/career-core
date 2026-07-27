@@ -1,6 +1,6 @@
 ---
 name: career-core
-description: Discovers and invokes the local career-core deterministic CLI for source-grounded normalization, resume readiness analysis, conservative resume-to-job matching, and optional external-proposal validation. Use when evaluating supported career documents, inspecting evidence, or building local integrations.
+description: Discovers and invokes the local career-core deterministic CLI for source-grounded normalization, resume readiness analysis, conservative resume-to-job matching, optional external-proposal validation, and selected assisted-variant materialization. Use when evaluating supported career documents, inspecting evidence, or building local integrations.
 license: MIT OR Apache-2.0
 compatibility: Requires an installed `career` binary or a career-core source checkout with Rust 1.85+.
 metadata:
@@ -26,7 +26,7 @@ From this repository:
 cargo run --quiet -p career-cli -- capabilities
 ```
 
-JSON is the default. Invoke only entries whose `status` is `available`. `core.capabilities`, `resume.evaluate`, `resume.analyze`, `resume.normalize`, provider-neutral `resume.enrich`, `job.normalize`, and `job.match` are available.
+JSON is the default. Invoke only entries whose `status` is `available`. `core.capabilities`, `resume.evaluate`, `resume.analyze`, `resume.normalize`, provider-neutral `resume.enrich`, `resume.variant.review`, `resume.variant.materialize`, `job.normalize`, and `job.match` are available.
 
 For human-readable discovery:
 
@@ -90,6 +90,24 @@ career resume enrich --input /path/to/enrichment-input.json
 Populate only the reported target sections and copy every non-empty value from source text. Do not infer or paraphrase. If generation or validation fails, retain the deterministic normalization.
 
 `resume enrich` does not call a model. Its result preserves the authoritative deterministic normalization under `baseline`; `assisted_document` must remain clearly labeled and must not replace deterministic confidence, evidence, or scoring input.
+
+## Review and materialize assisted variants
+
+Review `career.resume_variant_review_input.v1` containing original resume/vacancy inputs and at most 50 untrusted evidence-linked changes:
+
+```bash
+career resume variant-review --input /path/to/variant-review-input.json
+```
+
+Only canonical retained change identifiers are selectable. Exact evidence occurrence does not certify that generated prose is factually entailed. Do not repair discarded changes or select on the user's behalf.
+
+After explicit user selection, submit the same exact review input plus canonical identifiers through `career.resume_variant_materialization_input.v1`:
+
+```bash
+career resume variant-materialize --input /path/to/materialization-input.json
+```
+
+The output preserves the baseline and materializes only selected changes as assisted, non-authoritative text. It must not replace the original or enter deterministic analysis/matching.
 
 ## Normalize job descriptions
 

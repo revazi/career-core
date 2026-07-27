@@ -32,3 +32,4 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - `career.schema_catalog.v1`, source-install guidance, shell-safe coding-agent examples, Linux/macOS compatibility CI, and a checksum-based release-preparation checklist.
 - Pinned UniFFI `0.30.0` `career-swift` adapter with JSON-in/JSON-out functions for every stable deterministic operation and typed Swift errors.
 - Local `CareerCoreSwift` package, Apple Silicon macOS/iOS/iOS-simulator XCFramework build, exact Swift/Rust fixture parity, smoke executable, and per-file artifact checksums.
+- Versioned evidence-linked assisted resume-variant review/materialization contracts with 50-change bounds, canonical selection identifiers, exact baseline preservation, CLI/schema/Swift facade coverage, and mandatory non-authoritative factuality warnings.

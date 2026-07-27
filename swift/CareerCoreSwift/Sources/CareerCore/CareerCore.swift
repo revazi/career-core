@@ -651,6 +651,26 @@ public func resumeNormalizeJson(inputJson: String)throws  -> String  {
     )
 })
 }
+/**
+ * Materializes `career.resume_variant_materialization_input.v1` as canonical JSON.
+ */
+public func resumeVariantMaterializeJson(inputJson: String)throws  -> String  {
+    return try  FfiConverterString.lift(try rustCallWithError(FfiConverterTypeCareerSwiftError_lift) {
+    uniffi_career_swift_fn_func_resume_variant_materialize_json(
+        FfiConverterString.lower(inputJson),$0
+    )
+})
+}
+/**
+ * Reviews `career.resume_variant_review_input.v1` and returns canonical review JSON.
+ */
+public func resumeVariantReviewJson(inputJson: String)throws  -> String  {
+    return try  FfiConverterString.lift(try rustCallWithError(FfiConverterTypeCareerSwiftError_lift) {
+    uniffi_career_swift_fn_func_resume_variant_review_json(
+        FfiConverterString.lower(inputJson),$0
+    )
+})
+}
 
 private enum InitializationResult {
     case ok
@@ -686,6 +706,12 @@ private let initializationResult: InitializationResult = {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_career_swift_checksum_func_resume_normalize_json() != 450) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_career_swift_checksum_func_resume_variant_materialize_json() != 41445) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_career_swift_checksum_func_resume_variant_review_json() != 38326) {
         return InitializationResult.apiChecksumMismatch
     }
 

@@ -301,7 +301,37 @@ Phases 1–5 contracts required by the app are stable and versioned.
 - unsafe/FFI code is isolated, documented, and reviewed
 - Apple artifacts are reproducible and version aligned
 
-## Phase 7 — Optional concrete adapters
+## Phase 7 — Evidence-linked assisted resume variants
+
+### Goal
+
+Deterministically review and materialize an explicitly selected subset of externally generated resume changes while preserving the exact baseline and preventing assisted prose from entering authoritative analysis or matching.
+
+### Scope
+
+- provider-neutral proposal with at most 50 bounded line-targeted changes and exact resume/vacancy evidence
+- exact target/range/evidence validation without semantic factuality claims
+- stable canonical change identifiers, ordering, discard diagnostics, and non-overlap policy
+- all-change assisted preview for review presentation
+- second materialization operation that revalidates the complete proposal and selected identifiers
+- exact baseline and unselected-range preservation
+- mandatory assisted/non-authoritative provenance and warnings
+- JSON schemas, synthetic fixtures, CLI JSON/text operations, capability discovery, agent documentation, and UniFFI parity
+
+### Out of scope
+
+- providers, prompts, model calls, network requests/retries, credentials, persistence, UI, export, clipboard, clocks, random identifiers, semantic entailment certification, automatic acceptance, scoring/matching from assisted text, dependencies without separate justification, signing, publication, or distribution
+
+### Acceptance
+
+- malformed, oversized, duplicate, overlapping, ambiguous, stale-selection, Unicode, mixed-line-ending, prompt-like, and evidence-adversarial proposals fail or discard conservatively without payload echoes
+- identical versioned input produces byte-equivalent review/materialization output
+- selected output changes only selected canonical targets; baseline and every unselected byte remain unchanged
+- mandatory warnings state that evidence occurrence is not factual certification and variants are non-authoritative
+- existing analysis, normalization, enrichment, matching, schema, CLI, and Swift fixture outputs remain unchanged
+- full Rust/MSRV/Swift/XCFramework, schema, clean-clone, security, and CI gates pass
+
+## Phase 8 — Optional concrete adapters
 
 ### Goal
 

@@ -15,8 +15,10 @@ use career_core::{
     ResumeAnalysisV1, ResumeDetectionStatusV1, ResumeEnrichmentInputV1,
     ResumeEnrichmentMergeStatusV1, ResumeEnrichmentResultV1, ResumeEvaluationV1,
     ResumeFieldDetectionStatusV1, ResumeInputV1, ResumeNormalizationV1,
-    ResumeParseConfidenceLabelV1, analyze_resume, apply_resume_enrichment, capabilities,
-    evaluate_resume, match_job, normalize_job, normalize_resume,
+    ResumeParseConfidenceLabelV1, ResumeVariantMaterializationInputV1, ResumeVariantReviewInputV1,
+    ResumeVariantReviewV1, ResumeVariantV1, analyze_resume, apply_resume_enrichment, capabilities,
+    evaluate_resume, match_job, materialize_resume_variant, normalize_job, normalize_resume,
+    review_resume_variant,
 };
 use clap::{Parser, Subcommand, ValueEnum, error::ErrorKind};
 use schema::{SchemaCatalogV1, SchemaId, embedded_schema, schema_catalog};
@@ -133,6 +135,24 @@ enum ResumeCommand {
     /// Validate and merge an explicit external proposal without making a network request.
     Enrich {
         /// Read career.resume_enrichment_input.v1 JSON from this path, or use `-` for stdin.
+        #[arg(long)]
+        input: PathBuf,
+        /// Select machine-readable JSON or concise human-readable text.
+        #[arg(long, value_enum, default_value_t = OutputFormat::Json)]
+        format: OutputFormat,
+    },
+    /// Review bounded evidence-linked changes without certifying generated prose.
+    VariantReview {
+        /// Read career.resume_variant_review_input.v1 JSON from this path, or use `-` for stdin.
+        #[arg(long)]
+        input: PathBuf,
+        /// Select machine-readable JSON or concise human-readable text.
+        #[arg(long, value_enum, default_value_t = OutputFormat::Json)]
+        format: OutputFormat,
+    },
+    /// Materialize only explicitly selected canonical resume changes.
+    VariantMaterialize {
+        /// Read career.resume_variant_materialization_input.v1 JSON from this path, or use `-` for stdin.
         #[arg(long)]
         input: PathBuf,
         /// Select machine-readable JSON or concise human-readable text.
@@ -341,7 +361,9 @@ impl Cli {
                 ResumeCommand::Evaluate { format, .. }
                 | ResumeCommand::Analyze { format, .. }
                 | ResumeCommand::Normalize { format, .. }
-                | ResumeCommand::Enrich { format, .. } => *format,
+                | ResumeCommand::Enrich { format, .. }
+                | ResumeCommand::VariantReview { format, .. }
+                | ResumeCommand::VariantMaterialize { format, .. } => *format,
             },
             Command::Job { command } => match command {
                 JobCommand::Normalize { format, .. } | JobCommand::Match { format, .. } => *format,
@@ -422,6 +444,49 @@ fn run(
             let result = apply_resume_enrichment(&enrichment_input).map_err(CliFailure::Core)?;
             match format {
                 OutputFormat::Text => write_resume_enrichment_text(output, &result),
+                _ => write_json(output, &result, format),
+            }
+        }
+        Command::Resume {
+            command: ResumeCommand::VariantReview { input, format },
+        } => {
+            let input_bytes = read_input_with_limit(
+                &input,
+                standard_input,
+                "resume-variant-review",
+                MAX_CLI_JOB_MATCH_INPUT_BYTES,
+            )?;
+            let review_input = serde_json::from_slice::<ResumeVariantReviewInputV1>(&input_bytes)
+                .map_err(|error| {
+                CliFailure::invalid_json(&error, "career.resume_variant_review_input.v1")
+            })?;
+            let result = review_resume_variant(&review_input).map_err(CliFailure::Core)?;
+            match format {
+                OutputFormat::Text => write_resume_variant_review_text(output, &result),
+                _ => write_json(output, &result, format),
+            }
+        }
+        Command::Resume {
+            command: ResumeCommand::VariantMaterialize { input, format },
+        } => {
+            let input_bytes = read_input_with_limit(
+                &input,
+                standard_input,
+                "resume-variant-materialization",
+                MAX_CLI_JOB_MATCH_INPUT_BYTES,
+            )?;
+            let materialization_input =
+                serde_json::from_slice::<ResumeVariantMaterializationInputV1>(&input_bytes)
+                    .map_err(|error| {
+                        CliFailure::invalid_json(
+                            &error,
+                            "career.resume_variant_materialization_input.v1",
+                        )
+                    })?;
+            let result =
+                materialize_resume_variant(&materialization_input).map_err(CliFailure::Core)?;
+            match format {
+                OutputFormat::Text => write_resume_variant_text(output, &result),
                 _ => write_json(output, &result, format),
             }
         }
@@ -912,6 +977,60 @@ fn write_resume_enrichment_text(
     Ok(())
 }
 
+fn write_resume_variant_review_text(
+    output: &mut impl Write,
+    result: &ResumeVariantReviewV1,
+) -> Result<(), CliFailure> {
+    writeln!(
+        output,
+        "Assisted resume variant review: {} retained; {} discarded",
+        result.changes.len(),
+        result.discarded_changes.len()
+    )
+    .map_err(|_| CliFailure::output_failure())?;
+    writeln!(output, "Authority: assisted, non-authoritative")
+        .map_err(|_| CliFailure::output_failure())?;
+    for change in &result.changes {
+        writeln!(
+            output,
+            "  - {}: lines {}-{} ({:?})",
+            change.change_id, change.start_line, change.end_line, change.section
+        )
+        .map_err(|_| CliFailure::output_failure())?;
+    }
+    for warning in &result.warnings {
+        writeln!(output, "Warning: {}", warning.message)
+            .map_err(|_| CliFailure::output_failure())?;
+    }
+    Ok(())
+}
+
+fn write_resume_variant_text(
+    output: &mut impl Write,
+    result: &ResumeVariantV1,
+) -> Result<(), CliFailure> {
+    writeln!(
+        output,
+        "Assisted resume variant materialized: {} selected changes",
+        result.selected_changes.len()
+    )
+    .map_err(|_| CliFailure::output_failure())?;
+    writeln!(output, "Authority: assisted, non-authoritative")
+        .map_err(|_| CliFailure::output_failure())?;
+    writeln!(
+        output,
+        "Baseline characters: {}; assisted candidate characters: {}",
+        result.baseline_resume.text.chars().count(),
+        result.assisted_resume_text.chars().count()
+    )
+    .map_err(|_| CliFailure::output_failure())?;
+    for warning in &result.warnings {
+        writeln!(output, "Warning: {}", warning.message)
+            .map_err(|_| CliFailure::output_failure())?;
+    }
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -927,6 +1046,8 @@ mod tests {
         assert!(output.contains("resume.analyze [available]"));
         assert!(output.contains("resume.normalize [available]"));
         assert!(output.contains("resume.enrich [available]"));
+        assert!(output.contains("resume.variant.review [available]"));
+        assert!(output.contains("resume.variant.materialize [available]"));
         assert!(output.contains("job.normalize [available]"));
         assert!(output.contains("job.match [available]"));
         assert!(output.contains("network requests: false"));
