@@ -52,6 +52,8 @@ let evaluation = try resumeEvaluateJson(inputJson: resumeInput)
 let analysis = try resumeAnalyzeJson(inputJson: resumeInput)
 let normalization = try resumeNormalizeJson(inputJson: resumeInput)
 let enrichment = try resumeEnrichJson(inputJson: enrichmentInput)
+let variantReview = try resumeVariantReviewJson(inputJson: variantReviewInput)
+let variant = try resumeVariantMaterializeJson(inputJson: materializationInput)
 let job = try jobNormalizeJson(inputJson: jobInput)
 let match = try jobMatchJson(inputJson: matchInput)
 ```
@@ -65,7 +67,7 @@ Failures throw `CareerSwiftError`:
 - `InvalidInput` with core code, message, and field path
 - `OutputSerialization`
 
-Messages are bounded and do not include source documents. Single-document envelopes are limited to 262,144 UTF-8 bytes and match envelopes to 1,048,576 bytes before JSON parsing.
+Messages are bounded and do not include source documents. Single-document envelopes are limited to 262,144 UTF-8 bytes; match and variant review/materialization envelopes are limited to 1,048,576 bytes before JSON parsing.
 
 ## Smoke target
 

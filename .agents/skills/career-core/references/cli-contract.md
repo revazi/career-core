@@ -74,6 +74,17 @@ An agent must obtain user approval before using an external model. Provider fail
 
 See `docs/contracts/resume-normalization-v1.md` for all limits and merge rules.
 
+## Assisted resume variant review and materialization
+
+```bash
+career resume variant-review --input <path|-> [--format json|json-pretty|json-compact|text]
+career resume variant-materialize --input <path|-> [--format json|json-pretty|json-compact|text]
+```
+
+Review input follows `schemas/resume-variant-review-input-v1.schema.json`; output follows `schemas/resume-variant-review-v1.schema.json`. Review validates at most 50 exact line targets and exact evidence occurrences, discards invalid/overlapping items conservatively, assigns canonical IDs, and returns an assisted preview. Evidence occurrence is not semantic factuality certification.
+
+Materialization input follows `schemas/resume-variant-materialization-input-v1.schema.json`; output follows `schemas/resume-variant-v1.schema.json`. It revalidates the complete proposal and applies only explicit canonical IDs. The baseline remains exact and output is assisted/non-authoritative. Never pass it to deterministic analysis or matching.
+
 ## Job-description normalization
 
 ```bash
@@ -117,7 +128,7 @@ Current nonzero exit statuses:
 | 5 | valid JSON rejected by core input validation |
 | 6 | output write/serialization failure |
 
-Errors use `career.error.v1`. Messages are bounded and do not echo the source document. Single-document commands read at most 262,144 bytes; the two-document `job match` envelope reads at most 1,048,576 bytes before JSON parsing.
+Errors use `career.error.v1`. Messages are bounded and do not echo the source document. Single-document commands read at most 262,144 bytes; composite `job match` and variant review/materialization envelopes read at most 1,048,576 bytes before JSON parsing.
 
 ## Execution from source
 
@@ -127,6 +138,8 @@ cargo run --quiet -p career-cli -- resume evaluate --input fixtures/resume/phase
 cargo run --quiet -p career-cli -- resume analyze --input fixtures/resume/phase3/complete-analysis.input.json
 cargo run --quiet -p career-cli -- resume normalize --input fixtures/resume/phase2/complete-normalization.input.json
 cargo run --quiet -p career-cli -- resume enrich --input fixtures/resume/phase2/messy-unlabeled.enrichment-input.json
+cargo run --quiet -p career-cli -- resume variant-review --input fixtures/resume/phase7/complete-variant-review.input.json
+cargo run --quiet -p career-cli -- resume variant-materialize --input fixtures/resume/phase7/selected-variant-materialization.input.json
 cargo run --quiet -p career-cli -- job normalize --input fixtures/job/phase4a/complete-normalization.input.json
 cargo run --quiet -p career-cli -- job match --input fixtures/job/phase4b/complete-match.input.json
 ```

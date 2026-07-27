@@ -12,6 +12,8 @@ career resume evaluate --input <path|->
 career resume analyze --input <path|->
 career resume normalize --input <path|->
 career resume enrich --input <path|->
+career resume variant-review --input <path|->
+career resume variant-materialize --input <path|->
 career job normalize --input <path|->
 career job match --input <path|->
 ```
@@ -44,6 +46,8 @@ Machine modes write a successful result only to stdout. Failures write one `care
 | `resume analyze` | `career.resume_input.v1` | `career.resume_analysis.v1` |
 | `resume normalize` | `career.resume_input.v1` | `career.resume_normalization.v1` |
 | `resume enrich` | `career.resume_enrichment_input.v1` | `career.resume_enrichment_result.v1` |
+| `resume variant-review` | `career.resume_variant_review_input.v1` | `career.resume_variant_review.v1` |
+| `resume variant-materialize` | `career.resume_variant_materialization_input.v1` | `career.resume_variant.v1` |
 | `job normalize` | `career.job_input.v1` | `career.job_normalization.v1` |
 | `job match` | `career.job_match_input.v1` | `career.job_match.v1` |
 
@@ -72,7 +76,7 @@ Argument errors use canonical pretty JSON because the requested output format ma
 ## Input and privacy rules
 
 - Single-document command input is limited to 262,144 bytes before JSON parsing.
-- The two-document `job match` envelope is limited to 1,048,576 bytes.
+- Composite `job match` and resume-variant review/materialization envelopes are limited to 1,048,576 bytes.
 - Core character, line, string, list, and evidence limits still apply after parsing.
 - Missing paths are not echoed in errors.
 - Resume and job text is never logged or repeated in diagnostics.

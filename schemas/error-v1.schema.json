@@ -32,7 +32,17 @@
         "enrichment_field_too_long",
         "enrichment_list_too_long",
         "enrichment_value_not_grounded",
-        "enrichment_entry_invalid"
+        "enrichment_entry_invalid",
+        "unsupported_variant_review_input_schema_version",
+        "unsupported_variant_proposal_schema_version",
+        "unsupported_variant_materialization_input_schema_version",
+        "unsupported_variant_policy_version",
+        "variant_proposal_too_large",
+        "variant_change_list_too_long",
+        "variant_preview_invalid",
+        "variant_selection_empty",
+        "variant_selection_too_long",
+        "variant_selection_invalid"
       ]
     },
     "message": {

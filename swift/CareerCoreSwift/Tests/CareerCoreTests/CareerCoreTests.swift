@@ -46,6 +46,16 @@ final class CareerCoreTests: XCTestCase {
                 resumeEnrichJson
             ),
             (
+                "fixtures/resume/phase7/complete-variant-review.input.json",
+                "fixtures/resume/phase7/complete-variant-review.expected.json",
+                resumeVariantReviewJson
+            ),
+            (
+                "fixtures/resume/phase7/selected-variant-materialization.input.json",
+                "fixtures/resume/phase7/selected-variant-materialization.expected.json",
+                resumeVariantMaterializeJson
+            ),
+            (
                 "fixtures/job/phase4a/complete-normalization.input.json",
                 "fixtures/job/phase4a/complete-normalization.expected.json",
                 jobNormalizeJson

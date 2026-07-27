@@ -2,8 +2,10 @@ use career_core::{
     JobInputV1, JobMatchCategoryV1, JobMatchInputV1, JobMatchItemKindV1, JobMatchItemStatusV1,
     JobMatchRecommendationLabelV1, JobMatchRecommendationStatusV1, JobMatchTypeV1, JobMatchV1,
     JobNormalizationV1, ResumeAnalysisV1, ResumeEnrichmentInputV1, ResumeEnrichmentResultV1,
-    ResumeEvaluationV1, ResumeInputV1, ResumeNormalizationV1, analyze_resume,
-    apply_resume_enrichment, evaluate_resume, match_job, normalize_job, normalize_resume,
+    ResumeEvaluationV1, ResumeInputV1, ResumeNormalizationV1, ResumeVariantMaterializationInputV1,
+    ResumeVariantReviewInputV1, ResumeVariantReviewV1, ResumeVariantV1, analyze_resume,
+    apply_resume_enrichment, evaluate_resume, match_job, materialize_resume_variant, normalize_job,
+    normalize_resume, review_resume_variant,
 };
 
 const SCHEMAS: &[(&str, &str)] = &[
@@ -58,6 +60,26 @@ const SCHEMAS: &[(&str, &str)] = &[
     (
         "resume-enrichment-result-v1",
         include_str!("../schemas/resume-enrichment-result-v1.schema.json"),
+    ),
+    (
+        "resume-variant-proposal-v1",
+        include_str!("../schemas/resume-variant-proposal-v1.schema.json"),
+    ),
+    (
+        "resume-variant-review-input-v1",
+        include_str!("../schemas/resume-variant-review-input-v1.schema.json"),
+    ),
+    (
+        "resume-variant-review-v1",
+        include_str!("../schemas/resume-variant-review-v1.schema.json"),
+    ),
+    (
+        "resume-variant-materialization-input-v1",
+        include_str!("../schemas/resume-variant-materialization-input-v1.schema.json"),
+    ),
+    (
+        "resume-variant-v1",
+        include_str!("../schemas/resume-variant-v1.schema.json"),
     ),
     ("error-v1", include_str!("../schemas/error-v1.schema.json")),
 ];
@@ -708,6 +730,35 @@ fn selected_resume_analysis_scores_match_the_independent_reference_fixture() {
             assert_eq!(actual_check["explanation"], expected_check["details"]);
         }
     }
+}
+
+#[test]
+fn reviewed_resume_variant_fixtures_match_the_typed_contract() {
+    let review_input: ResumeVariantReviewInputV1 = serde_json::from_str(include_str!(
+        "../fixtures/resume/phase7/complete-variant-review.input.json"
+    ))
+    .expect("variant review input should be typed JSON");
+    let expected_review: ResumeVariantReviewV1 = serde_json::from_str(include_str!(
+        "../fixtures/resume/phase7/complete-variant-review.expected.json"
+    ))
+    .expect("variant review output should be typed JSON");
+    assert_eq!(
+        review_resume_variant(&review_input).expect("variant should review"),
+        expected_review
+    );
+
+    let materialization_input: ResumeVariantMaterializationInputV1 = serde_json::from_str(
+        include_str!("../fixtures/resume/phase7/selected-variant-materialization.input.json"),
+    )
+    .expect("variant materialization input should be typed JSON");
+    let expected_variant: ResumeVariantV1 = serde_json::from_str(include_str!(
+        "../fixtures/resume/phase7/selected-variant-materialization.expected.json"
+    ))
+    .expect("variant output should be typed JSON");
+    assert_eq!(
+        materialize_resume_variant(&materialization_input).expect("variant should materialize"),
+        expected_variant
+    );
 }
 
 #[test]

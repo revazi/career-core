@@ -57,6 +57,26 @@ career-core grounding validation + conservative merge
         └─ separately labeled assisted document
 ```
 
+Evidence-linked resume variants use a separate non-authoritative boundary:
+
+```text
+host/provider proposes bounded line-targeted changes
+        │
+        ▼
+career-core exact target/evidence + structural review
+        │ emits canonical selectable changes and assisted preview
+        ▼
+user selects canonical change identifiers outside core
+        │
+        ▼
+career-core revalidation + deterministic materialization
+        │
+        ├─ byte-equivalent baseline
+        └─ separately labeled assisted variant
+```
+
+Exact evidence occurrence does not prove semantic entailment or factual truth. Variant output is review/export data only and cannot enter authoritative analysis or matching.
+
 ## Core boundary
 
 The library accepts bounded typed values and returns typed deterministic results. It may:
@@ -69,6 +89,7 @@ The library accepts bounded typed values and returns typed deterministic results
 - emit provider-neutral enrichment eligibility and target contracts
 - validate source-grounded external proposals as untrusted typed input
 - merge accepted proposal values only into eligible empty fields while preserving the baseline
+- validate bounded variant targets/evidence structurally and deterministically materialize explicitly selected changes into a separate assisted variant
 - serialize public contract types through Serde
 
 It may not:

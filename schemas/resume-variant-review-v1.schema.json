@@ -1,0 +1,183 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/revazi/career-core/main/schemas/resume-variant-review-v1.schema.json",
+  "title": "career-core assisted resume variant review v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "policy_version",
+    "core_version",
+    "authority",
+    "baseline_resume",
+    "proposed_preview_text",
+    "changes",
+    "discarded_changes",
+    "warnings"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "career.resume_variant_review.v1"
+    },
+    "policy_version": {
+      "const": "resume_variant_review_v1"
+    },
+    "core_version": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "authority": {
+      "const": "assisted_non_authoritative"
+    },
+    "baseline_resume": {
+      "$ref": "resume-input-v1.schema.json"
+    },
+    "proposed_preview_text": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 50000
+    },
+    "changes": {
+      "type": "array",
+      "maxItems": 50,
+      "items": {
+        "$ref": "#/$defs/canonicalChange"
+      }
+    },
+    "discarded_changes": {
+      "type": "array",
+      "maxItems": 50,
+      "items": {
+        "$ref": "#/$defs/discardedChange"
+      }
+    },
+    "warnings": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "items": {
+        "$ref": "#/$defs/warning"
+      }
+    }
+  },
+  "$defs": {
+    "section": {
+      "type": "string",
+      "enum": [
+        "contact",
+        "summary",
+        "experience",
+        "education",
+        "skills",
+        "projects",
+        "certifications",
+        "other"
+      ]
+    },
+    "evidence": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 5,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 300
+      }
+    },
+    "canonicalChange": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "change_id",
+        "section",
+        "start_line",
+        "end_line",
+        "original_text",
+        "proposed_text",
+        "resume_evidence",
+        "vacancy_evidence"
+      ],
+      "properties": {
+        "change_id": {
+          "type": "string",
+          "pattern": "^change-[0-9]{4}$"
+        },
+        "section": {
+          "$ref": "#/$defs/section"
+        },
+        "start_line": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2000
+        },
+        "end_line": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2000
+        },
+        "original_text": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 10000
+        },
+        "proposed_text": {
+          "type": "string",
+          "maxLength": 10000
+        },
+        "resume_evidence": {
+          "$ref": "#/$defs/evidence"
+        },
+        "vacancy_evidence": {
+          "$ref": "#/$defs/evidence"
+        }
+      }
+    },
+    "discardedChange": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["input_index", "code"],
+      "properties": {
+        "input_index": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 49
+        },
+        "code": {
+          "type": "string",
+          "enum": [
+            "invalid_line_range",
+            "target_mismatch",
+            "no_change",
+            "change_text_too_long",
+            "unsupported_control_character",
+            "invalid_resume_evidence",
+            "invalid_vacancy_evidence",
+            "duplicate_or_overlapping_target"
+          ]
+        }
+      }
+    },
+    "warning": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "message"],
+      "properties": {
+        "code": {
+          "type": "string",
+          "enum": [
+            "assisted_content_non_authoritative",
+            "evidence_occurrence_not_factual_certification",
+            "deterministic_baseline_preserved"
+          ]
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 400
+        }
+      }
+    }
+  }
+}

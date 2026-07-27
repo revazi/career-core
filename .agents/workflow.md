@@ -58,6 +58,10 @@ cargo run --quiet -p career-cli -- resume normalize \
   --input fixtures/resume/phase2/complete-normalization.input.json
 cargo run --quiet -p career-cli -- resume enrich \
   --input fixtures/resume/phase2/messy-unlabeled.enrichment-input.json
+cargo run --quiet -p career-cli -- resume variant-review \
+  --input fixtures/resume/phase7/complete-variant-review.input.json
+cargo run --quiet -p career-cli -- resume variant-materialize \
+  --input fixtures/resume/phase7/selected-variant-materialization.input.json
 cargo run --quiet -p career-cli -- job normalize \
   --input fixtures/job/phase4a/complete-normalization.input.json
 cargo run --quiet -p career-cli -- job match \
@@ -75,6 +79,10 @@ scripts/verify-swift.sh
 ```
 
 Regeneration must leave checked-in `CareerCore.swift` byte-equivalent. Inspect XCFramework slices, validate checksums, run all Swift tests, and build generic iOS-device and iOS-simulator destinations without signing.
+
+## CI usage policy
+
+The hosted workflow runs only by explicit `workflow_dispatch`; pull requests and pushes do not start Linux or macOS jobs automatically. Complete local verification first, then dispatch the workflow once for the final reviewed head when hosted verification is required. Concurrency cancellation prevents a superseded manual run from continuing to consume runner time.
 
 ## Dependency policy
 

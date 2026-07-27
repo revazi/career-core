@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/revazi/career-core/main/schemas/resume-variant-review-input-v1.schema.json",
+  "title": "career-core assisted resume variant review input v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "resume", "vacancy", "proposal"],
+  "properties": {
+    "schema_version": {
+      "const": "career.resume_variant_review_input.v1"
+    },
+    "resume": {
+      "$ref": "resume-input-v1.schema.json"
+    },
+    "vacancy": {
+      "$ref": "job-input-v1.schema.json"
+    },
+    "proposal": {
+      "$ref": "resume-variant-proposal-v1.schema.json"
+    }
+  }
+}

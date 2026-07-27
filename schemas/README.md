@@ -20,6 +20,11 @@ Current schemas:
 - `resume-enrichment-proposal-v1.schema.json` — provider-neutral source-grounded proposal
 - `resume-enrichment-input-v1.schema.json` — resume plus explicit proposal envelope
 - `resume-enrichment-result-v1.schema.json` — preserved deterministic baseline plus separate assisted document and merge provenance
+- `resume-variant-proposal-v1.schema.json` — bounded evidence-linked external line changes
+- `resume-variant-review-input-v1.schema.json` — original resume/vacancy plus untrusted variant proposal
+- `resume-variant-review-v1.schema.json` — canonical selectable changes, assisted preview, discard diagnostics, and warnings
+- `resume-variant-materialization-input-v1.schema.json` — exact review input plus selected canonical change identifiers
+- `resume-variant-v1.schema.json` — preserved baseline plus deterministically materialized non-authoritative variant
 - `job-input-v1.schema.json` — bounded plain-text job-description input
 - `job-normalization-v1.schema.json` — deterministic source-grounded job fields, confidence, metadata, statuses, and warnings
 - `job-match-input-v1.schema.json` — original resume plus job-description input envelope

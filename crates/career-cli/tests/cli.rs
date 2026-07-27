@@ -27,6 +27,12 @@ fn phase3_fixture_path(name: &str) -> PathBuf {
         .join(name)
 }
 
+fn phase7_fixture_path(name: &str) -> PathBuf {
+    PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("../../fixtures/resume/phase7")
+        .join(name)
+}
+
 fn phase4a_fixture_path(name: &str) -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("../../fixtures/job/phase4a")
@@ -61,10 +67,14 @@ fn capabilities_default_to_valid_json() {
     assert_eq!(value["capabilities"][3]["status"], "available");
     assert_eq!(value["capabilities"][4]["id"], "resume.enrich");
     assert_eq!(value["capabilities"][4]["status"], "available");
-    assert_eq!(value["capabilities"][5]["id"], "job.normalize");
+    assert_eq!(value["capabilities"][5]["id"], "resume.variant.review");
     assert_eq!(value["capabilities"][5]["status"], "available");
-    assert_eq!(value["capabilities"][6]["id"], "job.match");
+    assert_eq!(value["capabilities"][6]["id"], "resume.variant.materialize");
     assert_eq!(value["capabilities"][6]["status"], "available");
+    assert_eq!(value["capabilities"][7]["id"], "job.normalize");
+    assert_eq!(value["capabilities"][7]["status"], "available");
+    assert_eq!(value["capabilities"][8]["id"], "job.match");
+    assert_eq!(value["capabilities"][8]["status"], "available");
 }
 
 #[test]
@@ -81,6 +91,8 @@ fn capabilities_support_human_readable_output() {
     assert!(stdout.contains("resume.analyze [available]"));
     assert!(stdout.contains("resume.normalize [available]"));
     assert!(stdout.contains("resume.enrich [available]"));
+    assert!(stdout.contains("resume.variant.review [available]"));
+    assert!(stdout.contains("resume.variant.materialize [available]"));
     assert!(stdout.contains("job.normalize [available]"));
     assert!(stdout.contains("job.match [available]"));
 }
@@ -495,6 +507,89 @@ fn resume_enrichment_matches_reviewed_golden_and_text_output() {
 }
 
 #[test]
+fn resume_variant_review_and_materialization_match_goldens_and_text_output() {
+    for (command, input_name, expected_name, text_marker) in [
+        (
+            "variant-review",
+            "complete-variant-review.input.json",
+            "complete-variant-review.expected.json",
+            "Assisted resume variant review: 2 retained; 0 discarded",
+        ),
+        (
+            "variant-materialize",
+            "selected-variant-materialization.input.json",
+            "selected-variant-materialization.expected.json",
+            "Assisted resume variant materialized: 1 selected changes",
+        ),
+    ] {
+        let input_path = phase7_fixture_path(input_name);
+        let output = Command::new(env!("CARGO_BIN_EXE_career"))
+            .args([
+                "resume",
+                command,
+                "--input",
+                input_path.to_str().expect("fixture path should be UTF-8"),
+            ])
+            .output()
+            .expect("career binary should run");
+        assert!(output.status.success());
+        assert!(output.stderr.is_empty());
+        let expected =
+            fs::read(phase7_fixture_path(expected_name)).expect("expected fixture should load");
+        assert_eq!(output.stdout, expected);
+
+        let text = Command::new(env!("CARGO_BIN_EXE_career"))
+            .args([
+                "resume",
+                command,
+                "--input",
+                input_path.to_str().expect("fixture path should be UTF-8"),
+                "--format",
+                "text",
+            ])
+            .output()
+            .expect("career binary should run");
+        assert!(text.status.success());
+        let stdout = String::from_utf8(text.stdout).expect("stdout should be UTF-8");
+        assert!(stdout.contains(text_marker));
+        assert!(stdout.contains("Authority: assisted, non-authoritative"));
+        assert!(stdout.contains("does not certify"));
+    }
+}
+
+#[test]
+fn invalid_variant_selection_returns_bounded_core_error() {
+    let input = fs::read_to_string(phase7_fixture_path(
+        "selected-variant-materialization.input.json",
+    ))
+    .expect("fixture should load")
+    .replace("change-0002", "private-provider-change-id");
+    let mut child = Command::new(env!("CARGO_BIN_EXE_career"))
+        .args(["resume", "variant-materialize", "--input", "-"])
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .expect("career binary should start");
+    child
+        .stdin
+        .take()
+        .expect("stdin should be piped")
+        .write_all(input.as_bytes())
+        .expect("input should be written");
+    let output = child
+        .wait_with_output()
+        .expect("career binary should finish");
+
+    assert_eq!(output.status.code(), Some(5));
+    assert!(output.stdout.is_empty());
+    let error: serde_json::Value =
+        serde_json::from_slice(&output.stderr).expect("stderr should contain JSON");
+    assert_eq!(error["code"], "variant_selection_invalid");
+    assert!(!String::from_utf8_lossy(&output.stderr).contains("private-provider-change-id"));
+}
+
+#[test]
 fn enrichment_proposal_rejects_unknown_json_fields() {
     let input = fs::read_to_string(phase2_fixture_path("messy-unlabeled.enrichment-input.json"))
         .expect("input fixture should be readable")
@@ -749,6 +844,11 @@ fn embedded_schema_catalog_lists_and_exports_every_public_schema() {
             "career.resume_evaluation.v1",
             "career.resume_input.v1",
             "career.resume_normalization.v1",
+            "career.resume_variant_materialization_input.v1",
+            "career.resume_variant_proposal.v1",
+            "career.resume_variant_review.v1",
+            "career.resume_variant_review_input.v1",
+            "career.resume_variant.v1",
             "career.schema_catalog.v1",
         ]
     );
@@ -845,6 +945,22 @@ fn every_machine_operation_supports_one_line_compact_json() {
             "enrich".to_owned(),
             "--input".to_owned(),
             phase2_fixture_path("messy-unlabeled.enrichment-input.json")
+                .to_string_lossy()
+                .into_owned(),
+        ],
+        vec![
+            "resume".to_owned(),
+            "variant-review".to_owned(),
+            "--input".to_owned(),
+            phase7_fixture_path("complete-variant-review.input.json")
+                .to_string_lossy()
+                .into_owned(),
+        ],
+        vec![
+            "resume".to_owned(),
+            "variant-materialize".to_owned(),
+            "--input".to_owned(),
+            phase7_fixture_path("selected-variant-materialization.input.json")
                 .to_string_lossy()
                 .into_owned(),
         ],

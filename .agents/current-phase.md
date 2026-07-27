@@ -2,11 +2,62 @@
 
 ## Active phase
 
-**No active implementation phase**
+**Phase 7 — Evidence-linked assisted resume variants**
 
 ## Status
 
-Phase 6 — Swift binding boundary was completed and squash-merged through PR `#8` as `eb6960c`. Final PR-head CI run `30083962027` passed on Linux and macOS. Phases 0–6 are complete. The separate `career-workbench` product application and Phase 7 optional adapters have not started; either requires a new explicit gate.
+The maintainer explicitly approved the production feature after formally accepting the `career-workbench` Phase 17 whole-resume side-by-side prototype. Phase 7 adds deterministic review and materialization contracts for selected untrusted resume changes. The core validates exact targets/evidence occurrence and structural safety, but it does not certify generated prose as factually true. No provider, prompt, persistence, UI, export, scoring, or matching behavior enters this repository.
+
+## Approved Phase 7 scope
+
+- provider-neutral `career.resume_variant_proposal.v1` with at most 50 evidence-linked line-targeted changes
+- versioned review input/output with stable core-assigned change identifiers, deterministic order, conservative duplicate/overlap handling, bounded discard diagnostics, and an all-change preview
+- versioned materialization input/output that revalidates the complete proposal and applies only explicitly selected canonical changes
+- byte-equivalent baseline preservation, exact unselected source preservation, assisted/non-authoritative provenance, and mandatory factuality limitations
+- no assisted variant may enter resume analysis or job matching
+- JSON schemas, synthetic fixtures, CLI JSON/text commands, capability discovery, agent guidance, UniFFI facade parity, and adversarial tests
+- no new dependency unless implementation proves the standard library insufficient
+
+## Explicitly out of scope for Phase 7
+
+- model/provider calls, prompts, networking, retries, credentials, UI, application persistence, TXT/PDF/DOCX export, clipboard behavior, variant naming, clocks, identifiers, or filesystem access in the core
+- semantic entailment/factuality certification, arbitrary source repair, automatic acceptance, assisted scoring/matching, or mutation of the deterministic baseline
+- changing existing stable operation semantics or fixtures
+
+## Implemented Phase 7 behavior
+
+- added provider-neutral review/materialization contracts with a 50-change ceiling and 1 MiB composite adapter envelopes
+- validates exact line targets, exact resume/vacancy evidence occurrence, string/list/source bounds, unsupported controls, canonical ordering, and all-change preview validity
+- discards malformed or ambiguous individual changes with bounded payload-free codes and discards every member of overlapping target sets
+- assigns stable core-owned identifiers only after canonical sorting; provider identifiers have no authority
+- materialization reruns complete review, validates the expected policy and selected identifiers, and applies only the selected canonical changes
+- preserves the byte-equivalent baseline and every unselected range; output is exhaustively assisted/non-authoritative with mandatory factuality limitations
+- added five public schemas, two CLI operations, two UniFFI functions, synthetic goldens, public/CLI/Swift parity tests, capability/skill/docs/security updates, and no dependency
+
+## Phase 7 verification status
+
+Passed locally on 2026-07-27:
+
+- `cargo fmt --all --check`
+- Clippy across all workspace targets/features with warnings denied
+- 119 Rust unit/integration/doc test entries across core, CLI, public contracts, and Swift adapter
+- locked all-feature workspace build
+- all legacy and new CLI fixture commands, compact output, schema discovery/export, and exact Phase 7 golden comparisons
+- all Phase 7 schemas validated against synthetic fixtures with an offline local registry
+- generated Swift source is deterministic; five Swift package tests cover all eight input-taking operations with exact Rust golden bytes
+- macOS/iOS/iOS-simulator XCFramework assembly, checksums, link smokes, and generic device/simulator builds through `scripts/verify-swift.sh`
+- `git diff --check`
+- Rust 1.85.0 `cargo check` across the workspace, all targets, and all features with the lockfile
+- a fresh local clone at `df85166` passed formatting, Clippy, all 119 Rust test entries, locked all-feature build, Rust 1.85 checking, complete Swift/XCFramework verification, deterministic generated source, and a clean final worktree
+- Fallow 3.9.1 audit/all/security reported zero findings, qualified because the analyzer recognized no Rust or Swift source files
+- PR #11 CI run `30263939201` passed on macOS and Ubuntu, including Rust 1.85 MSRV and the complete Apple Swift verification
+- hosted CI is now manual-dispatch only; the workflow-policy change passed the complete local Rust suite, locked build, CLI fixture commands, Swift/XCFramework verification, and `git diff --check` without spending a new hosted run
+
+Still required before Phase 7 merge: explicit merge approval and one final on-demand hosted run if required by branch protection or maintainer review.
+
+## Previous completed phase
+
+Phase 6 — Swift binding boundary was completed and squash-merged through PR `#8` as `eb6960c`. Final PR-head CI run `30083962027` passed on Linux and macOS. Phases 0–6 are complete.
 
 ## Completed Phase 6 scope
 
