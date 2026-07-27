@@ -80,6 +80,10 @@ scripts/verify-swift.sh
 
 Regeneration must leave checked-in `CareerCore.swift` byte-equivalent. Inspect XCFramework slices, validate checksums, run all Swift tests, and build generic iOS-device and iOS-simulator destinations without signing.
 
+## CI usage policy
+
+The hosted workflow runs only by explicit `workflow_dispatch`; pull requests and pushes do not start Linux or macOS jobs automatically. Complete local verification first, then dispatch the workflow once for the final reviewed head when hosted verification is required. Concurrency cancellation prevents a superseded manual run from continuing to consume runner time.
+
 ## Dependency policy
 
 A new dependency requires all of:

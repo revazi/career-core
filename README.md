@@ -47,6 +47,8 @@ cargo test --workspace --all-features
 cargo build --workspace --all-features --locked
 ```
 
+GitHub Actions is manual-only. After local verification, dispatch the hosted workflow once for a final reviewed head when Linux/macOS confirmation is required; pull requests and pushes do not start it automatically.
+
 Install the local CLI from a reviewed checkout:
 
 ```bash
