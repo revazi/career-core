@@ -50,8 +50,9 @@ Passed locally on 2026-07-27:
 - Rust 1.85.0 `cargo check` across the workspace, all targets, and all features with the lockfile
 - a fresh local clone at `df85166` passed formatting, Clippy, all 119 Rust test entries, locked all-feature build, Rust 1.85 checking, complete Swift/XCFramework verification, deterministic generated source, and a clean final worktree
 - Fallow 3.9.1 audit/all/security reported zero findings, qualified because the analyzer recognized no Rust or Swift source files
+- PR #11 CI run `30263939201` passed on macOS and Ubuntu, including Rust 1.85 MSRV and the complete Apple Swift verification
 
-Still required before Phase 7 merge: GitHub CI and explicit merge approval.
+Still required before Phase 7 merge: explicit merge approval.
 
 ## Previous completed phase
 
