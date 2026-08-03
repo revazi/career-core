@@ -86,6 +86,12 @@ pub fn capabilities() -> Capabilities {
                     .to_owned(),
             },
             Capability {
+                id: "resume.analysis-replacements.review".to_owned(),
+                status: CapabilityStatus::Available,
+                summary: "Review bounded exact external replacements against a freshly rerun deterministic analysis without changing it."
+                    .to_owned(),
+            },
+            Capability {
                 id: "resume.variant.review".to_owned(),
                 status: CapabilityStatus::Available,
                 summary: "Review bounded evidence-linked external resume changes without certifying generated prose."
@@ -147,6 +153,7 @@ mod tests {
                 "resume.normalize",
                 "resume.enrich",
                 "resume.analysis-suggestions.review",
+                "resume.analysis-replacements.review",
                 "resume.variant.review",
                 "resume.variant.materialize",
                 "job.normalize",

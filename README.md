@@ -4,7 +4,7 @@
 
 The project is intentionally **not an AI service**. The core performs no network requests and has no LLM dependency. Native applications, command-line tools, and coding-agent integrations can use its versioned evidence and scoring contracts. An opted-in host may submit an external source-grounded proposal for deterministic validation, but provider calls remain outside the authoritative core.
 
-> **Status:** Phases 0–6 are complete. Phase 7 assisted review includes evidence-linked resume variants and review-only external resume-analysis suggestions. Deterministic resume/job operations, compact output, offline schema discovery, source installation, and the reviewed local Swift binding boundary are available. Release publication, the SwiftUI product application, and optional adapters remain separately gated.
+> **Status:** Phases 0–6 are complete. Phase 7 assisted review includes evidence-linked resume variants, review-only external resume-analysis suggestions, and explicit review-only analysis replacements for diff display. Deterministic resume/job operations, compact output, offline schema discovery, source installation, and the reviewed local Swift binding boundary are available. Release publication, the SwiftUI product application, and optional adapters remain separately gated.
 
 ## Goals
 
@@ -106,6 +106,11 @@ JSON is the default output:
       "summary": "Review bounded external suggestions against a freshly rerun deterministic analysis without changing it."
     },
     {
+      "id": "resume.analysis-replacements.review",
+      "status": "available",
+      "summary": "Review bounded exact external replacements against a freshly rerun deterministic analysis without changing it."
+    },
+    {
       "id": "resume.variant.review",
       "status": "available",
       "summary": "Review bounded evidence-linked external resume changes without certifying generated prose."
@@ -204,6 +209,18 @@ cargo run --quiet -p career-cli -- \
 ```
 
 The core accepts only source-targeted suggestions bound to one current failed canonical improvement action. It preserves the exact `career.resume_analysis.v1` baseline under `baseline_analysis`, copies the action's confirmed/provisional status, and returns core-assigned identifiers plus bounded discard codes. Suggestions are assisted/non-authoritative; exact target/evidence occurrence neither verifies generated claims nor certifies a rewrite. This operation does not create, select, mutate, export, or materialize a candidate resume. See [`docs/contracts/resume-analysis-suggestions-v1.md`](docs/contracts/resume-analysis-suggestions-v1.md).
+
+## Review exact analysis replacements
+
+Review up to three source-targeted exact replacements when a host needs a truthful before/proposed-after diff beside the unchanged analysis baseline:
+
+```bash
+cargo run --quiet -p career-cli -- \
+  resume analysis-replacements-review \
+  --input fixtures/resume/phase7/complete-analysis-replacement-review.input.json
+```
+
+This separate contract returns canonical `source_target` and `proposed_replacement` values with the current failed action's core-owned priority, area, and status. It does not reinterpret v1 advisory `suggestion` text, create a candidate resume, or add selection/materialization. Exact occurrence is structural grounding only, never factual or rewrite certification. See [`docs/contracts/resume-analysis-replacements-v1.md`](docs/contracts/resume-analysis-replacements-v1.md).
 
 ## Normalize resumes
 

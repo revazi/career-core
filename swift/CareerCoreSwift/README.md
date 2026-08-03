@@ -50,6 +50,8 @@ The generated module exports narrow JSON functions:
 let capabilities = try capabilitiesJson()
 let evaluation = try resumeEvaluateJson(inputJson: resumeInput)
 let analysis = try resumeAnalyzeJson(inputJson: resumeInput)
+let suggestions = try resumeAnalysisSuggestionsReviewJson(inputJson: suggestionReviewInput)
+let replacements = try resumeAnalysisReplacementsReviewJson(inputJson: replacementReviewInput)
 let normalization = try resumeNormalizeJson(inputJson: resumeInput)
 let enrichment = try resumeEnrichJson(inputJson: enrichmentInput)
 let variantReview = try resumeVariantReviewJson(inputJson: variantReviewInput)
@@ -67,7 +69,7 @@ Failures throw `CareerSwiftError`:
 - `InvalidInput` with core code, message, and field path
 - `OutputSerialization`
 
-Messages are bounded and do not include source documents. Single-document envelopes are limited to 262,144 UTF-8 bytes; match and variant review/materialization envelopes are limited to 1,048,576 bytes before JSON parsing.
+Messages are bounded and do not include source documents. Single-document envelopes, including analysis-suggestion and analysis-replacement review, are limited to 262,144 UTF-8 bytes; match and variant review/materialization envelopes are limited to 1,048,576 bytes before JSON parsing.
 
 ## Smoke target
 

@@ -16,6 +16,9 @@ Current schemas:
 - `resume-input-v1.schema.json` — bounded plain-text resume input
 - `resume-evaluation-v1.schema.json` — Phase 1 section-coverage evaluation
 - `resume-analysis-v1.schema.json` — full deterministic resume-readiness scoring, checks, evidence, uncertainty, and actions
+- `resume-analysis-replacement-proposal-v1.schema.json` — bounded untrusted exact external replacements
+- `resume-analysis-replacement-review-input-v1.schema.json` — original resume, expected analysis policy, and replacement proposal
+- `resume-analysis-replacement-review-v1.schema.json` — preserved analysis baseline, canonical assisted replacements, discards, and warnings
 - `resume-analysis-suggestion-proposal-v1.schema.json` — bounded untrusted source-targeted external suggestions
 - `resume-analysis-suggestion-review-input-v1.schema.json` — original resume, expected analysis policy, and proposal
 - `resume-analysis-suggestion-review-v1.schema.json` — preserved analysis baseline, canonical assisted suggestions, discards, and warnings

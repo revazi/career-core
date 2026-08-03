@@ -36,6 +36,11 @@ final class CareerCoreTests: XCTestCase {
                 resumeAnalyzeJson
             ),
             (
+                "fixtures/resume/phase7/complete-analysis-replacement-review.input.json",
+                "fixtures/resume/phase7/complete-analysis-replacement-review.expected.json",
+                resumeAnalysisReplacementsReviewJson
+            ),
+            (
                 "fixtures/resume/phase7/complete-analysis-suggestion-review.input.json",
                 "fixtures/resume/phase7/complete-analysis-suggestion-review.expected.json",
                 resumeAnalysisSuggestionsReviewJson

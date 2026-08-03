@@ -11,7 +11,8 @@ The maintainer explicitly approved the production feature after formally accepti
 ## Approved Phase 7 scope
 
 - provider-neutral `career.resume_variant_proposal.v1` with at most 50 evidence-linked line-targeted changes
-- review-only `career.resume_analysis_suggestion_review.v1` with at most three source-targeted suggestions bound to a freshly rerun current failed action, confirmed/provisional status, stable identifiers/order, and bounded payload-free discards
+- review-only `career.resume_analysis_suggestion_review.v1` with at most three source-targeted advisory suggestions bound to a freshly rerun current failed action, confirmed/provisional status, stable identifiers/order, and bounded payload-free discards
+- review-only `career.resume_analysis_replacement_review.v1` with at most three exact source-targeted before/proposed-after replacements bound to freshly rerun current failed actions, stable identifiers/order, and bounded payload-free discards
 - versioned variant review input/output with stable core-assigned change identifiers, deterministic order, conservative duplicate/overlap handling, bounded discard diagnostics, and an all-change preview
 - versioned materialization input/output that revalidates the complete proposal and applies only explicitly selected canonical changes
 - byte-equivalent baseline preservation, exact unselected source preservation, assisted/non-authoritative provenance, and mandatory factuality limitations
@@ -35,6 +36,7 @@ The maintainer explicitly approved the production feature after formally accepti
 - preserves the byte-equivalent baseline and every unselected range; output is exhaustively assisted/non-authoritative with mandatory factuality limitations
 - added five public schemas, two CLI operations, two UniFFI functions, synthetic goldens, public/CLI/Swift parity tests, capability/skill/docs/security updates, and no dependency
 - added three public review-only analysis-suggestion schemas, one CLI operation, one UniFFI JSON function, synthetic golden/parity coverage, and no dependency; this contract reruns and preserves the authoritative analysis baseline and cannot materialize a resume
+- added three public review-only analysis-replacement schemas, one CLI operation, one UniFFI JSON function, synthetic golden/parity coverage, and no dependency; this separate explicit contract returns canonical exact before/proposed-after values for non-authoritative diff display and cannot select, apply, materialize, or mutate a resume
 
 ## Phase 7 verification status
 
@@ -46,7 +48,7 @@ Passed locally on 2026-07-27:
 - locked all-feature workspace build
 - all legacy and new CLI fixture commands, compact output, schema discovery/export, and exact Phase 7 golden comparisons
 - all Phase 7 schemas validated against synthetic fixtures with an offline local registry
-- generated Swift source is deterministic; five Swift package tests cover all nine input-taking operations with exact Rust golden bytes
+- generated Swift source is deterministic; five Swift package tests cover all ten input-taking operations with exact Rust golden bytes
 - macOS/iOS/iOS-simulator XCFramework assembly, checksums, link smokes, and generic device/simulator builds through `scripts/verify-swift.sh`
 - `git diff --check`
 - Rust 1.85.0 `cargo check` across the workspace, all targets, and all features with the lockfile
@@ -63,8 +65,19 @@ Passed locally on 2026-08-03:
 - Rust 1.85.0 workspace/all-target/all-feature locked check
 - all legacy CLI fixture commands plus canonical, compact, and text analysis-suggestion review output; canonical output exactly matches the new synthetic golden
 - all new schemas pass Draft 2020-12 metaschema validation; the proposal, review input, and review golden each pass an independent offline-base-uri schema validation
-- regenerated Swift source exposes only the core-defined `resumeAnalysisSuggestionsReviewJson` function; `scripts/verify-swift.sh` passes macOS/iOS/iOS-simulator builds, checksums, link smokes, and five Swift tests covering all nine input-taking operations
+- regenerated Swift source exposes only core-defined JSON facade functions, including `resumeAnalysisSuggestionsReviewJson` and `resumeAnalysisReplacementsReviewJson`; `scripts/verify-swift.sh` passes macOS/iOS/iOS-simulator builds, checksums, link smokes, and five Swift tests covering all ten input-taking operations
 - Fallow changed-code audit/all/security reported zero findings, qualified because the analyzer recognizes no Rust or Swift source files
+- `git diff --check`
+
+### Review-only analysis-replacement extension verification
+
+Passed locally on 2026-08-03:
+
+- `cargo fmt --all --check`, Clippy with warnings denied, all-feature workspace tests (135 Rust unit/integration/doc test entries), and locked workspace build
+- Rust 1.85.0 workspace/all-target/all-feature locked check
+- all required legacy CLI fixture commands plus canonical, compact, and text analysis-replacement review output; canonical output exactly matches the new synthetic golden
+- all 25 Draft 2020-12 schemas passed metaschema validation in an offline local registry; replacement proposal, review input, and review golden passed independent offline schema validation
+- regenerated Swift source exposes the core-defined `resumeAnalysisReplacementsReviewJson` function; `scripts/verify-swift.sh` passed macOS/iOS/iOS-simulator builds, checksums, link smokes, and five Swift tests covering all ten input-taking operations with exact Rust golden bytes
 - `git diff --check`
 
 Still required before Phase 7 merge: explicit merge approval and one final on-demand hosted run if required by branch protection or maintainer review.

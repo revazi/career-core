@@ -1,5 +1,7 @@
 mod analysis;
 mod analysis_contract;
+mod analysis_replacements;
+mod analysis_replacements_contract;
 mod analysis_suggestions;
 mod analysis_suggestions_contract;
 mod contract;
@@ -15,6 +17,8 @@ mod variant_contract;
 
 pub use analysis::analyze_resume;
 pub use analysis_contract::*;
+pub use analysis_replacements::review_resume_analysis_replacements;
+pub use analysis_replacements_contract::*;
 pub use analysis_suggestions::review_resume_analysis_suggestions;
 pub use analysis_suggestions_contract::*;
 pub use contract::{

@@ -1,0 +1,639 @@
+{
+  "schema_version": "career.resume_analysis_replacement_review.v1",
+  "policy_version": "resume_analysis_replacement_review_v1",
+  "analysis_policy_version": "resume_analysis_v1",
+  "core_version": "0.1.0",
+  "authority": "assisted_non_authoritative",
+  "baseline_analysis": {
+    "schema_version": "career.resume_analysis.v1",
+    "policy_version": "resume_analysis_v1",
+    "reference_policy_version": "deterministic_v2",
+    "normalization_policy_version": "resume_normalization_v1",
+    "core_version": "0.1.0",
+    "document_id": "synthetic-phase7-analysis-replacements-v1",
+    "scoring_weights": {
+      "format_ats": 20,
+      "content_strength": 25,
+      "experience_impact": 20,
+      "skills_coverage": 15,
+      "presentation": 10,
+      "completeness": 10
+    },
+    "overall_score": 94,
+    "category_scores": {
+      "format_ats": 100,
+      "content_strength": 100,
+      "experience_impact": 83,
+      "skills_coverage": 90,
+      "presentation": 93,
+      "completeness": 100
+    },
+    "summary": "Deterministic analysis completed with an overall score of 94. Strongest category: format_ats. Weakest category: experience_impact.",
+    "checks": [
+      {
+        "check_id": "contact_email_present",
+        "category": "completeness",
+        "raw_score": 100,
+        "score": 100,
+        "score_adjusted": false,
+        "passed": true,
+        "outcome": "passed",
+        "detection_status": null,
+        "explanation": "Email detected.",
+        "evidence": [
+          {
+            "evidence_id": "resume.analysis.contact_email_present.normalized_field",
+            "kind": "normalized_field",
+            "source": {
+              "start_line": 2,
+              "end_line": 2,
+              "excerpt": "morgan.lee@example.com",
+              "transformation": "verbatim"
+            },
+            "value": "email_present=true"
+          }
+        ]
+      },
+      {
+        "check_id": "contact_name_present",
+        "category": "completeness",
+        "raw_score": 100,
+        "score": 100,
+        "score_adjusted": false,
+        "passed": true,
+        "outcome": "passed",
+        "detection_status": null,
+        "explanation": "Candidate name detected.",
+        "evidence": [
+          {
+            "evidence_id": "resume.analysis.contact_name_present.normalized_field",
+            "kind": "normalized_field",
+            "source": {
+              "start_line": 1,
+              "end_line": 1,
+              "excerpt": "Morgan Lee",
+              "transformation": "verbatim"
+            },
+            "value": "name_present=true"
+          }
+        ]
+      },
+      {
+        "check_id": "contact_phone_or_link_present",
+        "category": "completeness",
+        "raw_score": 100,
+        "score": 100,
+        "score_adjusted": false,
+        "passed": true,
+        "outcome": "passed",
+        "detection_status": null,
+        "explanation": "Phone number or profile link detected.",
+        "evidence": [
+          {
+            "evidence_id": "resume.analysis.contact_phone_or_link_present.normalized_field",
+            "kind": "normalized_field",
+            "source": {
+              "start_line": 3,
+              "end_line": 3,
+              "excerpt": "+1 555 010 0200",
+              "transformation": "verbatim"
+            },
+            "value": "phone_present=true; link_count=1"
+          }
+        ]
+      },
+      {
+        "check_id": "summary_present",
+        "category": "content_strength",
+        "raw_score": 100,
+        "score": 100,
+        "score_adjusted": false,
+        "passed": true,
+        "outcome": "passed",
+        "detection_status": "detected",
+        "explanation": "Summary section detected.",
+        "evidence": [
+          {
+            "evidence_id": "resume.analysis.summary_present.normalized_field",
+            "kind": "normalized_field",
+            "source": {
+              "start_line": 6,
+              "end_line": 6,
+              "excerpt": "Backend engineer building reliable local services.",
+              "transformation": "whitespace_joined"
+            },
+            "value": "summary_present=true"
+          },
+          {
+            "evidence_id": "resume.analysis.summary_present.field_status",
+            "kind": "field_status",
+            "source": null,
+            "value": "field=summary; status=detected"
+          }
+        ]
+      },
+      {
+        "check_id": "experience_section_present",
+        "category": "completeness",
+        "raw_score": 100,
+        "score": 100,
+        "score_adjusted": false,
+        "passed": true,
+        "outcome": "passed",
+        "detection_status": "detected",
+        "explanation": "Experience section detected.",
+        "evidence": [
+          {
+            "evidence_id": "resume.analysis.experience_section_present.normalized_field",
+            "kind": "normalized_field",
+            "source": {
+              "start_line": 8,
+              "end_line": 11,
+              "excerpt": "Platform Engineer at Acme Corp\n2021 - Present\n- Built reliable APIs for internal teams.\n- Reduced deployment failures by 30 percent.",
+              "transformation": "verbatim"
+            },
+            "value": "experience_entry_count=1"
+          },
+          {
+            "evidence_id": "resume.analysis.experience_section_present.field_status",
+            "kind": "field_status",
+            "source": null,
+            "value": "field=experience; status=detected"
+          }
+        ]
+      },
+      {
+        "check_id": "education_section_present",
+        "category": "completeness",
+        "raw_score": 100,
+        "score": 100,
+        "score_adjusted": false,
+        "passed": true,
+        "outcome": "passed",
+        "detection_status": "detected",
+        "explanation": "Education section detected.",
+        "evidence": [
+          {
+            "evidence_id": "resume.analysis.education_section_present.normalized_field",
+            "kind": "normalized_field",
+            "source": {
+              "start_line": 13,
+              "end_line": 14,
+              "excerpt": "Bachelor of Science in Computer Science, Example University\n2016 - 2020",
+              "transformation": "verbatim"
+            },
+            "value": "education_entry_count=1"
+          },
+          {
+            "evidence_id": "resume.analysis.education_section_present.field_status",
+            "kind": "field_status",
+            "source": null,
+            "value": "field=education; status=detected"
+          }
+        ]
+      },
+      {
+        "check_id": "skills_section_present",
+        "category": "skills_coverage",
+        "raw_score": 100,
+        "score": 100,
+        "score_adjusted": false,
+        "passed": true,
+        "outcome": "passed",
+        "detection_status": "detected",
+        "explanation": "Skills section detected.",
+        "evidence": [
+          {
+            "evidence_id": "resume.analysis.skills_section_present.normalized_field",
+            "kind": "normalized_field",
+            "source": {
+              "start_line": 16,
+              "end_line": 16,
+              "excerpt": "Rust",
+              "transformation": "delimiter_split"
+            },
+            "value": "skill_count=5"
+          },
+          {
+            "evidence_id": "resume.analysis.skills_section_present.field_status",
+            "kind": "field_status",
+            "source": null,
+            "value": "field=skills; status=detected"
+          }
+        ]
+      },
+      {
+        "check_id": "experience_bullets_present",
+        "category": "experience_impact",
+        "raw_score": 100,
+        "score": 100,
+        "score_adjusted": false,
+        "passed": true,
+        "outcome": "passed",
+        "detection_status": null,
+        "explanation": "Detected 2 experience bullets.",
+        "evidence": [
+          {
+            "evidence_id": "resume.analysis.experience_bullets_present.metric",
+            "kind": "derived_metric",
+            "source": {
+              "start_line": 10,
+              "end_line": 10,
+              "excerpt": "Built reliable APIs for internal teams.",
+              "transformation": "verbatim"
+            },
+            "value": "experience_bullet_count=2"
+          }
+        ]
+      },
+      {
+        "check_id": "experience_bullet_length_quality",
+        "category": "experience_impact",
+        "raw_score": 100,
+        "score": 100,
+        "score_adjusted": false,
+        "passed": true,
+        "outcome": "passed",
+        "detection_status": null,
+        "explanation": "Checks whether experience bullets are reasonably sized.",
+        "evidence": [
+          {
+            "evidence_id": "resume.analysis.experience_bullet_length_quality.metric",
+            "kind": "derived_metric",
+            "source": {
+              "start_line": 10,
+              "end_line": 10,
+              "excerpt": "Built reliable APIs for internal teams.",
+              "transformation": "verbatim"
+            },
+            "value": "reasonably_sized_bullets=2/2"
+          }
+        ]
+      },
+      {
+        "check_id": "experience_date_ranges_present",
+        "category": "presentation",
+        "raw_score": 100,
+        "score": 100,
+        "score_adjusted": false,
+        "passed": true,
+        "outcome": "passed",
+        "detection_status": null,
+        "explanation": "Checks whether experience entries include date ranges.",
+        "evidence": [
+          {
+            "evidence_id": "resume.analysis.experience_date_ranges_present.metric",
+            "kind": "derived_metric",
+            "source": {
+              "start_line": 9,
+              "end_line": 9,
+              "excerpt": "2021 - Present",
+              "transformation": "verbatim"
+            },
+            "value": "entries_with_date_ranges=1/1"
+          }
+        ]
+      },
+      {
+        "check_id": "experience_chronology_consistency",
+        "category": "presentation",
+        "raw_score": 100,
+        "score": 100,
+        "score_adjusted": false,
+        "passed": true,
+        "outcome": "passed",
+        "detection_status": null,
+        "explanation": "Checks for basic chronology consistency across experience entries.",
+        "evidence": [
+          {
+            "evidence_id": "resume.analysis.experience_chronology_consistency.metric",
+            "kind": "derived_metric",
+            "source": {
+              "start_line": 9,
+              "end_line": 9,
+              "excerpt": "2021 - Present",
+              "transformation": "verbatim"
+            },
+            "value": "entries_with_reasonable_date_signals=1/1"
+          }
+        ]
+      },
+      {
+        "check_id": "measurable_impact_in_bullets",
+        "category": "experience_impact",
+        "raw_score": 50,
+        "score": 50,
+        "score_adjusted": false,
+        "passed": false,
+        "outcome": "failed",
+        "detection_status": null,
+        "explanation": "Checks for numbers, percentages, or measurable outcomes in bullets.",
+        "evidence": [
+          {
+            "evidence_id": "resume.analysis.measurable_impact_in_bullets.metric",
+            "kind": "derived_metric",
+            "source": {
+              "start_line": 11,
+              "end_line": 11,
+              "excerpt": "Reduced deployment failures by 30 percent.",
+              "transformation": "verbatim"
+            },
+            "value": "measurable_bullets=1/2"
+          }
+        ]
+      },
+      {
+        "check_id": "skills_count_quality",
+        "category": "skills_coverage",
+        "raw_score": 80,
+        "score": 80,
+        "score_adjusted": false,
+        "passed": true,
+        "outcome": "passed",
+        "detection_status": null,
+        "explanation": "Detected 5 skills.",
+        "evidence": [
+          {
+            "evidence_id": "resume.analysis.skills_count_quality.metric",
+            "kind": "derived_metric",
+            "source": {
+              "start_line": 16,
+              "end_line": 16,
+              "excerpt": "Rust",
+              "transformation": "delimiter_split"
+            },
+            "value": "skill_count=5"
+          }
+        ]
+      },
+      {
+        "check_id": "weak_phrasing_penalty",
+        "category": "content_strength",
+        "raw_score": 100,
+        "score": 100,
+        "score_adjusted": false,
+        "passed": true,
+        "outcome": "passed",
+        "detection_status": null,
+        "explanation": "Checks for vague or weak phrases in the resume text.",
+        "evidence": [
+          {
+            "evidence_id": "resume.analysis.weak_phrasing_penalty.metric",
+            "kind": "derived_metric",
+            "source": null,
+            "value": "weak_phrase_occurrences=0; matched_phrases=none"
+          }
+        ]
+      },
+      {
+        "check_id": "keyword_repetition_penalty",
+        "category": "presentation",
+        "raw_score": 80,
+        "score": 80,
+        "score_adjusted": false,
+        "passed": true,
+        "outcome": "passed",
+        "detection_status": null,
+        "explanation": "Checks for excessive repetition of significant words.",
+        "evidence": [
+          {
+            "evidence_id": "resume.analysis.keyword_repetition_penalty.metric",
+            "kind": "derived_metric",
+            "source": null,
+            "value": "significant_word_count=55; top_frequency=4; top_word=example"
+          }
+        ]
+      },
+      {
+        "check_id": "ats_section_header_clarity",
+        "category": "format_ats",
+        "raw_score": 100,
+        "score": 100,
+        "score_adjusted": false,
+        "passed": true,
+        "outcome": "passed",
+        "detection_status": null,
+        "explanation": "Checks whether major sections were clearly detected.",
+        "evidence": [
+          {
+            "evidence_id": "resume.analysis.ats_section_header_clarity.metric",
+            "kind": "derived_metric",
+            "source": null,
+            "value": "populated_core_fields=4/4"
+          }
+        ]
+      },
+      {
+        "check_id": "ats_line_density",
+        "category": "format_ats",
+        "raw_score": 100,
+        "score": 100,
+        "score_adjusted": false,
+        "passed": true,
+        "outcome": "passed",
+        "detection_status": null,
+        "explanation": "Checks for extremely sparse or overly dense extracted text.",
+        "evidence": [
+          {
+            "evidence_id": "resume.analysis.ats_line_density.metric",
+            "kind": "derived_metric",
+            "source": null,
+            "value": "non_empty_lines=22; total_words=72; average_words_x100=327"
+          }
+        ]
+      },
+      {
+        "check_id": "parse_quality_proxy",
+        "category": "format_ats",
+        "raw_score": 100,
+        "score": 100,
+        "score_adjusted": false,
+        "passed": true,
+        "outcome": "passed",
+        "detection_status": null,
+        "explanation": "Uses stored parse confidence as an ATS-readability proxy.",
+        "evidence": [
+          {
+            "evidence_id": "resume.analysis.parse_quality_proxy.parse_confidence",
+            "kind": "parse_confidence",
+            "source": null,
+            "value": "label=high; score=97/100"
+          }
+        ]
+      }
+    ],
+    "confidence_context": {
+      "score_source": "deterministic_normalization_baseline",
+      "parse_confidence": {
+        "label": "high",
+        "score": 97,
+        "max_score": 100,
+        "signals": [
+          {
+            "signal": "extraction_quality",
+            "score": 22,
+            "max_score": 25,
+            "evidence": [
+              "character_count=546",
+              "non_empty_line_count=22",
+              "readable_character_percent=100"
+            ]
+          },
+          {
+            "signal": "section_coverage",
+            "score": 25,
+            "max_score": 25,
+            "evidence": [
+              "detected_expected_section_count=4",
+              "expected_section_count=4"
+            ]
+          },
+          {
+            "signal": "contact_completeness",
+            "score": 15,
+            "max_score": 15,
+            "evidence": [
+              "has_name=true",
+              "has_email=true",
+              "has_phone_or_link=true"
+            ]
+          },
+          {
+            "signal": "experience_completeness",
+            "score": 25,
+            "max_score": 25,
+            "evidence": [
+              "entry_count=1",
+              "has_job_title=true",
+              "has_company=true",
+              "has_date_range=true",
+              "has_detail=true"
+            ]
+          },
+          {
+            "signal": "skills_completeness",
+            "score": 10,
+            "max_score": 10,
+            "evidence": [
+              "skill_count=5"
+            ]
+          }
+        ]
+      },
+      "field_statuses": [
+        {
+          "field": "contact",
+          "status": "detected"
+        },
+        {
+          "field": "summary",
+          "status": "detected"
+        },
+        {
+          "field": "experience",
+          "status": "detected"
+        },
+        {
+          "field": "education",
+          "status": "detected"
+        },
+        {
+          "field": "skills",
+          "status": "detected"
+        }
+      ],
+      "uncertain_fields": [],
+      "likely_missing_fields": [],
+      "fallbacks_applied": [],
+      "uncertain_score_floor": 50,
+      "adjusted_check_ids": [],
+      "adjustment_applied": false
+    },
+    "top_strengths": [
+      {
+        "area": "format_ats",
+        "title": "Strong ATS readability signals",
+        "reason": "Checks whether major sections were clearly detected.",
+        "basis_check_id": "ats_section_header_clarity",
+        "status": "confirmed"
+      },
+      {
+        "area": "content_strength",
+        "title": "Solid content foundation",
+        "reason": "Summary section detected.",
+        "basis_check_id": "summary_present",
+        "status": "confirmed"
+      },
+      {
+        "area": "completeness",
+        "title": "Good resume completeness",
+        "reason": "Email detected.",
+        "basis_check_id": "contact_email_present",
+        "status": "confirmed"
+      }
+    ],
+    "top_weaknesses": [
+      {
+        "area": "experience_impact",
+        "title": "Experience impact is underdeveloped",
+        "reason": "Checks for numbers, percentages, or measurable outcomes in bullets.",
+        "basis_check_id": "measurable_impact_in_bullets",
+        "status": "confirmed"
+      }
+    ],
+    "improvement_actions": [
+      {
+        "priority": 1,
+        "area": "experience_impact",
+        "action": "Add measurable outcomes only where the source evidence supports them.",
+        "basis_check_id": "measurable_impact_in_bullets",
+        "status": "confirmed"
+      }
+    ],
+    "warnings": [
+      {
+        "code": "general_ats_readiness_only",
+        "message": "This is a general deterministic resume-readiness analysis, not a reproduction of a proprietary ATS ranking or a guarantee of interview outcomes.",
+        "related_fields": []
+      },
+      {
+        "code": "visual_layout_not_evaluated",
+        "message": "Visual layout, columns, tables, text boxes, fonts, OCR quality, and document-conversion behavior are not evaluated from plain extracted text.",
+        "related_fields": []
+      }
+    ]
+  },
+  "replacements": [
+    {
+      "replacement_id": "replacement-0001",
+      "priority": 1,
+      "area": "experience_impact",
+      "basis_check_id": "measurable_impact_in_bullets",
+      "status": "confirmed",
+      "improvement_action": "Add measurable outcomes only where the source evidence supports them.",
+      "start_line": 10,
+      "end_line": 10,
+      "source_target": "- Built reliable APIs for internal teams.",
+      "source_evidence": [
+        "Built reliable APIs for internal teams.",
+        "Reduced deployment failures by 30 percent."
+      ],
+      "proposed_replacement": "- Built reliable APIs for internal teams, improving deployment reliability by 30 percent."
+    }
+  ],
+  "discarded_replacements": [],
+  "warnings": [
+    {
+      "code": "assisted_replacements_non_authoritative",
+      "message": "Retained replacements are externally assisted review content and are not authoritative for deterministic analysis, scoring, evidence, or matching."
+    },
+    {
+      "code": "evidence_occurrence_not_factual_or_rewrite_certification",
+      "message": "Exact target and evidence occurrence does not establish factual entailment or certify any rewrite; human review is required."
+    },
+    {
+      "code": "deterministic_analysis_preserved",
+      "message": "The current deterministic analysis baseline is preserved unchanged and remains authoritative."
+    }
+  ]
+}

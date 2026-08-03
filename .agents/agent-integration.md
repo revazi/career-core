@@ -103,7 +103,17 @@ career resume analysis-suggestions-review --input <path|-> [--format json|json-p
 
 Input is `career.resume_analysis_suggestion_review_input.v1`; output is `career.resume_analysis_suggestion_review.v1`. The operation independently reruns the current deterministic analysis from the original input and preserves it under `baseline_analysis` without changing any score, check, evidence, warning, or action.
 
-Agents may submit at most three untrusted source-targeted suggestions. Each retained suggestion is bound to one current failed canonical improvement action, receives a core identifier, and inherits the action's confirmed/provisional status. Agents must use bounded discard codes rather than repairing rejected suggestions. Exact target/evidence occurrence is not factual entailment or rewrite certification. Retained suggestions are assisted/non-authoritative, require human review, and must not become a candidate resume, selection, source mutation, export, materialization, analysis input, or matching input.
+Agents may submit at most three untrusted source-targeted suggestions. Each retained suggestion is bound to one current failed canonical improvement action, receives a core identifier, and inherits the action's confirmed/provisional status. Agents must use bounded discard codes rather than repairing rejected suggestions. Exact target/evidence occurrence is not factual entailment or rewrite certification. Retained suggestions are assisted/non-authoritative, require human review, and must not become a candidate resume, selection, source mutation, export, materialization, analysis input, or matching input. The v1 `suggestion` field is advisory text, not a replacement; hosts must not relabel it or synthesize replacement semantics.
+
+## Available review-only analysis-replacement operation
+
+```bash
+career resume analysis-replacements-review --input <path|-> [--format json|json-pretty|json-compact|text]
+```
+
+Input is `career.resume_analysis_replacement_review_input.v1`; output is `career.resume_analysis_replacement_review.v1`. The operation reruns and preserves the complete deterministic analysis under `baseline_analysis` and retains at most three exact source-targeted `proposed_replacement` values bound to current failed canonical actions.
+
+A host may render a non-authoritative before/proposed-after diff only from each returned canonical `source_target`, `proposed_replacement`, line range, action/status, evidence, and warnings. It must use bounded discard codes rather than repair rejected items. Exact occurrence is structural grounding, not factual or rewrite certification. This contract never creates, selects, applies, materializes, exports, persists, or mutates a resume, and cannot enter analysis or matching.
 
 ## Available Phase 2 operations
 

@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/revazi/career-core/main/schemas/resume-analysis-replacement-proposal-v1.schema.json",
+  "title": "career-core external resume analysis replacement proposal v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "replacements"],
+  "properties": {
+    "schema_version": {
+      "const": "career.resume_analysis_replacement_proposal.v1"
+    },
+    "replacements": {
+      "type": "array",
+      "maxItems": 3,
+      "items": {
+        "$ref": "#/$defs/proposedReplacement"
+      }
+    }
+  },
+  "$defs": {
+    "sourceEvidence": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 2,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 240
+      }
+    },
+    "proposedReplacement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "basis_check_id",
+        "start_line",
+        "end_line",
+        "source_target",
+        "source_evidence",
+        "proposed_replacement"
+      ],
+      "properties": {
+        "basis_check_id": {
+          "$ref": "resume-analysis-v1.schema.json#/$defs/checkId"
+        },
+        "start_line": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2000
+        },
+        "end_line": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2000
+        },
+        "source_target": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "source_evidence": {
+          "$ref": "#/$defs/sourceEvidence"
+        },
+        "proposed_replacement": {
+          "type": "string",
+          "maxLength": 600
+        }
+      }
+    }
+  }
+}
