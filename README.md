@@ -4,7 +4,7 @@
 
 The project is intentionally **not an AI service**. The core performs no network requests and has no LLM dependency. Native applications, command-line tools, and coding-agent integrations can use its versioned evidence and scoring contracts. An opted-in host may submit an external source-grounded proposal for deterministic validation, but provider calls remain outside the authoritative core.
 
-> **Status:** Phases 0–6 are complete. Phase 7 evidence-linked assisted resume-variant review/materialization is active. Deterministic resume/job operations, compact output, offline schema discovery, source installation, and the reviewed local Swift binding boundary are available. Release publication, the SwiftUI product application, and optional adapters remain separately gated.
+> **Status:** Phases 0–6 are complete. Phase 7 assisted review includes evidence-linked resume variants and review-only external resume-analysis suggestions. Deterministic resume/job operations, compact output, offline schema discovery, source installation, and the reviewed local Swift binding boundary are available. Release publication, the SwiftUI product application, and optional adapters remain separately gated.
 
 ## Goals
 
@@ -101,6 +101,11 @@ JSON is the default output:
       "summary": "Validate and conservatively merge an explicit source-grounded external proposal without network access."
     },
     {
+      "id": "resume.analysis-suggestions.review",
+      "status": "available",
+      "summary": "Review bounded external suggestions against a freshly rerun deterministic analysis without changing it."
+    },
+    {
       "id": "resume.variant.review",
       "status": "available",
       "summary": "Review bounded evidence-linked external resume changes without certifying generated prose."
@@ -187,6 +192,18 @@ cargo run --quiet -p career-cli -- \
 `career.resume_analysis.v1` reports 18 bounded checks across ATS-readability signals, content strength, experience impact, skills coverage, presentation, and completeness. It includes raw and confidence-adjusted scores, source-grounded evidence, provisional findings, deterministic improvement actions, and explicit limitations.
 
 This is a general text-based readiness analysis. It does not reproduce proprietary ATS rankings, inspect visual document layout, or guarantee hiring outcomes. Scores always consume the deterministic normalization baseline; assisted fields cannot alter them. See [`docs/contracts/resume-analysis-v1.md`](docs/contracts/resume-analysis-v1.md) for the complete policy and `deterministic_v2` compatibility matrix.
+
+## Review external analysis suggestions
+
+Review up to three model/provider-written suggestions beside, never inside, a freshly rerun deterministic analysis:
+
+```bash
+cargo run --quiet -p career-cli -- \
+  resume analysis-suggestions-review \
+  --input fixtures/resume/phase7/complete-analysis-suggestion-review.input.json
+```
+
+The core accepts only source-targeted suggestions bound to one current failed canonical improvement action. It preserves the exact `career.resume_analysis.v1` baseline under `baseline_analysis`, copies the action's confirmed/provisional status, and returns core-assigned identifiers plus bounded discard codes. Suggestions are assisted/non-authoritative; exact target/evidence occurrence neither verifies generated claims nor certifies a rewrite. This operation does not create, select, mutate, export, or materialize a candidate resume. See [`docs/contracts/resume-analysis-suggestions-v1.md`](docs/contracts/resume-analysis-suggestions-v1.md).
 
 ## Normalize resumes
 

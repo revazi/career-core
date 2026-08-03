@@ -1,5 +1,7 @@
 mod analysis;
 mod analysis_contract;
+mod analysis_suggestions;
+mod analysis_suggestions_contract;
 mod contract;
 mod enrichment;
 mod enrichment_contract;
@@ -13,6 +15,8 @@ mod variant_contract;
 
 pub use analysis::analyze_resume;
 pub use analysis_contract::*;
+pub use analysis_suggestions::review_resume_analysis_suggestions;
+pub use analysis_suggestions_contract::*;
 pub use contract::{
     CareerErrorCodeV1, CareerErrorV1, ERROR_SCHEMA_VERSION, EVALUATION_SCHEMA_VERSION,
     INPUT_SCHEMA_VERSION, MAX_DOCUMENT_ID_CHARACTERS, MAX_EVIDENCE_EXCERPT_CHARACTERS,

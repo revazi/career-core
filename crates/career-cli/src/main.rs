@@ -12,13 +12,13 @@ use career_core::{
     JobInputV1, JobMatchCategoryV1, JobMatchFindingStatusV1, JobMatchInputV1,
     JobMatchRecommendationLabelV1, JobMatchRecommendationStatusV1, JobMatchV1, JobNormalizationV1,
     JobParseConfidenceLabelV1, ResumeAnalysisCategoryV1, ResumeAnalysisFindingStatusV1,
-    ResumeAnalysisV1, ResumeDetectionStatusV1, ResumeEnrichmentInputV1,
-    ResumeEnrichmentMergeStatusV1, ResumeEnrichmentResultV1, ResumeEvaluationV1,
-    ResumeFieldDetectionStatusV1, ResumeInputV1, ResumeNormalizationV1,
-    ResumeParseConfidenceLabelV1, ResumeVariantMaterializationInputV1, ResumeVariantReviewInputV1,
-    ResumeVariantReviewV1, ResumeVariantV1, analyze_resume, apply_resume_enrichment, capabilities,
-    evaluate_resume, match_job, materialize_resume_variant, normalize_job, normalize_resume,
-    review_resume_variant,
+    ResumeAnalysisSuggestionReviewInputV1, ResumeAnalysisSuggestionReviewV1, ResumeAnalysisV1,
+    ResumeDetectionStatusV1, ResumeEnrichmentInputV1, ResumeEnrichmentMergeStatusV1,
+    ResumeEnrichmentResultV1, ResumeEvaluationV1, ResumeFieldDetectionStatusV1, ResumeInputV1,
+    ResumeNormalizationV1, ResumeParseConfidenceLabelV1, ResumeVariantMaterializationInputV1,
+    ResumeVariantReviewInputV1, ResumeVariantReviewV1, ResumeVariantV1, analyze_resume,
+    apply_resume_enrichment, capabilities, evaluate_resume, match_job, materialize_resume_variant,
+    normalize_job, normalize_resume, review_resume_analysis_suggestions, review_resume_variant,
 };
 use clap::{Parser, Subcommand, ValueEnum, error::ErrorKind};
 use schema::{SchemaCatalogV1, SchemaId, embedded_schema, schema_catalog};
@@ -117,6 +117,15 @@ enum ResumeCommand {
     /// Analyze resume readiness with the full deterministic scoring policy.
     Analyze {
         /// Read career.resume_input.v1 JSON from this path, or use `-` for stdin.
+        #[arg(long)]
+        input: PathBuf,
+        /// Select machine-readable JSON or concise human-readable text.
+        #[arg(long, value_enum, default_value_t = OutputFormat::Json)]
+        format: OutputFormat,
+    },
+    /// Review external suggestions against a freshly rerun deterministic analysis.
+    AnalysisSuggestionsReview {
+        /// Read career.resume_analysis_suggestion_review_input.v1 JSON from this path, or use `-` for stdin.
         #[arg(long)]
         input: PathBuf,
         /// Select machine-readable JSON or concise human-readable text.
@@ -360,6 +369,7 @@ impl Cli {
             Command::Resume { command } => match command {
                 ResumeCommand::Evaluate { format, .. }
                 | ResumeCommand::Analyze { format, .. }
+                | ResumeCommand::AnalysisSuggestionsReview { format, .. }
                 | ResumeCommand::Normalize { format, .. }
                 | ResumeCommand::Enrich { format, .. }
                 | ResumeCommand::VariantReview { format, .. }
@@ -419,6 +429,26 @@ fn run(
             match format {
                 OutputFormat::Text => write_resume_analysis_text(output, &analysis),
                 _ => write_json(output, &analysis, format),
+            }
+        }
+        Command::Resume {
+            command: ResumeCommand::AnalysisSuggestionsReview { input, format },
+        } => {
+            let input_bytes =
+                read_input(&input, standard_input, "resume-analysis-suggestion-review")?;
+            let review_input =
+                serde_json::from_slice::<ResumeAnalysisSuggestionReviewInputV1>(&input_bytes)
+                    .map_err(|error| {
+                        CliFailure::invalid_json(
+                            &error,
+                            "career.resume_analysis_suggestion_review_input.v1",
+                        )
+                    })?;
+            let result =
+                review_resume_analysis_suggestions(&review_input).map_err(CliFailure::Core)?;
+            match format {
+                OutputFormat::Text => write_resume_analysis_suggestion_review_text(output, &result),
+                _ => write_json(output, &result, format),
             }
         }
         Command::Resume {
@@ -896,6 +926,46 @@ fn parse_confidence_label(label: ResumeParseConfidenceLabelV1) -> &'static str {
     }
 }
 
+fn write_resume_analysis_suggestion_review_text(
+    output: &mut impl Write,
+    result: &ResumeAnalysisSuggestionReviewV1,
+) -> Result<(), CliFailure> {
+    writeln!(
+        output,
+        "Assisted resume analysis suggestion review: {} retained; {} discarded",
+        result.suggestions.len(),
+        result.discarded_suggestions.len()
+    )
+    .map_err(|_| CliFailure::output_failure())?;
+    writeln!(output, "Authority: assisted, non-authoritative")
+        .map_err(|_| CliFailure::output_failure())?;
+    for suggestion in &result.suggestions {
+        let status = match suggestion.status {
+            ResumeAnalysisFindingStatusV1::Confirmed => "confirmed",
+            ResumeAnalysisFindingStatusV1::Provisional => "provisional",
+        };
+        writeln!(
+            output,
+            "  {}. [{}] {}",
+            suggestion.priority, status, suggestion.suggestion
+        )
+        .map_err(|_| CliFailure::output_failure())?;
+        writeln!(
+            output,
+            "     basis: {}; target: lines {}-{}",
+            suggestion.basis_check_id.as_str(),
+            suggestion.start_line,
+            suggestion.end_line
+        )
+        .map_err(|_| CliFailure::output_failure())?;
+    }
+    for warning in &result.warnings {
+        writeln!(output, "Warning: {}", warning.message)
+            .map_err(|_| CliFailure::output_failure())?;
+    }
+    Ok(())
+}
+
 fn write_resume_normalization_text(
     output: &mut impl Write,
     normalization: &ResumeNormalizationV1,
@@ -1046,6 +1116,7 @@ mod tests {
         assert!(output.contains("resume.analyze [available]"));
         assert!(output.contains("resume.normalize [available]"));
         assert!(output.contains("resume.enrich [available]"));
+        assert!(output.contains("resume.analysis-suggestions.review [available]"));
         assert!(output.contains("resume.variant.review [available]"));
         assert!(output.contains("resume.variant.materialize [available]"));
         assert!(output.contains("job.normalize [available]"));

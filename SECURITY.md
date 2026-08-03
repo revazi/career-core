@@ -20,6 +20,7 @@ The core library processes untrusted career-document text and structured data lo
 - keep output bounded and deterministic
 - treat external normalization proposals as untrusted data requiring exact shape, limits, eligible targets, and source grounding
 - preserve deterministic output when assisted validation fails
+- treat external analysis-suggestion targets, evidence, and text as untrusted; rerun the analysis, require current failed-action/source binding, discard ambiguous items without payload echoes, and never claim occurrence proves factual entailment or rewrite certification
 - treat resume-variant targets, evidence, generated replacements, and selected identifiers as untrusted; discard ambiguous/overlapping changes and never claim evidence occurrence proves factual entailment
 - materialize only revalidated explicitly selected canonical changes while preserving the exact baseline and every unselected range
 - score only the deterministic normalization baseline and never assisted proposal or variant values

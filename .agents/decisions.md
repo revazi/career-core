@@ -61,3 +61,7 @@ The CLI embeds the repository's reviewed Draft 2020-12 schema files and exposes 
 ## D-015 — Swift uses a narrow pinned UniFFI JSON facade
 
 `career-swift` depends inward on `career-core` and exposes each stable operation as owned versioned JSON input/output plus typed Swift errors. The app may decode those contracts into app-owned `Codable` models; the FFI ABI does not mirror all internal Rust records. Exact UniFFI `0.30.0` is pinned because `0.31+` requires Rust 1.87, above the project MSRV. No handwritten unsafe code is allowed; generated FFI behavior is isolated to the adapter. XCFramework publication, signing, SwiftUI, persistence, and provider behavior remain outside this boundary.
+
+## D-016 — Analysis suggestions are review-only and baseline-bound
+
+`career.resume_analysis_suggestion_review.v1` reruns `career.resume_analysis.v1` from original `career.resume_input.v1` and returns that unchanged result as the authoritative baseline. An external suggestion is retained only when its exact target/evidence occurs in current source and its `basis_check_id` maps to one current failed canonical improvement action; the core assigns identifiers and copies confirmed/provisional status. Exact occurrence does not certify factuality or a rewrite. The contract is intentionally limited to review presentation: it has no candidate resume, selection, source mutation, export, or materialization path. Phase 2 enrichment remains parser-gap recovery only, and Swift only exposes this core-defined JSON surface.

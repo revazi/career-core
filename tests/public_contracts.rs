@@ -1,11 +1,12 @@
 use career_core::{
     JobInputV1, JobMatchCategoryV1, JobMatchInputV1, JobMatchItemKindV1, JobMatchItemStatusV1,
     JobMatchRecommendationLabelV1, JobMatchRecommendationStatusV1, JobMatchTypeV1, JobMatchV1,
-    JobNormalizationV1, ResumeAnalysisV1, ResumeEnrichmentInputV1, ResumeEnrichmentResultV1,
-    ResumeEvaluationV1, ResumeInputV1, ResumeNormalizationV1, ResumeVariantMaterializationInputV1,
+    JobNormalizationV1, ResumeAnalysisSuggestionReviewInputV1, ResumeAnalysisSuggestionReviewV1,
+    ResumeAnalysisV1, ResumeEnrichmentInputV1, ResumeEnrichmentResultV1, ResumeEvaluationV1,
+    ResumeInputV1, ResumeNormalizationV1, ResumeVariantMaterializationInputV1,
     ResumeVariantReviewInputV1, ResumeVariantReviewV1, ResumeVariantV1, analyze_resume,
     apply_resume_enrichment, evaluate_resume, match_job, materialize_resume_variant, normalize_job,
-    normalize_resume, review_resume_variant,
+    normalize_resume, review_resume_analysis_suggestions, review_resume_variant,
 };
 
 const SCHEMAS: &[(&str, &str)] = &[
@@ -44,6 +45,18 @@ const SCHEMAS: &[(&str, &str)] = &[
     (
         "resume-analysis-v1",
         include_str!("../schemas/resume-analysis-v1.schema.json"),
+    ),
+    (
+        "resume-analysis-suggestion-proposal-v1",
+        include_str!("../schemas/resume-analysis-suggestion-proposal-v1.schema.json"),
+    ),
+    (
+        "resume-analysis-suggestion-review-v1",
+        include_str!("../schemas/resume-analysis-suggestion-review-v1.schema.json"),
+    ),
+    (
+        "resume-analysis-suggestion-review-input-v1",
+        include_str!("../schemas/resume-analysis-suggestion-review-input-v1.schema.json"),
     ),
     (
         "resume-normalization-v1",
@@ -730,6 +743,26 @@ fn selected_resume_analysis_scores_match_the_independent_reference_fixture() {
             assert_eq!(actual_check["explanation"], expected_check["details"]);
         }
     }
+}
+
+#[test]
+fn reviewed_resume_analysis_suggestion_fixture_matches_the_typed_contract() {
+    let input: ResumeAnalysisSuggestionReviewInputV1 = serde_json::from_str(include_str!(
+        "../fixtures/resume/phase7/complete-analysis-suggestion-review.input.json"
+    ))
+    .expect("analysis-suggestion review input should be typed JSON");
+    let expected: ResumeAnalysisSuggestionReviewV1 = serde_json::from_str(include_str!(
+        "../fixtures/resume/phase7/complete-analysis-suggestion-review.expected.json"
+    ))
+    .expect("analysis-suggestion review output should be typed JSON");
+    let actual = review_resume_analysis_suggestions(&input)
+        .expect("analysis-suggestion review should succeed");
+
+    assert_eq!(actual, expected);
+    assert_eq!(
+        actual.baseline_analysis,
+        analyze_resume(&input.resume).expect("baseline analysis should repeat")
+    );
 }
 
 #[test]

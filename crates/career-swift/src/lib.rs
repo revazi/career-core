@@ -5,10 +5,11 @@ use std::error::Error;
 use std::fmt;
 
 use career_core::{
-    CareerErrorV1, JobInputV1, JobMatchInputV1, ResumeEnrichmentInputV1, ResumeInputV1,
-    ResumeVariantMaterializationInputV1, ResumeVariantReviewInputV1, analyze_resume,
-    apply_resume_enrichment, capabilities, evaluate_resume, match_job, materialize_resume_variant,
-    normalize_job, normalize_resume, review_resume_variant,
+    CareerErrorV1, JobInputV1, JobMatchInputV1, ResumeAnalysisSuggestionReviewInputV1,
+    ResumeEnrichmentInputV1, ResumeInputV1, ResumeVariantMaterializationInputV1,
+    ResumeVariantReviewInputV1, analyze_resume, apply_resume_enrichment, capabilities,
+    evaluate_resume, match_job, materialize_resume_variant, normalize_job, normalize_resume,
+    review_resume_analysis_suggestions, review_resume_variant,
 };
 use serde::Serialize;
 use serde::de::DeserializeOwned;
@@ -81,6 +82,19 @@ pub fn resume_analyze_json(input_json: String) -> Result<String, CareerSwiftErro
         MAX_SINGLE_INPUT_BYTES,
     )?;
     serialize_json(&analyze_resume(&input).map_err(map_core_error)?)
+}
+
+/// Reviews `career.resume_analysis_suggestion_review_input.v1` as canonical JSON.
+#[uniffi::export]
+pub fn resume_analysis_suggestions_review_json(
+    input_json: String,
+) -> Result<String, CareerSwiftError> {
+    let input = parse_input::<ResumeAnalysisSuggestionReviewInputV1>(
+        &input_json,
+        "career.resume_analysis_suggestion_review_input.v1",
+        MAX_SINGLE_INPUT_BYTES,
+    )?;
+    serialize_json(&review_resume_analysis_suggestions(&input).map_err(map_core_error)?)
 }
 
 /// Normalizes `career.resume_input.v1` and returns canonical normalization JSON.
@@ -207,6 +221,15 @@ mod tests {
                 include_str!("../../../fixtures/resume/phase3/complete-analysis.input.json"),
                 include_str!("../../../fixtures/resume/phase3/complete-analysis.expected.json"),
                 resume_analyze_json,
+            ),
+            (
+                include_str!(
+                    "../../../fixtures/resume/phase7/complete-analysis-suggestion-review.input.json"
+                ),
+                include_str!(
+                    "../../../fixtures/resume/phase7/complete-analysis-suggestion-review.expected.json"
+                ),
+                resume_analysis_suggestions_review_json,
             ),
             (
                 include_str!("../../../fixtures/resume/phase2/complete-normalization.input.json"),

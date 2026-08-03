@@ -49,6 +49,7 @@ The existing Django project at `../resume-ai` remains an independent application
 - **adapter**: CLI, Swift binding, or other boundary depending on the core
 - **external proposal**: bounded untrusted source-grounded structured data submitted by an opted-in host for core validation
 - **assisted document**: a separately labeled view containing accepted external values without replacing the deterministic baseline
+- **reviewed assisted suggestion**: bounded externally written review text tied to a current deterministic analysis action and source occurrence; it never becomes a resume candidate or scoring input
 
 ## Non-goals
 

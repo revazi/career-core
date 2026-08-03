@@ -180,6 +180,11 @@ pub enum ResumeEvaluationErrorCodeV1 {
     EnrichmentListTooLong,
     EnrichmentValueNotGrounded,
     EnrichmentEntryInvalid,
+    UnsupportedAnalysisSuggestionReviewInputSchemaVersion,
+    UnsupportedAnalysisSuggestionProposalSchemaVersion,
+    UnsupportedAnalysisSuggestionAnalysisPolicyVersion,
+    AnalysisSuggestionProposalTooLarge,
+    AnalysisSuggestionListTooLong,
     UnsupportedVariantReviewInputSchemaVersion,
     UnsupportedVariantProposalSchemaVersion,
     UnsupportedVariantMaterializationInputSchemaVersion,
@@ -217,6 +222,17 @@ impl ResumeEvaluationErrorCodeV1 {
             Self::EnrichmentListTooLong => "enrichment_list_too_long",
             Self::EnrichmentValueNotGrounded => "enrichment_value_not_grounded",
             Self::EnrichmentEntryInvalid => "enrichment_entry_invalid",
+            Self::UnsupportedAnalysisSuggestionReviewInputSchemaVersion => {
+                "unsupported_analysis_suggestion_review_input_schema_version"
+            }
+            Self::UnsupportedAnalysisSuggestionProposalSchemaVersion => {
+                "unsupported_analysis_suggestion_proposal_schema_version"
+            }
+            Self::UnsupportedAnalysisSuggestionAnalysisPolicyVersion => {
+                "unsupported_analysis_suggestion_analysis_policy_version"
+            }
+            Self::AnalysisSuggestionProposalTooLarge => "analysis_suggestion_proposal_too_large",
+            Self::AnalysisSuggestionListTooLong => "analysis_suggestion_list_too_long",
             Self::UnsupportedVariantReviewInputSchemaVersion => {
                 "unsupported_variant_review_input_schema_version"
             }

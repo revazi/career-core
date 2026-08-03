@@ -57,6 +57,23 @@ career-core grounding validation + conservative merge
         └─ separately labeled assisted document
 ```
 
+Optional external analysis suggestions use a separate review-only boundary:
+
+```text
+career.resume_input.v1
+        │
+        ▼
+resume_analysis_v1 deterministic baseline
+        │ host/provider proposes bounded source-targeted suggestions
+        ▼
+career-core reruns analysis + validates current action/source occurrence
+        │
+        ├─ unchanged authoritative analysis baseline
+        └─ separately labeled assisted review suggestions
+```
+
+Exact target/evidence occurrence does not prove semantic entailment, factual truth, or rewrite safety. This boundary never produces a candidate resume, selection, source mutation, export, or materialization result.
+
 Evidence-linked resume variants use a separate non-authoritative boundary:
 
 ```text
@@ -90,6 +107,7 @@ The library accepts bounded typed values and returns typed deterministic results
 - validate source-grounded external proposals as untrusted typed input
 - merge accepted proposal values only into eligible empty fields while preserving the baseline
 - validate bounded variant targets/evidence structurally and deterministically materialize explicitly selected changes into a separate assisted variant
+- rerun analysis and validate bounded external suggestions against current failed canonical actions and exact source occurrence without changing the baseline
 - serialize public contract types through Serde
 
 It may not:
