@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/revazi/career-core/main/schemas/resume-analysis-suggestion-review-input-v1.schema.json",
+  "title": "career-core external resume analysis suggestion review input v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "expected_analysis_policy_version",
+    "resume",
+    "proposal"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "career.resume_analysis_suggestion_review_input.v1"
+    },
+    "expected_analysis_policy_version": {
+      "const": "resume_analysis_v1"
+    },
+    "resume": {
+      "$ref": "resume-input-v1.schema.json"
+    },
+    "proposal": {
+      "$ref": "resume-analysis-suggestion-proposal-v1.schema.json"
+    }
+  }
+}

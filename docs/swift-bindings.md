@@ -22,6 +22,7 @@ career-core
 - `capabilities_json`
 - `resume_evaluate_json`
 - `resume_analyze_json`
+- `resume_analysis_suggestions_review_json`
 - `resume_normalize_json`
 - `resume_enrich_json`
 - `resume_variant_review_json`
@@ -45,7 +46,7 @@ The facade does not accept normalized or assisted documents for authoritative an
 
 Before JSON parsing, the adapter applies the same envelope ceilings as the CLI:
 
-- 262,144 UTF-8 bytes for single-document and enrichment operations
+- 262,144 UTF-8 bytes for single-document, enrichment, and analysis-suggestion review operations
 - 1,048,576 UTF-8 bytes for job matching and resume-variant review/materialization
 
 UniFFI maps `CareerSwiftError` into typed Swift errors:
@@ -118,7 +119,7 @@ Verification covers:
 - version/deployment/target metadata and per-file SHA-256 manifest verification
 - macOS Swift Package compilation and five Swift tests
 - exact Swift/Rust capabilities bytes
-- exact output parity for all eight input-taking operations
+- exact output parity for all nine input-taking operations
 - typed malformed, oversized, and core-validation errors
 - arm64 iOS-device and simulator link smokes containing the exported Rust symbols
 - generic iOS-device and iOS-simulator Swift Package builds without signing

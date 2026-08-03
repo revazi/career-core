@@ -83,6 +83,7 @@ Read stdout and stderr independently, enforce a caller-owned timeout, and branch
 
 - JSON, not text output, is authoritative for agent decisions.
 - `resume evaluate` is section coverage only; use `resume analyze` for full deterministic readiness checks.
+- `resume analysis-suggestions-review` reruns that baseline; retain only its canonical assisted suggestions, action status, discard codes, and mandatory factuality warning. It never creates or applies a rewrite.
 - Assisted resume values never replace the deterministic baseline or enter authoritative scores.
 - `not_detected`, `inconclusive`, `provisional`, and `unverified` do not prove absence.
 - Match only skills returned as `normalized_exact` or `conservative_alias`.

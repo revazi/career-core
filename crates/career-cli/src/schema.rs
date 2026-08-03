@@ -19,6 +19,12 @@ pub(crate) enum SchemaId {
     JobNormalizationV1,
     #[value(name = "career.resume_analysis.v1")]
     ResumeAnalysisV1,
+    #[value(name = "career.resume_analysis_suggestion_proposal.v1")]
+    ResumeAnalysisSuggestionProposalV1,
+    #[value(name = "career.resume_analysis_suggestion_review.v1")]
+    ResumeAnalysisSuggestionReviewV1,
+    #[value(name = "career.resume_analysis_suggestion_review_input.v1")]
+    ResumeAnalysisSuggestionReviewInputV1,
     #[value(name = "career.resume_enrichment_input.v1")]
     ResumeEnrichmentInputV1,
     #[value(name = "career.resume_enrichment_proposal.v1")]
@@ -46,7 +52,7 @@ pub(crate) enum SchemaId {
 }
 
 impl SchemaId {
-    pub(crate) const ALL: [Self; 19] = [
+    pub(crate) const ALL: [Self; 22] = [
         Self::CapabilitiesV1,
         Self::ErrorV1,
         Self::JobInputV1,
@@ -54,6 +60,9 @@ impl SchemaId {
         Self::JobMatchInputV1,
         Self::JobNormalizationV1,
         Self::ResumeAnalysisV1,
+        Self::ResumeAnalysisSuggestionProposalV1,
+        Self::ResumeAnalysisSuggestionReviewV1,
+        Self::ResumeAnalysisSuggestionReviewInputV1,
         Self::ResumeEnrichmentInputV1,
         Self::ResumeEnrichmentProposalV1,
         Self::ResumeEnrichmentResultV1,
@@ -150,6 +159,30 @@ pub(crate) const fn embedded_schema(id: SchemaId) -> EmbeddedSchema {
             file_name: "resume-analysis-v1.schema.json",
             title: "career-core deterministic resume analysis v1",
             document: include_str!("../../../schemas/resume-analysis-v1.schema.json"),
+        },
+        SchemaId::ResumeAnalysisSuggestionProposalV1 => EmbeddedSchema {
+            id: "career.resume_analysis_suggestion_proposal.v1",
+            file_name: "resume-analysis-suggestion-proposal-v1.schema.json",
+            title: "career-core external resume analysis suggestion proposal v1",
+            document: include_str!(
+                "../../../schemas/resume-analysis-suggestion-proposal-v1.schema.json"
+            ),
+        },
+        SchemaId::ResumeAnalysisSuggestionReviewV1 => EmbeddedSchema {
+            id: "career.resume_analysis_suggestion_review.v1",
+            file_name: "resume-analysis-suggestion-review-v1.schema.json",
+            title: "career-core reviewed external resume analysis suggestions v1",
+            document: include_str!(
+                "../../../schemas/resume-analysis-suggestion-review-v1.schema.json"
+            ),
+        },
+        SchemaId::ResumeAnalysisSuggestionReviewInputV1 => EmbeddedSchema {
+            id: "career.resume_analysis_suggestion_review_input.v1",
+            file_name: "resume-analysis-suggestion-review-input-v1.schema.json",
+            title: "career-core external resume analysis suggestion review input v1",
+            document: include_str!(
+                "../../../schemas/resume-analysis-suggestion-review-input-v1.schema.json"
+            ),
         },
         SchemaId::ResumeEnrichmentInputV1 => EmbeddedSchema {
             id: "career.resume_enrichment_input.v1",

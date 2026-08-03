@@ -1,6 +1,6 @@
 ---
 name: career-core
-description: Discovers and invokes the local career-core deterministic CLI for source-grounded normalization, resume readiness analysis, conservative resume-to-job matching, optional external-proposal validation, and selected assisted-variant materialization. Use when evaluating supported career documents, inspecting evidence, or building local integrations.
+description: Discovers and invokes the local career-core deterministic CLI for source-grounded normalization, resume readiness analysis, reviewed external suggestions, conservative resume-to-job matching, optional external-proposal validation, and selected assisted-variant materialization. Use when evaluating supported career documents, inspecting evidence, or building local integrations.
 license: MIT OR Apache-2.0
 compatibility: Requires an installed `career` binary or a career-core source checkout with Rust 1.85+.
 metadata:
@@ -26,7 +26,7 @@ From this repository:
 cargo run --quiet -p career-cli -- capabilities
 ```
 
-JSON is the default. Invoke only entries whose `status` is `available`. `core.capabilities`, `resume.evaluate`, `resume.analyze`, `resume.normalize`, provider-neutral `resume.enrich`, `resume.variant.review`, `resume.variant.materialize`, `job.normalize`, and `job.match` are available.
+JSON is the default. Invoke only entries whose `status` is `available`. `core.capabilities`, `resume.evaluate`, `resume.analyze`, `resume.normalize`, provider-neutral `resume.enrich`, `resume.analysis-suggestions.review`, `resume.variant.review`, `resume.variant.materialize`, `job.normalize`, and `job.match` are available.
 
 For human-readable discovery:
 
@@ -72,6 +72,16 @@ career resume analyze --input /path/to/input.json
 Read `raw_score`, adjusted `score`, `outcome`, evidence, and `basis_check_id` together. Treat `inconclusive` checks and `provisional` findings as unverified. Preserve the general-ATS and visual-layout warnings; never claim a proprietary ATS ranking, interview prediction, or layout inspection.
 
 `resume analyze` independently scores the deterministic normalization baseline. Do not substitute `assisted_document` values. The older `resume evaluate` operation remains section coverage only.
+
+## Review external analysis suggestions
+
+Review no more than three source-targeted external suggestions beside a freshly rerun deterministic analysis:
+
+```bash
+career resume analysis-suggestions-review --input /path/to/analysis-suggestion-review-input.json
+```
+
+Submit only `career.resume_analysis_suggestion_review_input.v1`. Each suggestion must bind to one current failed canonical action and exact source target/evidence occurrence. Use only the returned canonical suggestions, action status, and discard codes. The output's `baseline_analysis` remains authoritative; retained suggestions are assisted/non-authoritative. Exact occurrence neither verifies generated wording nor certifies a rewrite. Do not treat this review-only operation as candidate generation, selection, source mutation, or materialization.
 
 ## Normalize and optionally enrich
 

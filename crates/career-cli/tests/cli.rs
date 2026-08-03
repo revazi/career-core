@@ -67,14 +67,19 @@ fn capabilities_default_to_valid_json() {
     assert_eq!(value["capabilities"][3]["status"], "available");
     assert_eq!(value["capabilities"][4]["id"], "resume.enrich");
     assert_eq!(value["capabilities"][4]["status"], "available");
-    assert_eq!(value["capabilities"][5]["id"], "resume.variant.review");
+    assert_eq!(
+        value["capabilities"][5]["id"],
+        "resume.analysis-suggestions.review"
+    );
     assert_eq!(value["capabilities"][5]["status"], "available");
-    assert_eq!(value["capabilities"][6]["id"], "resume.variant.materialize");
+    assert_eq!(value["capabilities"][6]["id"], "resume.variant.review");
     assert_eq!(value["capabilities"][6]["status"], "available");
-    assert_eq!(value["capabilities"][7]["id"], "job.normalize");
+    assert_eq!(value["capabilities"][7]["id"], "resume.variant.materialize");
     assert_eq!(value["capabilities"][7]["status"], "available");
-    assert_eq!(value["capabilities"][8]["id"], "job.match");
+    assert_eq!(value["capabilities"][8]["id"], "job.normalize");
     assert_eq!(value["capabilities"][8]["status"], "available");
+    assert_eq!(value["capabilities"][9]["id"], "job.match");
+    assert_eq!(value["capabilities"][9]["status"], "available");
 }
 
 #[test]
@@ -91,6 +96,7 @@ fn capabilities_support_human_readable_output() {
     assert!(stdout.contains("resume.analyze [available]"));
     assert!(stdout.contains("resume.normalize [available]"));
     assert!(stdout.contains("resume.enrich [available]"));
+    assert!(stdout.contains("resume.analysis-suggestions.review [available]"));
     assert!(stdout.contains("resume.variant.review [available]"));
     assert!(stdout.contains("resume.variant.materialize [available]"));
     assert!(stdout.contains("job.normalize [available]"));
@@ -507,8 +513,14 @@ fn resume_enrichment_matches_reviewed_golden_and_text_output() {
 }
 
 #[test]
-fn resume_variant_review_and_materialization_match_goldens_and_text_output() {
+fn resume_analysis_suggestion_and_variant_reviews_match_goldens_and_text_output() {
     for (command, input_name, expected_name, text_marker) in [
+        (
+            "analysis-suggestions-review",
+            "complete-analysis-suggestion-review.input.json",
+            "complete-analysis-suggestion-review.expected.json",
+            "Assisted resume analysis suggestion review: 1 retained; 0 discarded",
+        ),
         (
             "variant-review",
             "complete-variant-review.input.json",
@@ -553,8 +565,56 @@ fn resume_variant_review_and_materialization_match_goldens_and_text_output() {
         let stdout = String::from_utf8(text.stdout).expect("stdout should be UTF-8");
         assert!(stdout.contains(text_marker));
         assert!(stdout.contains("Authority: assisted, non-authoritative"));
-        assert!(stdout.contains("does not certify"));
+        assert!(
+            stdout.contains("does not certify") || stdout.contains("does not establish"),
+            "text warning should retain the factuality boundary"
+        );
     }
+}
+
+#[test]
+fn discarded_analysis_suggestion_does_not_echo_untrusted_payload() {
+    let input = fs::read_to_string(phase7_fixture_path(
+        "complete-analysis-suggestion-review.input.json",
+    ))
+    .expect("fixture should load")
+    .replace(
+        "Review this bullet and add a specific, source-supported outcome if one can be verified.",
+        "Private discarded analysis suggestion.",
+    )
+    .replace(
+        "Built reliable APIs for internal teams.\"\n        ],",
+        "private unmatched evidence\"\n        ],",
+    );
+    let mut child = Command::new(env!("CARGO_BIN_EXE_career"))
+        .args(["resume", "analysis-suggestions-review", "--input", "-"])
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .expect("career binary should start");
+    child
+        .stdin
+        .take()
+        .expect("stdin should be piped")
+        .write_all(input.as_bytes())
+        .expect("input should be written");
+    let output = child
+        .wait_with_output()
+        .expect("career binary should finish");
+
+    assert!(output.status.success());
+    assert!(output.stderr.is_empty());
+    let result: serde_json::Value =
+        serde_json::from_slice(&output.stdout).expect("stdout should be JSON");
+    assert_eq!(result["suggestions"], serde_json::json!([]));
+    assert_eq!(
+        result["discarded_suggestions"][0]["code"],
+        "invalid_source_evidence"
+    );
+    let encoded = String::from_utf8(output.stdout).expect("stdout should be UTF-8");
+    assert!(!encoded.contains("Private discarded analysis suggestion."));
+    assert!(!encoded.contains("private unmatched evidence"));
 }
 
 #[test]
@@ -838,6 +898,9 @@ fn embedded_schema_catalog_lists_and_exports_every_public_schema() {
             "career.job_match_input.v1",
             "career.job_normalization.v1",
             "career.resume_analysis.v1",
+            "career.resume_analysis_suggestion_proposal.v1",
+            "career.resume_analysis_suggestion_review.v1",
+            "career.resume_analysis_suggestion_review_input.v1",
             "career.resume_enrichment_input.v1",
             "career.resume_enrichment_proposal.v1",
             "career.resume_enrichment_result.v1",
@@ -929,6 +992,14 @@ fn every_machine_operation_supports_one_line_compact_json() {
             "analyze".to_owned(),
             "--input".to_owned(),
             phase3_fixture_path("complete-analysis.input.json")
+                .to_string_lossy()
+                .into_owned(),
+        ],
+        vec![
+            "resume".to_owned(),
+            "analysis-suggestions-review".to_owned(),
+            "--input".to_owned(),
+            phase7_fixture_path("complete-analysis-suggestion-review.input.json")
                 .to_string_lossy()
                 .into_owned(),
         ],

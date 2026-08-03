@@ -301,15 +301,16 @@ Phases 1–5 contracts required by the app are stable and versioned.
 - unsafe/FFI code is isolated, documented, and reviewed
 - Apple artifacts are reproducible and version aligned
 
-## Phase 7 — Evidence-linked assisted resume variants
+## Phase 7 — Evidence-linked assisted resume review
 
 ### Goal
 
-Deterministically review and materialize an explicitly selected subset of externally generated resume changes while preserving the exact baseline and preventing assisted prose from entering authoritative analysis or matching.
+Deterministically review bounded externally generated resume content while preserving the exact baseline and preventing assisted prose from entering authoritative analysis or matching. Line-targeted variants may be materialized only after explicit selection; analysis suggestions remain review-only.
 
 ### Scope
 
 - provider-neutral proposal with at most 50 bounded line-targeted changes and exact resume/vacancy evidence
+- review-only external analysis suggestions bound to freshly rerun failed canonical actions and exact resume target/evidence occurrence, with no candidate or materialization path
 - exact target/range/evidence validation without semantic factuality claims
 - stable canonical change identifiers, ordering, discard diagnostics, and non-overlap policy
 - all-change assisted preview for review presentation
@@ -320,13 +321,14 @@ Deterministically review and materialize an explicitly selected subset of extern
 
 ### Out of scope
 
-- providers, prompts, model calls, network requests/retries, credentials, persistence, UI, export, clipboard, clocks, random identifiers, semantic entailment certification, automatic acceptance, scoring/matching from assisted text, dependencies without separate justification, signing, publication, or distribution
+- providers, prompts, model calls, network requests/retries, credentials, persistence, UI, export, clipboard, clocks, random identifiers, semantic entailment certification, automatic acceptance, scoring/matching from assisted text, analysis-suggestion candidate generation/selection/application/materialization, dependencies without separate justification, signing, publication, or distribution
 
 ### Acceptance
 
 - malformed, oversized, duplicate, overlapping, ambiguous, stale-selection, Unicode, mixed-line-ending, prompt-like, and evidence-adversarial proposals fail or discard conservatively without payload echoes
 - identical versioned input produces byte-equivalent review/materialization output
-- selected output changes only selected canonical targets; baseline and every unselected byte remain unchanged
+- analysis-suggestion review reruns and preserves the complete baseline analysis, binds retained content to current failed actions with confirmed/provisional status, and emits only canonical suggestions plus payload-free discards
+- selected variant output changes only selected canonical targets; baseline and every unselected byte remain unchanged
 - mandatory warnings state that evidence occurrence is not factual certification and variants are non-authoritative
 - existing analysis, normalization, enrichment, matching, schema, CLI, and Swift fixture outputs remain unchanged
 - full Rust/MSRV/Swift/XCFramework, schema, clean-clone, security, and CI gates pass
