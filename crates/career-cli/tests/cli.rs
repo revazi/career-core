@@ -72,14 +72,19 @@ fn capabilities_default_to_valid_json() {
         "resume.analysis-suggestions.review"
     );
     assert_eq!(value["capabilities"][5]["status"], "available");
-    assert_eq!(value["capabilities"][6]["id"], "resume.variant.review");
+    assert_eq!(
+        value["capabilities"][6]["id"],
+        "resume.analysis-replacements.review"
+    );
     assert_eq!(value["capabilities"][6]["status"], "available");
-    assert_eq!(value["capabilities"][7]["id"], "resume.variant.materialize");
+    assert_eq!(value["capabilities"][7]["id"], "resume.variant.review");
     assert_eq!(value["capabilities"][7]["status"], "available");
-    assert_eq!(value["capabilities"][8]["id"], "job.normalize");
+    assert_eq!(value["capabilities"][8]["id"], "resume.variant.materialize");
     assert_eq!(value["capabilities"][8]["status"], "available");
-    assert_eq!(value["capabilities"][9]["id"], "job.match");
+    assert_eq!(value["capabilities"][9]["id"], "job.normalize");
     assert_eq!(value["capabilities"][9]["status"], "available");
+    assert_eq!(value["capabilities"][10]["id"], "job.match");
+    assert_eq!(value["capabilities"][10]["status"], "available");
 }
 
 #[test]
@@ -97,6 +102,7 @@ fn capabilities_support_human_readable_output() {
     assert!(stdout.contains("resume.normalize [available]"));
     assert!(stdout.contains("resume.enrich [available]"));
     assert!(stdout.contains("resume.analysis-suggestions.review [available]"));
+    assert!(stdout.contains("resume.analysis-replacements.review [available]"));
     assert!(stdout.contains("resume.variant.review [available]"));
     assert!(stdout.contains("resume.variant.materialize [available]"));
     assert!(stdout.contains("job.normalize [available]"));
@@ -522,6 +528,12 @@ fn resume_analysis_suggestion_and_variant_reviews_match_goldens_and_text_output(
             "Assisted resume analysis suggestion review: 1 retained; 0 discarded",
         ),
         (
+            "analysis-replacements-review",
+            "complete-analysis-replacement-review.input.json",
+            "complete-analysis-replacement-review.expected.json",
+            "Assisted resume analysis replacement review: 1 retained; 0 discarded",
+        ),
+        (
             "variant-review",
             "complete-variant-review.input.json",
             "complete-variant-review.expected.json",
@@ -615,6 +627,86 @@ fn discarded_analysis_suggestion_does_not_echo_untrusted_payload() {
     let encoded = String::from_utf8(output.stdout).expect("stdout should be UTF-8");
     assert!(!encoded.contains("Private discarded analysis suggestion."));
     assert!(!encoded.contains("private unmatched evidence"));
+}
+
+#[test]
+fn discarded_analysis_replacement_does_not_echo_untrusted_payload_and_unknown_fields_fail() {
+    let input = fs::read_to_string(phase7_fixture_path(
+        "complete-analysis-replacement-review.input.json",
+    ))
+    .expect("fixture should load")
+    .replace(
+        "- Built reliable APIs for internal teams, improving deployment reliability by 30 percent.",
+        "Private discarded analysis replacement.",
+    )
+    .replace(
+        "Reduced deployment failures by 30 percent.\"\n        ],",
+        "private unmatched evidence\"\n        ],",
+    );
+    let mut child = Command::new(env!("CARGO_BIN_EXE_career"))
+        .args(["resume", "analysis-replacements-review", "--input", "-"])
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .expect("career binary should start");
+    child
+        .stdin
+        .take()
+        .expect("stdin should be piped")
+        .write_all(input.as_bytes())
+        .expect("input should be written");
+    let output = child
+        .wait_with_output()
+        .expect("career binary should finish");
+
+    assert!(output.status.success());
+    assert!(output.stderr.is_empty());
+    let result: serde_json::Value =
+        serde_json::from_slice(&output.stdout).expect("stdout should be JSON");
+    assert_eq!(result["replacements"], serde_json::json!([]));
+    assert_eq!(
+        result["discarded_replacements"][0]["code"],
+        "invalid_source_evidence"
+    );
+    let encoded = String::from_utf8(output.stdout).expect("stdout should be UTF-8");
+    assert!(!encoded.contains("Private discarded analysis replacement."));
+    assert!(!encoded.contains("private unmatched evidence"));
+
+    let unknown_field_input = fs::read_to_string(phase7_fixture_path(
+        "complete-analysis-replacement-review.input.json",
+    ))
+    .expect("fixture should load")
+    .replace(
+        "\"proposed_replacement\":",
+        "\"provider_score\": 100, \"proposed_replacement\":",
+    );
+    let mut child = Command::new(env!("CARGO_BIN_EXE_career"))
+        .args(["resume", "analysis-replacements-review", "--input", "-"])
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .expect("career binary should start");
+    child
+        .stdin
+        .take()
+        .expect("stdin should be piped")
+        .write_all(unknown_field_input.as_bytes())
+        .expect("input should be written");
+    let output = child
+        .wait_with_output()
+        .expect("career binary should finish");
+
+    assert_eq!(output.status.code(), Some(4));
+    assert!(output.stdout.is_empty());
+    let error: serde_json::Value =
+        serde_json::from_slice(&output.stderr).expect("stderr should be JSON");
+    assert_eq!(error["code"], "invalid_json");
+    assert!(
+        String::from_utf8_lossy(&output.stderr)
+            .contains("career.resume_analysis_replacement_review_input.v1")
+    );
 }
 
 #[test]
@@ -792,6 +884,32 @@ fn cli_input_bytes_are_bounded_before_json_parsing() {
 }
 
 #[test]
+fn analysis_replacement_cli_input_bytes_are_bounded_before_json_parsing() {
+    let mut child = Command::new(env!("CARGO_BIN_EXE_career"))
+        .args(["resume", "analysis-replacements-review", "--input", "-"])
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .expect("career binary should start");
+    child
+        .stdin
+        .take()
+        .expect("stdin should be piped")
+        .write_all(&vec![b'x'; 262_145])
+        .expect("oversized input should be written");
+    let output = child
+        .wait_with_output()
+        .expect("career binary should finish");
+
+    assert_eq!(output.status.code(), Some(3));
+    assert!(output.stdout.is_empty());
+    let error: serde_json::Value =
+        serde_json::from_slice(&output.stderr).expect("stderr should be JSON");
+    assert_eq!(error["code"], "cli_input_too_large");
+}
+
+#[test]
 fn job_match_cli_input_bytes_use_a_bounded_composite_limit() {
     let mut child = Command::new(env!("CARGO_BIN_EXE_career"))
         .args(["job", "match", "--input", "-"])
@@ -898,6 +1016,9 @@ fn embedded_schema_catalog_lists_and_exports_every_public_schema() {
             "career.job_match_input.v1",
             "career.job_normalization.v1",
             "career.resume_analysis.v1",
+            "career.resume_analysis_replacement_proposal.v1",
+            "career.resume_analysis_replacement_review.v1",
+            "career.resume_analysis_replacement_review_input.v1",
             "career.resume_analysis_suggestion_proposal.v1",
             "career.resume_analysis_suggestion_review.v1",
             "career.resume_analysis_suggestion_review_input.v1",
@@ -992,6 +1113,14 @@ fn every_machine_operation_supports_one_line_compact_json() {
             "analyze".to_owned(),
             "--input".to_owned(),
             phase3_fixture_path("complete-analysis.input.json")
+                .to_string_lossy()
+                .into_owned(),
+        ],
+        vec![
+            "resume".to_owned(),
+            "analysis-replacements-review".to_owned(),
+            "--input".to_owned(),
+            phase7_fixture_path("complete-analysis-replacement-review.input.json")
                 .to_string_lossy()
                 .into_owned(),
         ],

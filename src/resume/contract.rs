@@ -185,6 +185,11 @@ pub enum ResumeEvaluationErrorCodeV1 {
     UnsupportedAnalysisSuggestionAnalysisPolicyVersion,
     AnalysisSuggestionProposalTooLarge,
     AnalysisSuggestionListTooLong,
+    UnsupportedAnalysisReplacementReviewInputSchemaVersion,
+    UnsupportedAnalysisReplacementProposalSchemaVersion,
+    UnsupportedAnalysisReplacementAnalysisPolicyVersion,
+    AnalysisReplacementProposalTooLarge,
+    AnalysisReplacementListTooLong,
     UnsupportedVariantReviewInputSchemaVersion,
     UnsupportedVariantProposalSchemaVersion,
     UnsupportedVariantMaterializationInputSchemaVersion,
@@ -233,6 +238,17 @@ impl ResumeEvaluationErrorCodeV1 {
             }
             Self::AnalysisSuggestionProposalTooLarge => "analysis_suggestion_proposal_too_large",
             Self::AnalysisSuggestionListTooLong => "analysis_suggestion_list_too_long",
+            Self::UnsupportedAnalysisReplacementReviewInputSchemaVersion => {
+                "unsupported_analysis_replacement_review_input_schema_version"
+            }
+            Self::UnsupportedAnalysisReplacementProposalSchemaVersion => {
+                "unsupported_analysis_replacement_proposal_schema_version"
+            }
+            Self::UnsupportedAnalysisReplacementAnalysisPolicyVersion => {
+                "unsupported_analysis_replacement_analysis_policy_version"
+            }
+            Self::AnalysisReplacementProposalTooLarge => "analysis_replacement_proposal_too_large",
+            Self::AnalysisReplacementListTooLong => "analysis_replacement_list_too_long",
             Self::UnsupportedVariantReviewInputSchemaVersion => {
                 "unsupported_variant_review_input_schema_version"
             }

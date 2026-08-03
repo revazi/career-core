@@ -74,6 +74,23 @@ career-core reruns analysis + validates current action/source occurrence
 
 Exact target/evidence occurrence does not prove semantic entailment, factual truth, or rewrite safety. This boundary never produces a candidate resume, selection, source mutation, export, or materialization result.
 
+Optional exact analysis replacements use a separate review-only boundary:
+
+```text
+career.resume_input.v1
+        │
+        ▼
+resume_analysis_v1 deterministic baseline
+        │ host/provider proposes exact source-targeted replacements
+        ▼
+career-core reruns analysis + validates current action/source occurrence
+        │
+        ├─ unchanged authoritative analysis baseline
+        └─ canonical assisted before/proposed-after diff values
+```
+
+The replacement boundary is distinct from advisory analysis suggestions. It emits no candidate resume, selection, application, materialization, export, persistence, or source mutation. Exact target/evidence occurrence does not prove semantic entailment, factual truth, or rewrite safety.
+
 Evidence-linked resume variants use a separate non-authoritative boundary:
 
 ```text
@@ -108,6 +125,7 @@ The library accepts bounded typed values and returns typed deterministic results
 - merge accepted proposal values only into eligible empty fields while preserving the baseline
 - validate bounded variant targets/evidence structurally and deterministically materialize explicitly selected changes into a separate assisted variant
 - rerun analysis and validate bounded external suggestions against current failed canonical actions and exact source occurrence without changing the baseline
+- rerun analysis and validate bounded exact external replacements against current failed canonical actions and exact source occurrence for non-authoritative diff display only
 - serialize public contract types through Serde
 
 It may not:

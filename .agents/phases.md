@@ -305,12 +305,13 @@ Phases 1–5 contracts required by the app are stable and versioned.
 
 ### Goal
 
-Deterministically review bounded externally generated resume content while preserving the exact baseline and preventing assisted prose from entering authoritative analysis or matching. Line-targeted variants may be materialized only after explicit selection; analysis suggestions remain review-only.
+Deterministically review bounded externally generated resume content while preserving the exact baseline and preventing assisted prose from entering authoritative analysis or matching. Line-targeted variants may be materialized only after explicit selection; analysis suggestions and analysis replacements remain review-only.
 
 ### Scope
 
 - provider-neutral proposal with at most 50 bounded line-targeted changes and exact resume/vacancy evidence
 - review-only external analysis suggestions bound to freshly rerun failed canonical actions and exact resume target/evidence occurrence, with no candidate or materialization path
+- review-only exact external analysis replacements bound to freshly rerun failed canonical actions and exact resume target/evidence occurrence for before/proposed-after diff display only, with no candidate or materialization path
 - exact target/range/evidence validation without semantic factuality claims
 - stable canonical change identifiers, ordering, discard diagnostics, and non-overlap policy
 - all-change assisted preview for review presentation
@@ -328,6 +329,7 @@ Deterministically review bounded externally generated resume content while prese
 - malformed, oversized, duplicate, overlapping, ambiguous, stale-selection, Unicode, mixed-line-ending, prompt-like, and evidence-adversarial proposals fail or discard conservatively without payload echoes
 - identical versioned input produces byte-equivalent review/materialization output
 - analysis-suggestion review reruns and preserves the complete baseline analysis, binds retained content to current failed actions with confirmed/provisional status, and emits only canonical suggestions plus payload-free discards
+- analysis-replacement review reruns and preserves the complete baseline analysis, binds retained exact source targets and proposed replacements to current failed actions with confirmed/provisional status, and emits only canonical diff values plus payload-free discards
 - selected variant output changes only selected canonical targets; baseline and every unselected byte remain unchanged
 - mandatory warnings state that evidence occurrence is not factual certification and variants are non-authoritative
 - existing analysis, normalization, enrichment, matching, schema, CLI, and Swift fixture outputs remain unchanged

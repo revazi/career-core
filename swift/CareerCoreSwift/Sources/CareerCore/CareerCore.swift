@@ -612,6 +612,16 @@ public func jobNormalizeJson(inputJson: String)throws  -> String  {
 })
 }
 /**
+ * Reviews `career.resume_analysis_replacement_review_input.v1` as canonical JSON.
+ */
+public func resumeAnalysisReplacementsReviewJson(inputJson: String)throws  -> String  {
+    return try  FfiConverterString.lift(try rustCallWithError(FfiConverterTypeCareerSwiftError_lift) {
+    uniffi_career_swift_fn_func_resume_analysis_replacements_review_json(
+        FfiConverterString.lower(inputJson),$0
+    )
+})
+}
+/**
  * Reviews `career.resume_analysis_suggestion_review_input.v1` as canonical JSON.
  */
 public func resumeAnalysisSuggestionsReviewJson(inputJson: String)throws  -> String  {
@@ -704,6 +714,9 @@ private let initializationResult: InitializationResult = {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_career_swift_checksum_func_job_normalize_json() != 1732) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_career_swift_checksum_func_resume_analysis_replacements_review_json() != 36525) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_career_swift_checksum_func_resume_analysis_suggestions_review_json() != 12533) {

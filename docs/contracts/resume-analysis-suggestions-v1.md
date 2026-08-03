@@ -2,7 +2,7 @@
 
 ## Scope
 
-`career.resume_analysis_suggestion_review.v1` is a review-only assisted boundary for presenting bounded external suggestions beside the authoritative `career.resume_analysis.v1` baseline.
+`career.resume_analysis_suggestion_review.v1` is a review-only assisted boundary for presenting bounded external advisory suggestions beside the authoritative `career.resume_analysis.v1` baseline. Its `suggestion` field is advisory text, not a replacement; hosts must not relabel it or synthesize replacement semantics.
 
 ```bash
 career resume analysis-suggestions-review --input <path|->
@@ -37,7 +37,7 @@ Each item must contain:
 - 1-based inclusive `start_line` and `end_line`
 - an exact nonempty `source_target` at that exact physical line range
 - one or two unique exact `source_evidence` excerpts occurring in the current resume source
-- bounded suggestion text without unsupported controls
+- bounded advisory suggestion text without unsupported controls; it is not a source replacement
 
 A retained item must bind to one current canonical `improvement_action` whose basis check remains failed. The output copies that action's priority, area, action text, and `confirmed` or `provisional` status; proposal-supplied status, action text, provider IDs, and score claims are never accepted.
 

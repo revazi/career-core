@@ -54,9 +54,21 @@ career resume analysis-suggestions-review --input <path|-> [--format json|json-p
 
 Input follows `schemas/resume-analysis-suggestion-review-input-v1.schema.json`; output follows `schemas/resume-analysis-suggestion-review-v1.schema.json`. The core reruns the original resume's deterministic analysis and returns it unchanged under `baseline_analysis`.
 
-At most three source-targeted external suggestions can be retained. Each must map to one current failed canonical improvement action and exact source target/evidence occurrence. Use only core-assigned IDs, canonical confirmed/provisional status, and bounded discard codes. Retained suggestions are assisted/non-authoritative; exact occurrence is not factual entailment or rewrite certification. This operation never creates, selects, applies, exports, or materializes a resume candidate.
+At most three source-targeted external suggestions can be retained. Each must map to one current failed canonical improvement action and exact source target/evidence occurrence. Use only core-assigned IDs, canonical confirmed/provisional status, and bounded discard codes. Retained suggestions are assisted/non-authoritative; exact occurrence is not factual entailment or rewrite certification. The v1 `suggestion` field remains advisory text, never a replacement. This operation never creates, selects, applies, exports, or materializes a resume candidate.
 
 See `docs/contracts/resume-analysis-suggestions-v1.md` for exact limits and review rules.
+
+## Review-only exact analysis replacements
+
+```bash
+career resume analysis-replacements-review --input <path|-> [--format json|json-pretty|json-compact|text]
+```
+
+Input follows `schemas/resume-analysis-replacement-review-input-v1.schema.json`; output follows `schemas/resume-analysis-replacement-review-v1.schema.json`. It reruns the original deterministic analysis unchanged under `baseline_analysis`, validates at most three current-action-bound exact source targets/evidence excerpts, and returns core-canonical before/proposed-after values as `source_target` and `proposed_replacement`.
+
+Use this output only for a non-authoritative diff display, preserving returned action/status, evidence, discard codes, and warnings. Exact occurrence does not certify factuality or a rewrite. There is no candidate, selection, application, source mutation, materialization, persistence, or export path.
+
+See `docs/contracts/resume-analysis-replacements-v1.md` for exact limits and review rules.
 
 ## Resume normalization
 
@@ -140,7 +152,7 @@ Current nonzero exit statuses:
 | 5 | valid JSON rejected by core input validation |
 | 6 | output write/serialization failure |
 
-Errors use `career.error.v1`. Messages are bounded and do not echo the source document. Single-document commands, including analysis-suggestion review, read at most 262,144 bytes; composite `job match` and variant review/materialization envelopes read at most 1,048,576 bytes before JSON parsing.
+Errors use `career.error.v1`. Messages are bounded and do not echo the source document. Single-document commands, including analysis-suggestion and analysis-replacement review, read at most 262,144 bytes; composite `job match` and variant review/materialization envelopes read at most 1,048,576 bytes before JSON parsing.
 
 ## Execution from source
 
@@ -149,6 +161,7 @@ cargo run --quiet -p career-cli -- capabilities
 cargo run --quiet -p career-cli -- resume evaluate --input fixtures/resume/phase1/complete-sections.input.json
 cargo run --quiet -p career-cli -- resume analyze --input fixtures/resume/phase3/complete-analysis.input.json
 cargo run --quiet -p career-cli -- resume analysis-suggestions-review --input fixtures/resume/phase7/complete-analysis-suggestion-review.input.json
+cargo run --quiet -p career-cli -- resume analysis-replacements-review --input fixtures/resume/phase7/complete-analysis-replacement-review.input.json
 cargo run --quiet -p career-cli -- resume normalize --input fixtures/resume/phase2/complete-normalization.input.json
 cargo run --quiet -p career-cli -- resume enrich --input fixtures/resume/phase2/messy-unlabeled.enrichment-input.json
 cargo run --quiet -p career-cli -- resume variant-review --input fixtures/resume/phase7/complete-variant-review.input.json

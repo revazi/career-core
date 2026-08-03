@@ -11,6 +11,7 @@ career schema export --id <contract-id>
 career resume evaluate --input <path|->
 career resume analyze --input <path|->
 career resume analysis-suggestions-review --input <path|->
+career resume analysis-replacements-review --input <path|->
 career resume normalize --input <path|->
 career resume enrich --input <path|->
 career resume variant-review --input <path|->
@@ -46,6 +47,7 @@ Machine modes write a successful result only to stdout. Failures write one `care
 | `resume evaluate` | `career.resume_input.v1` | `career.resume_evaluation.v1` |
 | `resume analyze` | `career.resume_input.v1` | `career.resume_analysis.v1` |
 | `resume analysis-suggestions-review` | `career.resume_analysis_suggestion_review_input.v1` | `career.resume_analysis_suggestion_review.v1` |
+| `resume analysis-replacements-review` | `career.resume_analysis_replacement_review_input.v1` | `career.resume_analysis_replacement_review.v1` |
 | `resume normalize` | `career.resume_input.v1` | `career.resume_normalization.v1` |
 | `resume enrich` | `career.resume_enrichment_input.v1` | `career.resume_enrichment_result.v1` |
 | `resume variant-review` | `career.resume_variant_review_input.v1` | `career.resume_variant_review.v1` |
@@ -79,7 +81,7 @@ Argument errors use canonical pretty JSON because the requested output format ma
 
 - Single-document command input is limited to 262,144 bytes before JSON parsing.
 - `job match` and resume-variant review/materialization envelopes are limited to 1,048,576 bytes.
-- Resume analysis-suggestion review is limited to the ordinary 262,144-byte single-document envelope because it contains one resume and a deliberately small proposal.
+- Resume analysis-suggestion and analysis-replacement review are limited to the ordinary 262,144-byte single-document envelope because each contains one resume and a deliberately small proposal.
 - Core character, line, string, list, and evidence limits still apply after parsing.
 - Missing paths are not echoed in errors.
 - Resume and job text is never logged or repeated in diagnostics.

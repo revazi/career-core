@@ -1,12 +1,13 @@
 use career_core::{
     JobInputV1, JobMatchCategoryV1, JobMatchInputV1, JobMatchItemKindV1, JobMatchItemStatusV1,
     JobMatchRecommendationLabelV1, JobMatchRecommendationStatusV1, JobMatchTypeV1, JobMatchV1,
-    JobNormalizationV1, ResumeAnalysisSuggestionReviewInputV1, ResumeAnalysisSuggestionReviewV1,
-    ResumeAnalysisV1, ResumeEnrichmentInputV1, ResumeEnrichmentResultV1, ResumeEvaluationV1,
-    ResumeInputV1, ResumeNormalizationV1, ResumeVariantMaterializationInputV1,
-    ResumeVariantReviewInputV1, ResumeVariantReviewV1, ResumeVariantV1, analyze_resume,
-    apply_resume_enrichment, evaluate_resume, match_job, materialize_resume_variant, normalize_job,
-    normalize_resume, review_resume_analysis_suggestions, review_resume_variant,
+    JobNormalizationV1, ResumeAnalysisReplacementReviewInputV1, ResumeAnalysisReplacementReviewV1,
+    ResumeAnalysisSuggestionReviewInputV1, ResumeAnalysisSuggestionReviewV1, ResumeAnalysisV1,
+    ResumeEnrichmentInputV1, ResumeEnrichmentResultV1, ResumeEvaluationV1, ResumeInputV1,
+    ResumeNormalizationV1, ResumeVariantMaterializationInputV1, ResumeVariantReviewInputV1,
+    ResumeVariantReviewV1, ResumeVariantV1, analyze_resume, apply_resume_enrichment,
+    evaluate_resume, match_job, materialize_resume_variant, normalize_job, normalize_resume,
+    review_resume_analysis_replacements, review_resume_analysis_suggestions, review_resume_variant,
 };
 
 const SCHEMAS: &[(&str, &str)] = &[
@@ -45,6 +46,18 @@ const SCHEMAS: &[(&str, &str)] = &[
     (
         "resume-analysis-v1",
         include_str!("../schemas/resume-analysis-v1.schema.json"),
+    ),
+    (
+        "resume-analysis-replacement-proposal-v1",
+        include_str!("../schemas/resume-analysis-replacement-proposal-v1.schema.json"),
+    ),
+    (
+        "resume-analysis-replacement-review-v1",
+        include_str!("../schemas/resume-analysis-replacement-review-v1.schema.json"),
+    ),
+    (
+        "resume-analysis-replacement-review-input-v1",
+        include_str!("../schemas/resume-analysis-replacement-review-input-v1.schema.json"),
     ),
     (
         "resume-analysis-suggestion-proposal-v1",
@@ -743,6 +756,26 @@ fn selected_resume_analysis_scores_match_the_independent_reference_fixture() {
             assert_eq!(actual_check["explanation"], expected_check["details"]);
         }
     }
+}
+
+#[test]
+fn reviewed_resume_analysis_replacement_fixture_matches_the_typed_contract() {
+    let input: ResumeAnalysisReplacementReviewInputV1 = serde_json::from_str(include_str!(
+        "../fixtures/resume/phase7/complete-analysis-replacement-review.input.json"
+    ))
+    .expect("analysis-replacement review input should be typed JSON");
+    let expected: ResumeAnalysisReplacementReviewV1 = serde_json::from_str(include_str!(
+        "../fixtures/resume/phase7/complete-analysis-replacement-review.expected.json"
+    ))
+    .expect("analysis-replacement review output should be typed JSON");
+    let actual = review_resume_analysis_replacements(&input)
+        .expect("analysis-replacement review should succeed");
+
+    assert_eq!(actual, expected);
+    assert_eq!(
+        actual.baseline_analysis,
+        analyze_resume(&input.resume).expect("baseline analysis should repeat")
+    );
 }
 
 #[test]

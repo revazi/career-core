@@ -1,6 +1,6 @@
 ---
 name: career-core
-description: Discovers and invokes the local career-core deterministic CLI for source-grounded normalization, resume readiness analysis, reviewed external suggestions, conservative resume-to-job matching, optional external-proposal validation, and selected assisted-variant materialization. Use when evaluating supported career documents, inspecting evidence, or building local integrations.
+description: Discovers and invokes the local career-core deterministic CLI for source-grounded normalization, resume readiness analysis, reviewed external suggestions and exact replacement diffs, conservative resume-to-job matching, optional external-proposal validation, and selected assisted-variant materialization. Use when evaluating supported career documents, inspecting evidence, or building local integrations.
 license: MIT OR Apache-2.0
 compatibility: Requires an installed `career` binary or a career-core source checkout with Rust 1.85+.
 metadata:
@@ -26,7 +26,7 @@ From this repository:
 cargo run --quiet -p career-cli -- capabilities
 ```
 
-JSON is the default. Invoke only entries whose `status` is `available`. `core.capabilities`, `resume.evaluate`, `resume.analyze`, `resume.normalize`, provider-neutral `resume.enrich`, `resume.analysis-suggestions.review`, `resume.variant.review`, `resume.variant.materialize`, `job.normalize`, and `job.match` are available.
+JSON is the default. Invoke only entries whose `status` is `available`. `core.capabilities`, `resume.evaluate`, `resume.analyze`, `resume.normalize`, provider-neutral `resume.enrich`, `resume.analysis-suggestions.review`, `resume.analysis-replacements.review`, `resume.variant.review`, `resume.variant.materialize`, `job.normalize`, and `job.match` are available.
 
 For human-readable discovery:
 
@@ -82,6 +82,18 @@ career resume analysis-suggestions-review --input /path/to/analysis-suggestion-r
 ```
 
 Submit only `career.resume_analysis_suggestion_review_input.v1`. Each suggestion must bind to one current failed canonical action and exact source target/evidence occurrence. Use only the returned canonical suggestions, action status, and discard codes. The output's `baseline_analysis` remains authoritative; retained suggestions are assisted/non-authoritative. Exact occurrence neither verifies generated wording nor certifies a rewrite. Do not treat this review-only operation as candidate generation, selection, source mutation, or materialization.
+
+## Review exact analysis replacements
+
+Review up to three exact source-targeted external replacements for a non-authoritative before/proposed-after diff:
+
+```bash
+career resume analysis-replacements-review --input /path/to/analysis-replacement-review-input.json
+```
+
+Submit only `career.resume_analysis_replacement_review_input.v1`. Each retained replacement is bound to one current failed canonical action and exact source target/evidence occurrence. Render only its returned canonical `source_target`, `proposed_replacement`, action/status, evidence, and warnings beside `baseline_analysis`. Exact occurrence does not verify generated wording or certify a rewrite. This is review-only: it has no candidate, selection, source mutation, materialization, or export path.
+
+The existing `resume analysis-suggestions-review` v1 `suggestion` field remains advisory text, not a replacement. Do not relabel it or synthesize replacement semantics.
 
 ## Normalize and optionally enrich
 
