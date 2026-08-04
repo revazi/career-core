@@ -1,0 +1,58 @@
+name: Prepare pi-career runtime artifacts
+run-name: Prepare pi-career runtime artifacts at ${{ github.sha }}
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pi-career-runtime-artifacts-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    name: Native runtime (${{ matrix.platform_key }})
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-latest
+            platform_key: linux-x64-gnu
+            target: x86_64-unknown-linux-gnu
+          - runner: macos-14
+            platform_key: darwin-arm64
+            target: aarch64-apple-darwin
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Configure stable Rust
+        run: |
+          rustup update stable --no-self-update
+          rustup default stable
+
+      - name: Prepare verified native archive
+        run: |
+          test -z "$(git status --porcelain)"
+          output_dir="$RUNNER_TEMP/pi-career-runtime-artifacts"
+          scripts/prepare-pi-career-runtime-artifact.sh \
+            --output-dir "$output_dir" \
+            --expected-target "${{ matrix.target }}"
+          archive="$output_dir/career-pi-runtime-${{ matrix.platform_key }}-${{ matrix.target }}-${{ github.sha }}.tar.gz"
+          test -f "$archive"
+          test "$(find "$output_dir" -maxdepth 1 -type f | wc -l | tr -d ' ')" = "1"
+
+      - name: Upload short-retention maintainer input
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: career-pi-runtime-${{ matrix.platform_key }}-${{ matrix.target }}-${{ github.sha }}
+          path: ${{ runner.temp }}/pi-career-runtime-artifacts/career-pi-runtime-${{ matrix.platform_key }}-${{ matrix.target }}-${{ github.sha }}.tar.gz
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 3
+          overwrite: false

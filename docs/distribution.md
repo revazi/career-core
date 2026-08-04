@@ -44,6 +44,27 @@ The script uses a temporary Cargo root, executes capability/schema discovery plu
 
 The optional native Pi package and bundled Agent Skill are maintained in the separate [`pi-career`](https://github.com/revazi/pi-career) repository. Career Core is not a Pi package; use the external repository's reviewed installation and security guidance rather than registering this checkout.
 
+## Maintainer-only runtime inputs for `pi-career`
+
+`pi-career` may track reviewed native `career` binaries so its users need neither a separately installed CLI nor a Rust toolchain. Career Core provides a bounded preparation mechanism for that repository, not a public installation channel:
+
+- `.github/workflows/pi-career-runtime-artifacts.yml` runs only by explicit `workflow_dispatch` and is separate from normal Core CI.
+- `scripts/prepare-pi-career-runtime-artifact.sh` provides the same native preparation and verification locally.
+- Approved targets are limited to `x86_64-unknown-linux-gnu` on native `ubuntu-latest` x86_64 and `aarch64-apple-darwin` on native `macos-14` Apple Silicon. The script fails closed on every other host/target pairing.
+- Each locked release build is executed for version, capability and schema discovery, one schema export, deterministic resume analysis, and deterministic job matching against synthetic goldens before packaging.
+- The archive contains only `career`, `metadata.json`, `LICENSE-MIT`, `LICENSE-APACHE`, and `THIRD_PARTY_NOTICES.md`. Metadata records the exact source SHA, dirty state, Rust/Cargo and host/target details, executable size/hash, bounded contract digests, and representative-result hashes.
+- Workflow artifacts have three-day retention and are unsigned maintainer handoff inputs. A separate `pi-career` change must review and track them before use.
+
+On a clean reviewed checkout, the local equivalent requires an output directory outside the repository:
+
+```bash
+artifact_dir="$(mktemp -d)"
+trap 'rm -rf "$artifact_dir"' EXIT
+scripts/prepare-pi-career-runtime-artifact.sh --output-dir "$artifact_dir"
+```
+
+Artifact names contain the platform key, target triple, and full Core commit. This workflow does not create a tag, GitHub Release, installer, public download, signature, notarization, npm/crate publication, package-manager channel, or support claim for any other architecture. Do not direct Core end users to workflow artifacts.
+
 ## Uninstall a local CLI
 
 Remove a default Cargo installation with:

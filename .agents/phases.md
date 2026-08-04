@@ -345,6 +345,8 @@ Add only adapters justified by demonstrated consumers.
 
 The previously approved native Pi integration now lives in the separate [`pi-career`](https://github.com/revazi/pi-career) repository. Career Core retains the generic installed-CLI acceptance script but owns no Pi package, bundled Agent Skill, adapter runtime, or adapter tests. This extraction does not activate a new Core implementation phase or change the completed Phase 0–7 contracts.
 
+Career Core may prepare bounded, unsigned native CLI archives through a separate maintainer-dispatched workflow for reviewed import into `pi-career`. Only targets built and executed on the approved matching native runners may be named; short-retention workflow artifacts are handoff inputs, not Core releases or end-user downloads.
+
 ### Other candidate work (not approved)
 
 - Python bindings for a concrete non-Django consumer

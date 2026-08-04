@@ -69,6 +69,16 @@ RUSTUP_TOOLCHAIN=stable rustup target add aarch64-apple-ios aarch64-apple-ios-si
 RUSTUP_TOOLCHAIN=stable scripts/verify-swift.sh
 ```
 
+## Maintainer-only `pi-career` runtime inputs
+
+The normal verification ladder and normal manual CI do not produce binary artifacts. When changing the separate runtime-artifact script or workflow, validate the current native host into an external temporary directory:
+
+```bash
+scripts/test-pi-career-runtime-artifact.sh
+```
+
+The test exercises fail-closed target selection, calls the reusable preparation script in an external temporary directory, validates the archive allowlist and metadata, and reruns discovery from the packaged executable. The underlying `--allow-dirty` option exists only so an uncommitted script change can be tested; it marks the archive dirty and that archive must not be imported. Reviewed maintainer transfer artifacts require a clean exact commit and the manual `.github/workflows/pi-career-runtime-artifacts.yml` workflow. They are unsigned short-retention inputs for separate `pi-career` review, not Core releases or end-user downloads.
+
 ## Contributions
 
 - Keep each pull request limited to one phase-sized task.
