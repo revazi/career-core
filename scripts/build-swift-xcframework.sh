@@ -2,6 +2,9 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+source "$ROOT_DIR/scripts/swift-rustup-toolchain.sh"
+career_swift_select_rustup_toolchain
+
 PACKAGE_DIR="$ROOT_DIR/swift/CareerCoreSwift"
 ARTIFACTS_DIR="$PACKAGE_DIR/Artifacts"
 XCFRAMEWORK_PATH="$ARTIFACTS_DIR/CareerCoreFFI.xcframework"
@@ -18,7 +21,7 @@ readonly LIBRARY_NAME="libcareer_swift.a"
 export MACOSX_DEPLOYMENT_TARGET="${MACOSX_DEPLOYMENT_TARGET:-13.0}"
 export IPHONEOS_DEPLOYMENT_TARGET="${IPHONEOS_DEPLOYMENT_TARGET:-16.0}"
 
-for command in cargo grep python3 rustc sed shasum xcodebuild; do
+for command in grep python3 sed shasum xcodebuild; do
   if ! command -v "$command" >/dev/null 2>&1; then
     echo "error: required command is unavailable: $command" >&2
     exit 2
@@ -26,20 +29,14 @@ for command in cargo grep python3 rustc sed shasum xcodebuild; do
 done
 
 for target in "$MACOS_TARGET" "$IOS_TARGET" "$IOS_SIMULATOR_TARGET"; do
-  target_libdir="$(rustc --print target-libdir --target "$target")"
-  if [[ ! -d "$target_libdir" ]]; then
-    echo "error: Rust target is not installed: $target" >&2
-    echo "Install it with: rustup target add $target" >&2
-    exit 2
-  fi
-
+  career_swift_require_rust_target "$target"
 done
 
 rm -rf "$BUILD_DIR" "$XCFRAMEWORK_PATH"
 mkdir -p "$GENERATED_DIR" "$HEADERS_DIR" "$ARTIFACTS_DIR" "$PACKAGE_DIR/Sources/CareerCore"
 
 for target in "$MACOS_TARGET" "$IOS_TARGET" "$IOS_SIMULATOR_TARGET"; do
-  cargo build \
+  "$CAREER_SWIFT_CARGO" build \
     --locked \
     --release \
     --package career-swift \
@@ -52,7 +49,7 @@ MACOS_LIBRARY="$CARGO_TARGET_DIR/$MACOS_TARGET/release/$LIBRARY_NAME"
 IOS_LIBRARY="$CARGO_TARGET_DIR/$IOS_TARGET/release/$LIBRARY_NAME"
 IOS_SIMULATOR_LIBRARY="$CARGO_TARGET_DIR/$IOS_SIMULATOR_TARGET/release/$LIBRARY_NAME"
 
-cargo run \
+"$CAREER_SWIFT_CARGO" run \
   --quiet \
   --locked \
   --package career-swift \
@@ -109,7 +106,7 @@ PY
 
 WORKSPACE_METADATA_PATH="$BUILD_DIR/cargo-metadata.json"
 ARTIFACT_METADATA_PATH="$ARTIFACTS_DIR/CareerCoreFFI.metadata.json"
-cargo metadata \
+"$CAREER_SWIFT_CARGO" metadata \
   --locked \
   --format-version 1 \
   --no-deps \

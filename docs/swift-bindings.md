@@ -111,6 +111,16 @@ scripts/build-swift-xcframework.sh
 scripts/verify-swift.sh
 ```
 
+Both scripts resolve Cargo and rustc through rustup's active toolchain, rather
+than the first Rust installation in `PATH`. To use another installed toolchain,
+set the standard `RUSTUP_TOOLCHAIN` variable consistently while installing the
+Apple targets and running the scripts:
+
+```bash
+RUSTUP_TOOLCHAIN=stable rustup target add aarch64-apple-ios aarch64-apple-ios-sim
+RUSTUP_TOOLCHAIN=stable scripts/verify-swift.sh
+```
+
 Verification covers:
 
 - three Rust static-library targets

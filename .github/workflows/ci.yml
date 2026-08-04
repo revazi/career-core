@@ -44,6 +44,9 @@ jobs:
       - name: Build workspace
         run: cargo build --workspace --all-features --locked
 
+      - name: Verify Swift rustup selection guards
+        run: bash scripts/test-swift-rustup-toolchain.sh
+
       - name: Verify minimum supported Rust version
         if: runner.os == 'Linux'
         run: |
