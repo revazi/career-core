@@ -83,6 +83,9 @@ The sibling repository `../resume-ai` is read-only reference material. It is not
 Run all checks before requesting review:
 
 ```bash
+npm test
+PI_OFFLINE=1 npm run test:pi-smoke
+scripts/verify-installed-cli.sh
 cargo fmt --all --check
 cargo clippy --workspace --all-targets --all-features -- -D warnings
 cargo test --workspace --all-features

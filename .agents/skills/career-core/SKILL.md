@@ -2,7 +2,7 @@
 name: career-core
 description: Discovers and invokes the local career-core deterministic CLI for source-grounded normalization, resume readiness analysis, reviewed external suggestions and exact replacement diffs, conservative resume-to-job matching, optional external-proposal validation, and selected assisted-variant materialization. Use when evaluating supported career documents, inspecting evidence, or building local integrations.
 license: MIT OR Apache-2.0
-compatibility: Requires an installed `career` binary or a career-core source checkout with Rust 1.85+.
+compatibility: Requires an installed `career` binary or a career-core source checkout with Rust 1.85+; native Pi tools require the reviewed local Pi package.
 metadata:
   author: revazi
   version: "0.1.0"
@@ -10,7 +10,35 @@ metadata:
 
 # career-core
 
-Use the local `career` CLI as the authoritative deterministic tool. Do not recreate its scoring in prompts or infer support for planned capabilities.
+Use the local `career` CLI as the authoritative deterministic tool. The native Pi extension is only a bounded process adapter around that installed binary. Do not recreate scoring, schemas, or repair behavior in TypeScript or prompts, and do not infer support for planned capabilities.
+
+## Privacy decision before document use
+
+Pi may persist tool arguments and results in session JSONL even though Career Core and its extension do not persist career documents. Before placing private resume or job content in a Pi tool call, require the user to make an explicit session-persistence decision. Recommend starting a new transient run:
+
+```bash
+pi --no-session
+```
+
+`--no-session` prevents normal Pi session saving for that run; do not claim secure erasure or that it removes copies already stored elsewhere. If the user does not approve placing private content in Pi context, do not call a document tool.
+
+## Install local interfaces
+
+From a reviewed checkout, install the CLI without a remote shell installer:
+
+```bash
+cargo install --path crates/career-cli --locked
+career capabilities --format json-compact
+```
+
+To load this repository's native extension and this same canonical skill, register the reviewed local package:
+
+```bash
+repository_root="$(pwd -P)"
+pi install "$repository_root"
+```
+
+The local package points to this skill; it does not copy it. The extension uses `career` from `PATH`, or a bounded absolute `CAREER_CLI_PATH` override. It never invokes Cargo automatically. See [`../../../docs/distribution.md`](../../../docs/distribution.md) for isolated install and uninstall instructions.
 
 ## Discover available behavior
 
@@ -42,6 +70,20 @@ career schema export --id career.job_match_input.v1
 ```
 
 Use canonical `json`/`json-pretty` when reviewed indentation matters, `json-compact` for one-line machine transport, and `text` only for human display.
+
+## Native Pi tool surface
+
+When the local Pi package is loaded, prefer discovery first through these stable tools:
+
+- `career_core_discover`: operations `capabilities`, `schema-list`, and `schema-export`
+- `career_core_resume`: `evaluate`, `analyze`, `analysis-suggestions-review`, `analysis-replacements-review`, `normalize`, `enrich`, `variant-review`, and `variant-materialize`
+- `career_core_job`: `normalize` and `match`
+
+For `career_core_resume` and `career_core_job`, pass exactly one versioned input object serialized as the `input_json` string. Use schemas returned by `career_core_discover`; do not infer the shape from prose. The extension sends those bytes only to installed-CLI stdin with `--input - --format json-compact`, makes no model/network call, and returns complete CLI JSON without semantic transformation.
+
+A `career.pi_error.v1` error is adapter/process status, not a deterministic career result. On `career_cli_error`, inspect only the nested validated bounded `career.error.v1`. Do not retry validation errors without correcting input. On `result_too_large` or `result_too_many_lines`, never use a partial result: ask the user to run the installed `career` CLI directly in a user-approved local workflow that can consume the complete JSON.
+
+If native tools are unavailable, use the direct CLI commands below. Never substitute Cargo automatically from inside the extension.
 
 ## Evaluate supported resume text
 
@@ -157,15 +199,18 @@ Recommendation labels are deterministic workflow gates, not hiring predictions. 
 
 ## Rules
 
+- Start with `career_core_discover` when native Pi tools are loaded; otherwise start with `career capabilities`.
 - Prefer `json-compact` or canonical JSON output for agent decisions.
 - Discover exact contracts with `career schema list` and `career schema export`; do not infer JSON shape from prose.
 - Treat stdout as machine output and stderr as diagnostics.
-- Do not send resume or job content to external services without explicit user approval.
+- Require a separate explicit decision before placing private resume or job content in Pi session context; recommend a new `pi --no-session` run.
+- Do not send resume or job content to external services without explicit user approval; local Pi-session consent is not provider consent.
 - Never place API keys in CLI input, output, files, or logs.
 - Preserve uncertainty, source provenance, basis check IDs, and warnings in any explanation.
 - Treat `baseline` as authoritative and external proposal fields as assisted only.
 - Do not turn planned capabilities into fabricated results.
 - Do not modify source documents unless the user separately requests and approves a change.
+- Treat Core JSON as authoritative; never truncate, reorder, repair, or upgrade its warnings, evidence, uncertainty, baseline boundaries, or assisted/non-authoritative labels.
 - When developing this repository, read `AGENTS.md` and `.agents/current-phase.md` before editing.
 
 See [`references/cli-contract.md`](references/cli-contract.md) for the current process contract.

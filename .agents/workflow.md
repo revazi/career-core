@@ -42,6 +42,9 @@ cargo test -p career-cli <test-name>
 Before review:
 
 ```bash
+npm test
+PI_OFFLINE=1 npm run test:pi-smoke
+scripts/verify-installed-cli.sh
 cargo fmt --all --check
 cargo clippy --workspace --all-targets --all-features -- -D warnings
 cargo test --workspace --all-features
@@ -75,7 +78,9 @@ git diff --check
 
 If the CLI contract changes, also invoke every changed command in canonical, compact, and text modes where supported; parse JSON with an independent parser. For distribution changes, install the CLI into a temporary root from a clean clone and run capability/schema discovery through the installed binary.
 
-For Swift-boundary changes on macOS:
+The Pi smoke must use a temporary agent directory and in-memory settings, load extension/skill resources without constructing a model runtime, run with `PI_OFFLINE=1`, and make no provider request. Native extension process tests use only synthetic fake-executable payloads.
+
+For Swift-boundary or final phase-status changes on macOS:
 
 ```bash
 rustup target add aarch64-apple-ios aarch64-apple-ios-sim

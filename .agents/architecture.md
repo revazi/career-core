@@ -5,6 +5,7 @@
 ```text
 career-cli ───────► career-core
 career-swift ─────► career-core
+Pi extension ─────► installed career-cli ─► career-core
 future adapters ──► career-core
 
 career-core ─X─► adapters, UI, persistence, network, LLMs
@@ -223,3 +224,11 @@ The adapter maps malformed JSON, envelope limits, typed core failures, and seria
 Project-authored Rust code contains no unsafe block. `career-swift` denies unsafe source; generated C ABI scaffolding and memory transport are isolated inside exact UniFFI `0.30.0` macros/runtime. The root `career-core` crate remains `#![forbid(unsafe_code)]` and has no FFI dependency.
 
 The future Swift host owns SwiftUI, database access, document handling, Keychain, consent settings, provider clients, and network calls. It may submit only versioned original inputs or explicit proposal contracts; assisted values remain isolated from authoritative scoring.
+
+## Pi adapter boundary
+
+The Phase 8A TypeScript extension is a process adapter around an independently installed `career` executable. It does not depend directly on Rust Core, duplicate schemas or algorithms, reinterpret output, or invoke Cargo. It maps three bounded Pi tools to the stable CLI hierarchy, sends document JSON only through stdin, and returns one complete compact JSON result without semantic transformation.
+
+The extension owns executable resolution, argv construction, pre-spawn envelope limits, timeout/cancellation cleanup, stream/context ceilings, strict success/error framing, and stable redacted adapter failures. It opens no career payload/result file and performs no network, provider, model, prompt, telemetry, UI, or extension-state behavior.
+
+Pi session storage is outside Core and adapter persistence guarantees. Tool arguments/results may be recorded by Pi as session messages. Hosts must obtain an explicit privacy decision for private documents and should start a new `pi --no-session` run for transient use; this is non-persistence, not a secure-erasure guarantee.

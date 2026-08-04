@@ -32,6 +32,57 @@ cargo install --path crates/career-cli --locked --root "$install_root"
 
 This installation builds only the CLI and its inward dependency on `career-core`. It adds no provider, telemetry, TLS, or network-runtime dependency.
 
+Verify the same installed boundary outside the checkout with:
+
+```bash
+scripts/verify-installed-cli.sh
+```
+
+The script uses a temporary Cargo root, executes capability/schema discovery plus representative resume, job, and Phase 7 operations from a temporary working directory, and removes the temporary installation on exit.
+
+## Install the reviewed local Pi package
+
+Prerequisites are an installed `career` binary and Pi. Review the checkout and keep it at a stable absolute path, because Pi local-path packages are referenced in place rather than copied:
+
+```bash
+cd /absolute/path/to/career-core
+repository_root="$(pwd -P)"
+pi install "$repository_root"
+pi list
+```
+
+This registers `extensions/career-core/index.ts` and the canonical `.agents/skills/career-core` skill from the package manifest. It does not publish or download this package and has no runtime npm dependency beyond Pi-provided peers and Node built-ins. Restart Pi or use `/reload` in an existing trusted session after resource changes.
+
+The extension resolves `career` from `PATH`. For an isolated Cargo root, set a bounded absolute override before starting Pi:
+
+```bash
+export CAREER_CLI_PATH="$HOME/.local/bin/career"
+```
+
+Pi may save native tool arguments and results in session history. For private career documents, make an explicit persistence decision and prefer a new transient run:
+
+```bash
+pi --no-session
+```
+
+This does not promise secure erasure. If a complete result exceeds the extension's Pi context ceiling, run the installed CLI directly in a user-approved local workflow that can consume the full JSON; do not use truncated output.
+
+Remove the local Pi package registration with the same resolved source path:
+
+```bash
+cd /absolute/path/to/career-core
+repository_root="$(pwd -P)"
+pi remove "$repository_root"
+```
+
+If desired, remove a default Cargo installation separately:
+
+```bash
+cargo uninstall career-cli
+```
+
+For an isolated `cargo install --root`, remove only that user-controlled install root after verifying it contains no other tools. No uninstall step claims to erase Pi sessions, shell history, backups, or separately saved results.
+
 ## Release binaries
 
 No release binary is published until a maintainer explicitly approves a release. When binaries become available, download the archive and `SHA256SUMS` from the same GitHub release page. Do not pipe an installer into a shell.

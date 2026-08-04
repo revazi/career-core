@@ -4,7 +4,7 @@
 
 The project is intentionally **not an AI service**. The core performs no network requests and has no LLM dependency. Native applications, command-line tools, and coding-agent integrations can use its versioned evidence and scoring contracts. An opted-in host may submit an external source-grounded proposal for deterministic validation, but provider calls remain outside the authoritative core.
 
-> **Status:** Phases 0–7 are complete. Available behavior includes deterministic resume/job operations, evidence-linked assisted resume variants, review-only external resume-analysis suggestions and replacement diffs, compact output, offline schema discovery, source installation, and the reviewed local Swift binding boundary. Release publication, the SwiftUI product application, and Phase 8 optional adapters remain separately gated.
+> **Status:** Phases 0–7 are complete. Phase 8A is the authorized in-progress installed CLI and native Pi integration; Rust Core, CLI/public JSON, schemas, and Swift behavior remain unchanged. Release publication, the SwiftUI product application, MCP, and other Phase 8 adapters remain separately gated.
 
 ## Goals
 
@@ -23,6 +23,7 @@ The project is intentionally **not an AI service**. The core performs no network
 ├── crates/career-cli/           `career` command-line adapter
 ├── crates/career-swift/         narrow UniFFI adapter and pinned bindgen tool
 ├── swift/CareerCoreSwift/       local Swift Package wrapper and smoke tests
+├── extensions/career-core/      bounded native Pi process adapter
 ├── schemas/                     versioned public JSON schemas
 ├── fixtures/                    synthetic reviewed golden contracts
 ├── docs/contracts/              public scoring and limit rules
@@ -37,6 +38,7 @@ The repository root is the `career-core` library package. The CLI is a separate 
 ## Requirements
 
 - Rust 1.85 or newer
+- Pi's supported Node.js runtime for the optional local Pi package
 
 ## Build and verify
 
@@ -56,7 +58,20 @@ cargo install --path crates/career-cli --locked
 career capabilities --format json-compact
 ```
 
-No release binaries or package-manager channels are published yet. See [`docs/distribution.md`](docs/distribution.md) for source installation and future checksum verification.
+No release binaries or package-manager channels are published yet. See [`docs/distribution.md`](docs/distribution.md) for source installation, local Pi setup/uninstall, and future checksum verification.
+
+### Optional native Pi package
+
+After installing `career`, review and register this checkout as a local Pi package:
+
+```bash
+repository_root="$(pwd -P)"
+pi install "$repository_root"
+```
+
+The package loads the canonical `.agents/skills/career-core` skill and three tools: `career_core_discover`, `career_core_resume`, and `career_core_job`. The extension invokes installed `career` directly with argv/stdin, never Cargo or a shell, and makes no network/model/provider request. MCP is not used.
+
+Pi may persist tool arguments and results even though Core and the extension do not persist career documents. Private use requires an explicit user decision; start a new `pi --no-session` run when transient session behavior is desired. This is not a secure-erasure guarantee. Complete results that exceed the Pi context ceiling fail instead of being truncated; use a direct installed-CLI workflow capable of consuming the full JSON.
 
 ## Coding-agent discovery
 
@@ -151,7 +166,7 @@ career schema export --id career.job_match_input.v1
 
 `--format json` remains canonical pretty output. `json-pretty` selects it explicitly, `json-compact` emits one JSON document on one line, and `text` is for human display. See [`docs/cli.md`](docs/cli.md) for the stable hierarchy, contract map, stream rules, formats, input limits, and exit statuses.
 
-The project includes an Agent Skills-compatible guide at `.agents/skills/career-core/SKILL.md`. Pi discovers that skill after the repository is trusted. Other coding agents can read the same file or invoke the CLI directly. Shell-safe Pi, Claude Code, Codex, and generic subprocess examples are documented in [`docs/agent-usage.md`](docs/agent-usage.md).
+The project includes an Agent Skills-compatible guide at `.agents/skills/career-core/SKILL.md`. Pi discovers that canonical skill after the repository is trusted or through the local package manifest; the skill is not copied. Other coding agents can read the same file or invoke the CLI directly. Native-tool privacy rules plus shell-safe Pi, Claude Code, Codex, and generic subprocess examples are documented in [`docs/agent-usage.md`](docs/agent-usage.md).
 
 ## Evaluate resume section coverage
 
@@ -316,7 +331,7 @@ The detailed, gated roadmap lives in [`.agents/phases.md`](.agents/phases.md). I
 5. hardened CLI and coding-agent distribution
 6. Swift bindings for a later SwiftUI application
 7. evidence-linked assisted resume review
-8. optional adapters only when concrete consumers require them and the phase is explicitly approved
+8. optional adapters only for concrete approved consumers; Phase 8A covers installed CLI and native Pi integration only
 
 ## Security and privacy
 
