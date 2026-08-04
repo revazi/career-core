@@ -341,11 +341,31 @@ Deterministically review bounded externally generated resume content while prese
 
 Add only adapters justified by demonstrated consumers.
 
-### Candidate work
+### Approved Phase 8A sub-gate — installed CLI and native Pi integration
+
+The maintainer approved Pi as the first demonstrated consumer. Scope is limited to:
+
+- source installation and installed-binary acceptance outside the checkout
+- the existing canonical Agent Skill, updated for installed CLI and native-tool use
+- one local Pi package exposing grouped discovery, resume, and job tools
+- direct installed `career` argv/stdin execution with bounded input, timeout/cancellation cleanup, strict output/error limits, and no result truncation or payload persistence
+- explicit Pi session-history privacy guidance and no-model load/discovery tests
+
+Acceptance:
+
+- the package points to `.agents/skills/career-core` rather than copying it
+- tool names/schemas load through Pi without credentials or a model request
+- fake-executable tests cover argv/stdin, shell isolation, success/error redaction, missing executable, timeout, cancellation, signal, malformed/multiple JSON, stream/context overflow, cleanup, and concurrency
+- an installed temporary-root binary completes capability/schema and representative resume/job/Phase 7 operations from outside the checkout
+- Core, CLI/public JSON, schemas, and Swift behavior remain unchanged
+
+MCP and an MCP bridge are explicit non-scope for Phase 8A.
+
+### Other candidate work (not approved)
 
 - Python bindings for a concrete non-Django consumer
-- MCP-over-stdio adapter if CLI integration is insufficient
+- MCP-over-stdio adapter if a separately demonstrated consumer cannot use the CLI or native extension
 - WASM build if a local browser consumer exists
 - package-manager distribution and signed binaries
 
-Each candidate requires its own design note, threat model, maintenance owner, and explicit approval. No adapter is automatically part of the roadmap.
+Each additional candidate requires its own design note, threat model, maintenance owner, and explicit approval. No other adapter is automatically part of the roadmap.

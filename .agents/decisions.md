@@ -12,7 +12,7 @@ Source is offered under `MIT OR Apache-2.0`. Package manifests and source distri
 
 ## D-003 — CLI before agent-specific protocols
 
-A documented JSON CLI is the universal coding-agent interface. Agent Skills documentation teaches agents to call it. MCP, editor extensions, and provider-specific integrations are deferred until a concrete consumer cannot use the CLI.
+A documented JSON CLI is the universal coding-agent interface. Agent Skills documentation teaches agents to call it. A demonstrated harness may receive an explicitly approved thin native tool adapter only after the CLI contract is stable and without duplicating authority. MCP, bridge protocols, editor integrations, and provider-specific behavior remain deferred until their own concrete consumer proves the CLI or an approved native adapter insufficient.
 
 ## D-004 — Deterministic core, provider-neutral assisted boundary
 
@@ -69,3 +69,7 @@ The CLI embeds the repository's reviewed Draft 2020-12 schema files and exposes 
 ## D-017 — Analysis replacements are explicit diff-only review values
 
 `career.resume_analysis_replacement_review.v1` is a separate additive contract rather than a reinterpretation of advisory v1 suggestions. It reruns and returns the unchanged authoritative `career.resume_analysis.v1` baseline, and retains at most three exact source targets with bounded proposed replacements only when each binds to one current failed canonical action and exact source evidence. The core assigns identifiers/order/action priority/area/status, rejects unchanged targets, and discards every member of duplicate-action or overlapping-target groups. Exact occurrence remains structural grounding, not factuality or rewrite certification. The contract produces no candidate resume, selection, application, materialization, export, persistence, or source mutation; Swift exposes only the same core-owned JSON.
+
+## D-018 — Pi uses a thin installed-CLI adapter
+
+Pi is the first approved Phase 8 consumer. The repository-local Pi package points to the canonical Agent Skill and exposes three stable grouped tools over an independently installed `career` executable. It invokes direct argv/stdin only, duplicates no Rust algorithm or public schema, returns complete CLI JSON without semantic transformation, and performs no Cargo, shell, network, model/provider, UI, payload-file, or extension-state behavior. Pi session history is an explicit host privacy boundary; private use requires a persistence decision and should prefer a new `pi --no-session` run without claiming secure erasure. MCP and a bridge remain non-scope.

@@ -133,6 +133,24 @@ Read category `raw_score`, published `score`, item status, source spans, confide
 
 See `docs/contracts/job-match-v1.md` for category rules, aliases, integer rounding, confidence bounds, evidence/status semantics, recommendation blockers, limits, and parity scope.
 
+## Native Pi extension contract
+
+The reviewed local Pi package exposes three stable tools over the installed CLI:
+
+| Tool | Operations |
+|---|---|
+| `career_core_discover` | `capabilities`, `schema-list`, `schema-export` |
+| `career_core_resume` | `evaluate`, `analyze`, `analysis-suggestions-review`, `analysis-replacements-review`, `normalize`, `enrich`, `variant-review`, `variant-materialize` |
+| `career_core_job` | `normalize`, `match` |
+
+Document tools accept one exact JSON object serialized as `input_json`. They invoke installed `career` directly with an argv array and pass document bytes only through stdin using `--input - --format json-compact`. `CAREER_CLI_PATH` is accepted only as a bounded absolute override; otherwise `career` resolves from `PATH`. The extension never invokes Cargo, a shell, a model/provider, the network, or a temporary career payload/result file.
+
+Success returns one complete CLI JSON object as tool text. Bounded `details` contains only the operation identifier. The extension fails rather than truncating output over 50,000 bytes or 2,000 lines. Use a separately chosen direct installed-CLI workflow when a complete result cannot fit, and never treat partial output as authoritative JSON.
+
+Failures use payload-free `career.pi_error.v1`. Only `career_cli_error` includes nested detail, and that detail must be an allowlisted, strictly bounded `career.error.v1`. Missing executables, timeout, cancellation, signals, malformed/multiple JSON, stream overflow, context overflow, unexpected stderr, and unknown process failures do not expose raw diagnostics, executable paths, environment values, or source/result copies.
+
+Pi session history is a separate privacy boundary: Pi may store `input_json` arguments and successful result text in session JSONL. Require an explicit decision before private use and recommend starting a new `pi --no-session` run. Ephemeral mode is not secure erasure and does not remove external copies.
+
 ## Machine-process rules
 
 - stdout contains one result JSON document only on success
