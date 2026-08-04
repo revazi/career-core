@@ -54,6 +54,10 @@ cargo run --quiet -p career-cli -- resume evaluate \
   --input fixtures/resume/phase1/complete-sections.input.json
 cargo run --quiet -p career-cli -- resume analyze \
   --input fixtures/resume/phase3/complete-analysis.input.json
+cargo run --quiet -p career-cli -- resume analysis-suggestions-review \
+  --input fixtures/resume/phase7/complete-analysis-suggestion-review.input.json
+cargo run --quiet -p career-cli -- resume analysis-replacements-review \
+  --input fixtures/resume/phase7/complete-analysis-replacement-review.input.json
 cargo run --quiet -p career-cli -- resume normalize \
   --input fixtures/resume/phase2/complete-normalization.input.json
 cargo run --quiet -p career-cli -- resume enrich \

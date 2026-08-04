@@ -4,7 +4,7 @@
 
 The project is intentionally **not an AI service**. The core performs no network requests and has no LLM dependency. Native applications, command-line tools, and coding-agent integrations can use its versioned evidence and scoring contracts. An opted-in host may submit an external source-grounded proposal for deterministic validation, but provider calls remain outside the authoritative core.
 
-> **Status:** Phases 0–6 are complete. Phase 7 assisted review includes evidence-linked resume variants, review-only external resume-analysis suggestions, and explicit review-only analysis replacements for diff display. Deterministic resume/job operations, compact output, offline schema discovery, source installation, and the reviewed local Swift binding boundary are available. Release publication, the SwiftUI product application, and optional adapters remain separately gated.
+> **Status:** Phases 0–7 are complete. Available behavior includes deterministic resume/job operations, evidence-linked assisted resume variants, review-only external resume-analysis suggestions and replacement diffs, compact output, offline schema discovery, source installation, and the reviewed local Swift binding boundary. Release publication, the SwiftUI product application, and Phase 8 optional adapters remain separately gated.
 
 ## Goals
 
@@ -306,15 +306,17 @@ See [`.agents/reference-map.md`](.agents/reference-map.md) for the bounded refer
 
 ## Roadmap
 
-The detailed, gated roadmap lives in [`.agents/phases.md`](.agents/phases.md). The broad order is:
+The detailed, gated roadmap lives in [`.agents/phases.md`](.agents/phases.md). Its phase order is:
 
+0. repository foundation and agent discovery
 1. versioned contracts and a minimal resume-evaluation vertical slice
 2. deterministic resume normalization and provider-neutral assisted validation
 3. explainable resume scoring parity and general ATS-readiness analysis
 4. job-description normalization, followed by conservative matching
 5. hardened CLI and coding-agent distribution
 6. Swift bindings for a later SwiftUI application
-7. optional adapters only when concrete consumers require them
+7. evidence-linked assisted resume review
+8. optional adapters only when concrete consumers require them and the phase is explicitly approved
 
 ## Security and privacy
 

@@ -2,11 +2,13 @@
 
 ## Active phase
 
-**Phase 7 — Evidence-linked assisted resume review**
+**No active implementation phase — Phases 0–7 are complete**
 
 ## Status
 
-The maintainer explicitly approved the production feature after formally accepting the `career-workbench` Phase 17 whole-resume side-by-side prototype. Phase 7 adds deterministic review/materialization contracts for selected untrusted resume changes and a separately approved review-only external analysis-suggestion contract. The core validates exact targets/evidence occurrence and structural safety, but it does not certify generated prose as factually true. No provider, prompt, persistence, UI, export, scoring, or matching behavior enters this repository.
+Phase 7 evidence-linked assisted resume review and its review-only analysis-suggestion and analysis-replacement extensions are implemented and merged. The core validates exact targets/evidence occurrence and structural safety, but it does not certify generated prose as factually true. No provider, prompt, persistence, UI, export, assisted scoring, or assisted matching behavior enters this repository.
+
+Phase 8 optional adapters are not approved. Any MCP, Python, WASM, package-manager, or other concrete adapter requires a demonstrated consumer, its own design and threat review, and explicit maintainer authorization.
 
 ## Approved Phase 7 scope
 
@@ -80,11 +82,25 @@ Passed locally on 2026-08-03:
 - regenerated Swift source exposes the core-defined `resumeAnalysisReplacementsReviewJson` function; `scripts/verify-swift.sh` passed macOS/iOS/iOS-simulator builds, checksums, link smokes, and five Swift tests covering all ten input-taking operations with exact Rust golden bytes
 - `git diff --check`
 
-Still required before Phase 7 merge: explicit merge approval and one final on-demand hosted run if required by branch protection or maintainer review.
+Phase 7 landed on `main` through the reviewed variant, analysis-suggestion, and analysis-replacement changes in PRs `#11`, `#12`, and `#13`. The subsequent Swift toolchain-selection fix landed through PR `#14`. No Phase 7 merge gate remains open.
 
-## Previous completed phase
+### Phase 0–7 completeness re-audit
 
-Phase 6 — Swift binding boundary was completed and squash-merged through PR `#8` as `eb6960c`. Final PR-head CI run `30083962027` passed on Linux and macOS. Phases 0–6 are complete.
+Passed locally on 2026-08-04:
+
+- formatting, Clippy with warnings denied, all 135 Rust unit/integration/doc test entries, and the locked all-feature workspace build
+- Rust 1.85.0 workspace/all-target/all-feature locked check
+- all 11 available capabilities mapped across Core, CLI, schemas, goldens, Swift, docs, and the Agent Skill, with no missing deterministic operation
+- canonical, compact, and text invocation of all ten input-taking commands; every canonical output remained byte-equivalent to its reviewed golden
+- all 25 public schemas passed Draft 2020-12 metaschema validation and independent representative-instance validation through an offline local registry
+- temporary-root source installation followed by installed-binary capability and schema discovery outside the checkout
+- documented exit statuses `2`–`6` and bounded payload-free diagnostics independently exercised
+- complete `scripts/verify-swift.sh` XCFramework, checksum, generated-source, link, Apple build, and exact Rust/Swift parity verification
+- no Core algorithm, public JSON/CLI/Swift contract, schema, fixture, dependency, or Phase 8 adapter change
+
+## Earlier completed phase
+
+Phase 6 — Swift binding boundary was completed and squash-merged through PR `#8` as `eb6960c`. Final PR-head CI run `30083962027` passed on Linux and macOS.
 
 ## Completed Phase 6 scope
 
@@ -108,7 +124,7 @@ Phase 6 — Swift binding boundary was completed and squash-merged through PR `#
 - App Store packaging, signing, notarization, TestFlight, or cloud sync
 - publishing a Swift package, GitHub release, XCFramework, crate, or binary artifact
 - changing deterministic core algorithms, existing JSON contracts, CLI behavior, or schemas
-- MCP, Python, WASM, editor extensions, or other Phase 7 adapters
+- MCP, Python, WASM, editor extensions, or other optional adapters
 
 ## Compatibility and boundary requirements
 
@@ -182,4 +198,4 @@ Phase 6 — Swift binding boundary was completed and squash-merged through PR `#
 
 ## Deferred gate
 
-The actual SwiftUI application belongs in the separate future `career-workbench` repository. Creating that repository or implementing its first foundation phase requires explicit approval. Artifact publication, signing, App Store work, and every Phase 7 adapter also require separate approval.
+The actual SwiftUI application belongs in the separate `career-workbench` repository. Artifact publication, signing, App Store work, and every Phase 8 optional adapter require separate approval.
