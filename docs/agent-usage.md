@@ -47,39 +47,11 @@ trap 'rm -f "$temporary_input"' EXIT
 career resume normalize --input "$temporary_input" --format json-compact
 ```
 
-## Pi
+## External harness integrations
 
-The repository is a reviewed local Pi package with one canonical skill at `.agents/skills/career-core/SKILL.md` and three native tools:
+Career Core ships no harness-specific package or bundled Agent Skill. The optional native Pi integration is maintained in the separate [`pi-career`](https://github.com/revazi/pi-career) repository. Review that package's own installation, privacy, and security guidance there; do not register this Career Core checkout as a Pi package.
 
-- `career_core_discover`
-- `career_core_resume`
-- `career_core_job`
-
-Install the CLI first, then register the checkout without piping remote code into a shell:
-
-```bash
-cargo install --path crates/career-cli --locked
-repository_root="$(pwd -P)"
-pi install "$repository_root"
-```
-
-The native extension invokes installed `career` directly with argv, passes document JSON only through stdin, and never invokes Cargo, a shell, a model/provider, the network, or a temporary career payload/result file. Use `career_core_discover` before document operations. Document tools accept one exact versioned object serialized as `input_json` and return one complete compact CLI JSON result.
-
-Pi session history is separate from Career Core's no-persistence property. Pi may save tool arguments and results in its session JSONL. Before private document use, require an explicit user decision and recommend a new transient run:
-
-```bash
-pi --no-session
-```
-
-Do not claim secure erasure. Local Pi-session approval also does not authorize sending content to an external provider. If a complete tool result exceeds the 50,000-byte / 2,000-line context bound, do not accept truncation; use the installed CLI directly in a separately user-approved local workflow capable of consuming the full result.
-
-When native tools are not installed, Pi may invoke the CLI directly or, only from a source checkout at the user's request:
-
-```bash
-cargo run --quiet --locked -p career-cli -- capabilities --format json-compact
-```
-
-The extension itself never selects this Cargo fallback. MCP and an MCP bridge are non-scope.
+All harnesses may invoke the installed `career` CLI directly using the safe process rules in this document.
 
 ## Claude Code and Codex
 
@@ -115,4 +87,4 @@ Read stdout and stderr independently, enforce a caller-owned timeout, and branch
 - Recommendation labels are workflow guidance, not proprietary ATS rankings or hiring predictions.
 - Preserve source spans, basis IDs, evidence, confidence, and warnings in explanations.
 
-See [`cli.md`](cli.md) for the complete process contract and [`.agents/skills/career-core/SKILL.md`](../.agents/skills/career-core/SKILL.md) for operation-specific guidance.
+See [`cli.md`](cli.md) for the complete process contract and operation-specific guidance.

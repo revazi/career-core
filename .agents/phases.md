@@ -15,7 +15,7 @@ Create a trustworthy Rust repository that builds cleanly and tells humans and ag
 - dual MIT/Apache-2.0 licensing
 - capability discovery with versioned JSON
 - root `AGENTS.md` and detailed `.agents/` handbook
-- Agent Skills-compatible project skill
+- coding-agent discovery and governance guidance
 - formatting, linting, tests, build, and CI
 - public README, contributing, changelog, and security guidance
 
@@ -34,7 +34,7 @@ Create a trustworthy Rust repository that builds cleanly and tells humans and ag
 - `career capabilities` emits valid JSON by default
 - only implemented discovery is marked available
 - machine output contains no logs or nondeterministic values
-- Pi can discover `.agents/skills/career-core/SKILL.md` after project trust
+- coding agents can discover repository governance and truthful capability JSON
 - current documentation is explicit that evaluation and matching are planned
 
 ## Phase 1 — Versioned contracts and first resume vertical slice
@@ -246,8 +246,8 @@ Make the deterministic engine dependable from any coding-agent harness through d
 - stdin, explicit files, compact JSON, pretty JSON, and human output
 - schema discovery/export commands
 - installation from source and release binaries for approved platforms
-- Agent Skills guide updated with all available operations
-- shell-safe examples for Pi, Claude Code, Codex, and generic agents
+- coding-agent CLI guidance updated with all available operations
+- shell-safe examples for coding-agent harnesses and generic subprocess clients
 - bounded diagnostics on stderr
 - compatibility tests across Linux and macOS
 - reproducible release checklist and checksums
@@ -341,30 +341,14 @@ Deterministically review bounded externally generated resume content while prese
 
 Add only adapters justified by demonstrated consumers.
 
-### Approved Phase 8A sub-gate — installed CLI and native Pi integration
+### Externalized Pi consumer
 
-The maintainer approved Pi as the first demonstrated consumer. Scope is limited to:
-
-- source installation and installed-binary acceptance outside the checkout
-- the existing canonical Agent Skill, updated for installed CLI and native-tool use
-- one local Pi package exposing grouped discovery, resume, and job tools
-- direct installed `career` argv/stdin execution with bounded input, timeout/cancellation cleanup, strict output/error limits, and no result truncation or payload persistence
-- explicit Pi session-history privacy guidance and no-model load/discovery tests
-
-Acceptance:
-
-- the package points to `.agents/skills/career-core` rather than copying it
-- tool names/schemas load through Pi without credentials or a model request
-- fake-executable tests cover argv/stdin, shell isolation, success/error redaction, missing executable, timeout, cancellation, signal, malformed/multiple JSON, stream/context overflow, cleanup, and concurrency
-- an installed temporary-root binary completes capability/schema and representative resume/job/Phase 7 operations from outside the checkout
-- Core, CLI/public JSON, schemas, and Swift behavior remain unchanged
-
-MCP and an MCP bridge are explicit non-scope for Phase 8A.
+The previously approved native Pi integration now lives in the separate [`pi-career`](https://github.com/revazi/pi-career) repository. Career Core retains the generic installed-CLI acceptance script but owns no Pi package, bundled Agent Skill, adapter runtime, or adapter tests. This extraction does not activate a new Core implementation phase or change the completed Phase 0–7 contracts.
 
 ### Other candidate work (not approved)
 
 - Python bindings for a concrete non-Django consumer
-- MCP-over-stdio adapter if a separately demonstrated consumer cannot use the CLI or native extension
+- MCP-over-stdio adapter if a separately demonstrated consumer cannot use the CLI or a separately approved native adapter
 - WASM build if a local browser consumer exists
 - package-manager distribution and signed binaries
 

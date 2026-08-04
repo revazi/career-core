@@ -4,7 +4,7 @@
 
 The `career` executable is the primary agent interface. A CLI is portable across coding-agent harnesses, inspectable, scriptable, and does not require each harness to implement a protocol client.
 
-Pi specifically favors well-documented CLI tools and Agent Skills. Phase 8A additionally provides a native Pi extension over the same installed CLI. Pi has no built-in MCP, and MCP or a bridge is not part of this integration.
+Harness-specific adapters and bundled skills are maintained outside this repository. The optional native Pi integration lives in [`pi-career`](https://github.com/revazi/pi-career); Career Core remains authoritative only through its Rust, CLI/schema, and Swift surfaces.
 
 The installed CLI embeds reviewed Draft 2020-12 schemas. Agents can discover exact contracts without a source checkout or network request:
 
@@ -56,34 +56,6 @@ An integrating agent must:
 6. obtain user approval before sending source documents to any external model or service
 7. avoid writing generated claims back into a resume without source evidence
 8. preserve the deterministic baseline and label every accepted external field as assisted
-
-## Agent Skills
-
-The project skill is:
-
-```text
-.agents/skills/career-core/SKILL.md
-```
-
-It follows the Agent Skills standard so Pi and compatible harnesses can discover it. Keep the skill concise and move detailed command contracts into its `references/` directory. Update the skill whenever an available CLI capability changes.
-
-Pi project skills load only after the repository is trusted. Use `/trust`, restart Pi, and run `/reload` after edits.
-
-## Native Pi package
-
-The repository root is a local Pi package whose manifest loads the canonical skill above and three stable tools:
-
-- `career_core_discover`: `capabilities`, `schema-list`, `schema-export`
-- `career_core_resume`: all eight available resume operations
-- `career_core_job`: `normalize`, `match`
-
-Install `career` first, then register a reviewed local checkout with `pi install /absolute/path/to/career-core`. The extension resolves `career` from `PATH`; `CAREER_CLI_PATH` may contain a bounded absolute override. It never invokes Cargo automatically.
-
-Document tools accept one `input_json` string matching the exact embedded input schema, invoke the executable directly without a shell, and send that JSON only through stdin with `--input - --format json-compact`. A complete result is returned without reordering or truncation. If it cannot fit Pi's 50 KB / 2,000-line tool context guidance, the tool fails explicitly and the user must choose a direct installed-CLI workflow capable of consuming the complete result.
-
-Pi may persist tool arguments and tool results in session JSONL even though Core and the extension do not persist documents. Before private document use, require an explicit user decision and recommend starting a new transient session with `pi --no-session`. Do not claim that ephemeral mode securely erases data already stored elsewhere.
-
-The extension makes no network/model/provider request, persists no extension state, and creates no temporary career payload/result file. MCP and an MCP bridge are non-scope.
 
 ## Available Phase 1 operation
 
@@ -210,9 +182,8 @@ Low/unknown normalization or truncation bounds all category scores to 50–75, m
 
 1. source checkout via `cargo run --locked`
 2. local CLI install via `cargo install --path crates/career-cli --locked`
-3. optional reviewed local Pi package registration via `pi install /absolute/path/to/career-core`
-4. checksummed release binaries only after explicit release approval
-5. package-manager publication only with a maintenance plan
+3. checksummed release binaries only after explicit release approval
+4. package-manager publication only with a maintenance plan
 
 Source installation, future checksum verification, and the release-preparation gate are documented under `docs/`. Do not tell users to pipe remote scripts into a shell.
 
@@ -220,6 +191,6 @@ Source installation, future checksum verification, and the release-preparation g
 
 Consider MCP-over-stdio only if a concrete consumer requires structured tool discovery that cannot use capability JSON and subprocess execution. An MCP adapter must remain thin, local by default, and depend on `career-core`. It must not add LLM behavior.
 
-## Coding-agent packages
+## External coding-agent packages
 
-The approved local Pi extension wraps the same installed CLI without duplicating scoring, schemas, or repair behavior. Any future provider-specific package must preserve that rule: skills and tools teach/invoke the boundary; Rust remains authoritative.
+Career Core does not ship harness-specific packages or skills. External integrations must treat the installed CLI and embedded schemas as authoritative rather than duplicating scoring, schemas, or repair behavior. Each future integration requires its own ownership and review.

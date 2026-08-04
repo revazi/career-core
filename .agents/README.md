@@ -4,8 +4,6 @@ This directory contains the detailed operating context for humans and coding age
 
 Pi automatically loads the root [`AGENTS.md`](../AGENTS.md). It does **not** automatically inject every Markdown file in this directory. `AGENTS.md` tells agents which documents to read for a task so context stays focused.
 
-The `.agents/skills/` subtree follows the Agent Skills standard and is discovered by Pi after project trust is granted. Run `/trust`, restart Pi, and use `/reload` after changing skills or context files.
-
 ## Reading order
 
 Every implementation task:
@@ -19,7 +17,7 @@ Read when applicable:
 
 - [`project.md`](project.md) — vision, users, scope, and vocabulary
 - [`reference-map.md`](reference-map.md) — bounded map into `../resume-ai`
-- [`agent-integration.md`](agent-integration.md) — CLI, JSON, skills, and future adapters
+- [`agent-integration.md`](agent-integration.md) — CLI, JSON, and future external adapters
 - [`decisions.md`](decisions.md) — decisions that must not be silently reversed
 
 ## Maintenance rule
