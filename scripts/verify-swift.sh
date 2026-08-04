@@ -2,13 +2,16 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+source "$ROOT_DIR/scripts/swift-rustup-toolchain.sh"
+career_swift_select_rustup_toolchain
+
 PACKAGE_DIR="$ROOT_DIR/swift/CareerCoreSwift"
 ARTIFACTS_DIR="$PACKAGE_DIR/Artifacts"
 RUST_TARGET_DIR="${CARGO_TARGET_DIR:-$ROOT_DIR/target}"
 TEMP_DIR="$(mktemp -d)"
 trap 'rm -rf "$TEMP_DIR"' EXIT
 
-for command in cargo cmp git nm python3 shasum swift xcodebuild xcrun; do
+for command in cmp git nm python3 shasum swift xcodebuild xcrun; do
   if ! command -v "$command" >/dev/null 2>&1; then
     echo "error: required command is unavailable: $command" >&2
     exit 2
@@ -27,7 +30,7 @@ git -C "$ROOT_DIR" diff --exit-code -- \
 swift test --package-path "$PACKAGE_DIR"
 swift run --package-path "$PACKAGE_DIR" career-core-smoke \
   > "$TEMP_DIR/swift-capabilities.json"
-cargo run \
+"$CAREER_SWIFT_CARGO" run \
   --quiet \
   --locked \
   --manifest-path "$ROOT_DIR/Cargo.toml" \

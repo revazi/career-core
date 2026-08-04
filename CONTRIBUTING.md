@@ -52,6 +52,16 @@ rustup target add aarch64-apple-ios aarch64-apple-ios-sim
 scripts/verify-swift.sh
 ```
 
+The Swift scripts resolve Cargo and rustc through rustup's active toolchain even
+when another installation appears first in `PATH`. To select another installed
+toolchain intentionally, use the standard rustup variable for both target
+installation and verification:
+
+```bash
+RUSTUP_TOOLCHAIN=stable rustup target add aarch64-apple-ios aarch64-apple-ios-sim
+RUSTUP_TOOLCHAIN=stable scripts/verify-swift.sh
+```
+
 ## Contributions
 
 - Keep each pull request limited to one phase-sized task.
