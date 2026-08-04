@@ -36,6 +36,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Review-only external resume-analysis suggestion contracts with fresh deterministic baseline reruns, action/check binding, exact source targets/evidence, core-assigned identifiers, confirmed/provisional status, payload-free discard diagnostics, and CLI/schema/Swift parity.
 - Separate review-only external resume-analysis replacement contracts with fresh deterministic baseline reruns, action/check binding, exact source before/proposed-after values, no-change rejection, core-assigned identifiers, payload-free discards, and CLI/schema/Swift parity for non-authoritative diff display.
 - Temporary-root installed-CLI acceptance covering capability/schema discovery and representative resume, job, and assisted-review commands outside the checkout.
+- Separate maintainer-dispatched native runtime artifact preparation for reviewed `pi-career` imports, with fail-closed target checks, bounded provenance/digests, synthetic execution, and short retention; this is not a public Core release channel.
 
 ### Changed
 

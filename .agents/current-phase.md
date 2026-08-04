@@ -8,7 +8,11 @@
 
 Career Core currently owns the deterministic Rust library, the `career` CLI and embedded public schemas, and the Swift binding boundary. No Core algorithm, CLI/public JSON contract, schema, fixture, dependency, or Swift behavior change is authorized.
 
-The native Pi package and bundled Agent Skill are maintained separately in [`pi-career`](https://github.com/revazi/pi-career). This repository no longer owns Pi adapter source, package metadata, skill discovery, build behavior, or adapter security policy. The generic installed-CLI verifier remains part of Career Core.
+The native Pi package and bundled Agent Skill are maintained separately in [`pi-career`](https://github.com/revazi/pi-career). This repository does not own Pi adapter source, package metadata, skill discovery, build behavior, or adapter security policy. The generic installed-CLI verifier remains part of Career Core.
+
+A bounded maintenance exception is authorized for preparing unsigned native `career` archives as inputs to `pi-career`: only explicitly dispatched native Ubuntu x86_64 GNU/Linux and Apple Silicon macOS jobs, with short retention and machine-readable provenance. This is not an active implementation phase, public Core release/install channel, adapter ownership reversal, or approval for additional targets.
+
+Local maintenance verification passed on Apple Silicon macOS on 2026-08-05: dirty transfer and mismatched-target rejection, locked native release build, bounded metadata/digests, exact five-file archive contents and executable mode, packaged-binary discovery, synthetic resume/job golden parity, the complete Core verification ladder, and the Swift/XCFramework gate. The new artifact workflow was not dispatched during implementation; clean-run macOS and Ubuntu artifact evidence remains a later reviewed-head gate.
 
 Optional future Core bindings or adapters remain gated by a demonstrated consumer, design/threat review, maintenance owner, and explicit authorization. MCP, provider/model behavior, networking, persistence, UI, publication, release artifacts, and signing remain unapproved.
 

@@ -73,3 +73,7 @@ The CLI embeds the repository's reviewed Draft 2020-12 schema files and exposes 
 ## D-018 — Pi adapter ownership externalized (supersedes repository-local placement)
 
 The earlier decision to host the approved Pi consumer in this repository is superseded. The native Pi package and bundled Agent Skill now belong to the separate [`pi-career`](https://github.com/revazi/pi-career) repository. Career Core ships only its deterministic Rust, CLI/schema, generic installed-CLI acceptance, and Swift surfaces; this ownership change does not alter any of those contracts. Future Core adapters remain separately gated.
+
+## D-019 — Native runtime archives are maintainer handoff inputs, not releases
+
+Career Core may build the existing locked release CLI on approved matching native runners, execute synthetic acceptance, record bounded provenance/digests, and upload a short-retention unsigned archive for reviewed import into `pi-career`. This exception does not authorize a tag, GitHub Release, public download/install channel, package publication, signing/notarization, install hook, or unsupported architecture claim. Normal Core CI remains separate and uploads no runtime artifact.
