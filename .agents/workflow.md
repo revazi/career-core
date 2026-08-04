@@ -15,7 +15,7 @@
 3. Run the narrow test while iterating.
 4. Run formatting and Clippy before broad tests.
 5. Update capability status only when the operation is fully implemented and its acceptance gate passes.
-6. Update schemas, examples, changelog, and agent skill together with public contract changes.
+6. Update schemas, examples, changelog, and coding-agent guidance together with public contract changes.
 7. Update `current-phase.md` with actual verification, not planned results.
 
 ## Django-reference loop
@@ -42,8 +42,6 @@ cargo test -p career-cli <test-name>
 Before review:
 
 ```bash
-npm test
-PI_OFFLINE=1 npm run test:pi-smoke
 scripts/verify-installed-cli.sh
 cargo fmt --all --check
 cargo clippy --workspace --all-targets --all-features -- -D warnings
@@ -77,8 +75,6 @@ git diff --check
 ```
 
 If the CLI contract changes, also invoke every changed command in canonical, compact, and text modes where supported; parse JSON with an independent parser. For distribution changes, install the CLI into a temporary root from a clean clone and run capability/schema discovery through the installed binary.
-
-The Pi smoke must use a temporary agent directory and in-memory settings, load extension/skill resources without constructing a model runtime, run with `PI_OFFLINE=1`, and make no provider request. Native extension process tests use only synthetic fake-executable payloads.
 
 For Swift-boundary or final phase-status changes on macOS:
 

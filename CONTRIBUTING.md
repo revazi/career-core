@@ -20,8 +20,6 @@ rustup default stable
 ## Verification
 
 ```bash
-npm test
-PI_OFFLINE=1 npm run test:pi-smoke
 scripts/verify-installed-cli.sh
 cargo fmt --all --check
 cargo clippy --workspace --all-targets --all-features -- -D warnings

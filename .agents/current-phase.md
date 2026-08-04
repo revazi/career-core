@@ -2,45 +2,15 @@
 
 ## Active phase
 
-**Phase 8A — installed CLI and native Pi integration (authorized, in progress)**
+**No active implementation phase — Phases 0–7 are complete.**
 
 ## Status
 
-The maintainer authorized Pi as the first demonstrated Phase 8 consumer. Phase 8A is limited to installed-binary acceptance, the canonical Agent Skill, and a local native Pi TypeScript package that invokes the reviewed `career` executable through three bounded tools. The design and threat review is recorded in [`docs/design/phase8a-pi-cli-integration.md`](../docs/design/phase8a-pi-cli-integration.md).
+Career Core currently owns the deterministic Rust library, the `career` CLI and embedded public schemas, and the Swift binding boundary. No Core algorithm, CLI/public JSON contract, schema, fixture, dependency, or Swift behavior change is authorized.
 
-Rust Core, CLI commands and JSON contracts, schemas, scoring, matching, and Swift behavior remain unchanged. The adapter invokes an installed executable directly with argv and stdin, performs no Cargo, network, model, provider, UI, or persistence behavior, and fails rather than truncating authoritative JSON.
+The native Pi package and bundled Agent Skill are maintained separately in [`pi-career`](https://github.com/revazi/pi-career). This repository no longer owns Pi adapter source, package metadata, skill discovery, build behavior, or adapter security policy. The generic installed-CLI verifier remains part of Career Core.
 
-MCP and an MCP bridge are explicit non-scope. Python, WASM, package-manager publication, release artifacts, and every other Phase 8 adapter remain unapproved and require their own demonstrated consumer, design/threat review, and explicit authorization.
-
-## Approved Phase 8A scope
-
-- temporary-root source installation and installed-binary acceptance outside the checkout
-- one local Pi package rooted at this repository with no runtime npm dependency beyond Pi-provided peers and Node built-ins
-- canonical `.agents/skills/career-core` package discovery without a copied skill
-- stable `career_core_discover`, `career_core_resume`, and `career_core_job` tools
-- direct installed executable invocation with bounded override, argv/stdin transport, timeout/cancellation cleanup, strict output/error validation, and payload-free adapter failures
-- explicit Pi session-history privacy guidance and `pi --no-session` recommendation
-- synthetic fake-executable tests and a no-model/no-credential Pi resource-loader smoke
-
-## Explicitly out of scope for Phase 8A
-
-- Rust Core, CLI, schema, scoring, matching, or Swift contract changes
-- MCP, bridge protocols, provider/model calls, prompts, credentials, network requests, telemetry, or Cargo invocation by the extension
-- temporary career payload/result files, result truncation, custom UI/TUI components, extension state persistence, or source-document mutation
-- npm publication, global maintainer installation, release/signing, Python, WASM, or another adapter
-
-## Phase 8A verification status
-
-Passed locally on 2026-08-04 before independent reviewer handoff:
-
-- 21 synthetic Node process-boundary tests covering direct argv/stdin, shell isolation, no payload files, success, strict known CLI errors, unknown stderr redaction, missing executable, timeout, cancellation, signal, malformed/multiple JSON, stdout/stderr and context overflow, pre-spawn bounds, override validation, and concurrency
-- Pi `0.80.10` resource-loader smoke loaded all three intended strict tool schemas plus the one canonical skill with a temporary agent directory, in-memory settings, disabled `fetch`, `PI_OFFLINE=1`, no credential file, and no model runtime or provider request
-- temporary Pi settings root accepted, listed, and removed the absolute local package path without touching maintainer settings
-- temporary Cargo root source installation with the lockfile, followed by installed capability/schema discovery and representative resume, job, and Phase 7 operations from outside the checkout; the passing rerun used Cargo offline mode after the ordinary attempt encountered an unavailable registry index
-- formatting, Clippy with warnings denied, all 135 Rust unit/integration/doc test entries, locked all-feature workspace build, and every required CLI fixture command
-- complete `scripts/verify-swift.sh` XCFramework, checksum, generated-source, link, Apple build, and five-test Rust/Swift parity gate
-- package/JSON and shell syntax checks, relative Markdown links, credential-pattern scan, and `git diff --check`
-- Fallow 3.14.0 supplemental analysis found no unresolved imports, dependency, duplication, cycle, or boundary issue; its remaining unused-entry, complexity/coverage, spawn, and path-sink candidates are qualified because the Pi manifest dynamically loads the entry, Node tests are not ingested as coverage, direct `spawn` is the reviewed boundary with `shell: false`, and smoke paths are maintainer-controlled local test inputs
+Optional future Core bindings or adapters remain gated by a demonstrated consumer, design/threat review, maintenance owner, and explicit authorization. MCP, provider/model behavior, networking, persistence, UI, publication, release artifacts, and signing remain unapproved.
 
 ## Earlier completed phase
 
@@ -72,7 +42,7 @@ Phase 7 evidence-linked assisted resume review and its review-only analysis-sugg
 - assigns stable core-owned identifiers only after canonical sorting; provider identifiers have no authority
 - materialization reruns complete review, validates the expected policy and selected identifiers, and applies only the selected canonical changes
 - preserves the byte-equivalent baseline and every unselected range; output is exhaustively assisted/non-authoritative with mandatory factuality limitations
-- added five public schemas, two CLI operations, two UniFFI functions, synthetic goldens, public/CLI/Swift parity tests, capability/skill/docs/security updates, and no dependency
+- added five public schemas, two CLI operations, two UniFFI functions, synthetic goldens, public/CLI/Swift parity tests, capability/docs/security updates, and no dependency
 - added three public review-only analysis-suggestion schemas, one CLI operation, one UniFFI JSON function, synthetic golden/parity coverage, and no dependency; this contract reruns and preserves the authoritative analysis baseline and cannot materialize a resume
 - added three public review-only analysis-replacement schemas, one CLI operation, one UniFFI JSON function, synthetic golden/parity coverage, and no dependency; this separate explicit contract returns canonical exact before/proposed-after values for non-authoritative diff display and cannot select, apply, materialize, or mutate a resume
 
@@ -126,7 +96,7 @@ Passed locally on 2026-08-04:
 
 - formatting, Clippy with warnings denied, all 135 Rust unit/integration/doc test entries, and the locked all-feature workspace build
 - Rust 1.85.0 workspace/all-target/all-feature locked check
-- all 11 available capabilities mapped across Core, CLI, schemas, goldens, Swift, docs, and the Agent Skill, with no missing deterministic operation
+- all 11 available capabilities mapped across Core, CLI, schemas, goldens, Swift, and public docs, with no missing deterministic operation
 - canonical, compact, and text invocation of all ten input-taking commands; every canonical output remained byte-equivalent to its reviewed golden
 - all 25 public schemas passed Draft 2020-12 metaschema validation and independent representative-instance validation through an offline local registry
 - temporary-root source installation followed by installed-binary capability and schema discovery outside the checkout
@@ -234,4 +204,4 @@ Phase 6 — Swift binding boundary was completed and squash-merged through PR `#
 
 ## Deferred gate
 
-The actual SwiftUI application belongs in the separate `career-workbench` repository. Artifact publication, signing, App Store work, and every additional Phase 8 optional adapter require separate approval beyond the bounded Pi work above.
+The actual SwiftUI application belongs in the separate `career-workbench` repository. Artifact publication, signing, App Store work, and every future optional Core adapter or binding require separate approval.

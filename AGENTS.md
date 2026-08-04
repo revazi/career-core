@@ -17,7 +17,7 @@ Before changing code:
 5. If porting behavior, read `.agents/reference-map.md` before opening files in `../resume-ai`.
 6. If changing CLI or JSON output, read `.agents/agent-integration.md`.
 
-Pi loads this `AGENTS.md` automatically. The detailed `.agents/*.md` files are deliberately loaded on demand to keep routine context focused. Run `/reload` after editing agent context or skills.
+Pi loads this `AGENTS.md` automatically. The detailed `.agents/*.md` files are deliberately loaded on demand to keep routine context focused. Run `/reload` after editing agent context.
 
 ## Working rules
 
@@ -83,8 +83,6 @@ The sibling repository `../resume-ai` is read-only reference material. It is not
 Run all checks before requesting review:
 
 ```bash
-npm test
-PI_OFFLINE=1 npm run test:pi-smoke
 scripts/verify-installed-cli.sh
 cargo fmt --all --check
 cargo clippy --workspace --all-targets --all-features -- -D warnings
