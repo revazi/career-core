@@ -4,6 +4,8 @@ version = "0.1.0"
 edition = "2024"
 rust-version = "1.85"
 description = "Deterministic, explainable career-document analysis core"
+authors = ["Revaz Zakalashvili"]
+publish = false
 repository = "https://github.com/revazi/career-core"
 license = "MIT OR Apache-2.0"
 readme = "README.md"
@@ -18,6 +20,7 @@ resolver = "2"
 version = "0.1.0"
 edition = "2024"
 rust-version = "1.85"
+authors = ["Revaz Zakalashvili"]
 repository = "https://github.com/revazi/career-core"
 license = "MIT OR Apache-2.0"
 

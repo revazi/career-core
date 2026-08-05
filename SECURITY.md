@@ -6,7 +6,7 @@
 
 ## Reporting a vulnerability
 
-Use GitHub private vulnerability reporting when the repository is public. Do not include sensitive resume content, job descriptions, credentials, or API keys in a report. If private reporting is unavailable, contact the maintainer before sharing exploit details publicly.
+Use GitHub private vulnerability reporting for this public repository. Do not include sensitive resume content, job descriptions, credentials, or API keys in a report. If GitHub private vulnerability reporting is unavailable, contact [Revaz Zakalashvili](https://github.com/revazi) before sharing exploit details publicly.
 
 ## Security model
 

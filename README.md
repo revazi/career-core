@@ -6,6 +6,12 @@ The project is intentionally **not an AI service**. The core performs no network
 
 > **Status:** Phases 0–7 are complete, with no active implementation phase. Career Core owns the deterministic Rust library, CLI/public JSON and schemas, and Swift binding boundary. Optional adapters, release publication, and the SwiftUI product application remain separately gated.
 
+## Maintainer and support
+
+Maintainer/support: [Revaz Zakalashvili](https://github.com/revazi)
+
+Project-authored source is dual-licensed under `MIT OR Apache-2.0` at your option. See [`LICENSE-MIT`](LICENSE-MIT) and [`LICENSE-APACHE`](LICENSE-APACHE).
+
 ## Goals
 
 - deterministic output for identical versioned input
@@ -330,11 +336,9 @@ See [`CONTRIBUTING.md`](CONTRIBUTING.md). Coding agents must also follow [`AGENT
 
 ## License
 
-Licensed under either of:
+Project-authored source is dual-licensed under `MIT OR Apache-2.0` at your option.
 
 - Apache License, Version 2.0 ([`LICENSE-APACHE`](LICENSE-APACHE))
 - MIT License ([`LICENSE-MIT`](LICENSE-MIT))
-
-at your option.
 
 The optional Swift adapter uses pinned MPL-2.0 UniFFI components documented in [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
