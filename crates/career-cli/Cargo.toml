@@ -3,6 +3,7 @@ name = "career-cli"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
+authors.workspace = true
 repository.workspace = true
 license.workspace = true
 description = "Agent-friendly command-line interface for career-core"

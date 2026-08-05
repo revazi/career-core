@@ -3,6 +3,7 @@ name = "career-swift"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
+authors.workspace = true
 repository.workspace = true
 license.workspace = true
 description = "Narrow UniFFI adapter exposing career-core to Swift"
