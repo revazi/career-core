@@ -9,3 +9,8 @@
 /swift/CareerCoreSwift/Artifacts/CareerCoreFFI.xcframework/
 /swift/CareerCoreSwift/Artifacts/CareerCoreFFI.sha256
 /swift/CareerCoreSwift/Artifacts/CareerCoreFFI.metadata.json
+/npm/dist/
+/npm/stage/
+/npm/**/*.tgz
+/npm/platforms/*/career
+/npm/platforms/*/provenance.json

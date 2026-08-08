@@ -1,0 +1,42 @@
+{
+  "name": "@revazi/career-linux-x64-gnu",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Internal Career Core CLI implementation for x86-64 GNU/Linux (glibc 2.35+)",
+  "license": "MIT OR Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/revazi/career-core.git"
+  },
+  "os": [
+    "linux"
+  ],
+  "cpu": [
+    "x64"
+  ],
+  "libc": [
+    "glibc"
+  ],
+  "files": [
+    "career",
+    "provenance.json",
+    "LICENSE-MIT",
+    "LICENSE-APACHE",
+    "THIRD_PARTY_NOTICES.md"
+  ],
+  "exports": {
+    "./package.json": "./package.json"
+  },
+  "career_native": {
+    "schema_version": "career.npm_native_package.v1",
+    "platform_key": "linux-x64-gnu",
+    "node_platform": "linux",
+    "node_arch": "x64",
+    "rust_target": "x86_64-unknown-linux-gnu",
+    "binary_file": "career",
+    "provenance_file": "provenance.json",
+    "executable_mode": "0755",
+    "maximum_binary_size_bytes": 16777216,
+    "minimum_glibc_version": "2.35"
+  }
+}

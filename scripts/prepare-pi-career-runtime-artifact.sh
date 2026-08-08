@@ -6,10 +6,11 @@ usage() {
 Usage: scripts/prepare-pi-career-runtime-artifact.sh \
   --output-dir <directory> [--expected-target <triple>] [--allow-dirty]
 
-Build and verify one native career CLI archive for maintainer transfer to the
-separate pi-career repository. The output directory must be outside this
-checkout. Clean source is required unless --allow-dirty is used for local
-script validation; dirty archives are labeled and are not import candidates.
+Build and verify one transitional native career CLI archive for maintainer
+transfer to the separate pi-career repository. The output directory must be
+outside this checkout. Clean source is required unless --allow-dirty is used
+for local script validation; dirty archives are labeled and are not import
+candidates. Keep this path only until the reviewed npm transition gate passes.
 EOF
 }
 

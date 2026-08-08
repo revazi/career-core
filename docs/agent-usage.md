@@ -52,6 +52,14 @@ career resume normalize --input "$temporary_input" --format json-compact
 
 Career Core ships no harness-specific package or bundled Agent Skill. The optional native Pi integration is maintained in the separate [`pi-career`](https://github.com/revazi/pi-career) repository. Review that package's own installation, privacy, and security guidance there; do not register this Career Core checkout as a Pi package.
 
+Phase 9 adds one generic npm consumer surface for the same CLI:
+
+```bash
+npx --yes --package=@revazi/career@0.1.0 career <args>
+```
+
+Use exact `0.1.0`, never `latest`. npx acquisition may use the network and remains caller-owned; launcher/native runtime is network-free, package-local, and fail-closed. Native optional packages are internal implementation details and must never appear in consumer installation or invocation logic. See [`contracts/npm-cli-distribution-v1.md`](contracts/npm-cli-distribution-v1.md).
+
 All harnesses may invoke the installed `career` CLI directly using the safe process rules in this document.
 
 Generic raw agents remain discovery-first and should make capability/schema decisions from current installed output. A separately reviewed managed adapter may discover `career operations` and required `schema bundle` documents internally once per verified `core_version`, then cache only that non-sensitive metadata. It must not hide warnings or authority boundaries, cache private documents/results by default, or expose schema bootstrap calls to the model merely to reconstruct exact envelopes.
@@ -70,7 +78,7 @@ No provider-specific extension or duplicate TypeScript/Python scoring implementa
 
 ## Generic subprocess clients
 
-Pass an argument vector rather than constructing a shell string. For example:
+Pass an argument vector rather than constructing a shell string. This also applies to any future npm launcher or explicit npx runner. For example:
 
 ```text
 ["career", "job", "match", "--input", input_path, "--format", "json-compact"]

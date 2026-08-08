@@ -2,11 +2,49 @@
 
 ## Active phase
 
-**No active implementation phase — Phases 0–8 are complete.**
+**Phase 9 — npm CLI publication completion is authorized and under local implementation/review. Phases 0–8 remain complete.**
 
-## Status
+## Phase 9 authorized scope
 
-The demonstrated external `pi-career` consumer authorizes only deterministic CLI discovery/bundling/output-bound contracts and maintainer artifact compatibility evidence. Career Core still owns no Pi package, `career_run` runtime, handles, projection, persistence, provider/model behavior, networking, UI, extraction/export, or adapter state.
+Career Core owns one user-facing npm surface: exact `@revazi/career@0.1.0`, bin `career`, at annotated tag `v0.1.0`. Exactly two lockstep optional native packages implement Apple Silicon macOS and x86-64 GNU/Linux internally; users and `pi-career` never address them directly. The launcher is Node 22+, resolves only its package-local implementation, requires glibc 2.35+ on Linux, validates exact package/provenance/version/target/type/mode/size/SHA-256 consistency, and uses argv-only inherited-stdio execution without network, PATH fallback, install hooks, providers, telemetry, or bypass.
+
+Checked-in templates remain `private: true`; generated public manifests, binaries, provenance, and tarballs remain outside the checkout. The explicit candidate path requires clean exact fetched `origin/main`, reviewed SHA, annotated unmoved `v0.1.0`, exact Node 22.19.0/npm 11.6.2 and rustc/Cargo 1.97.1, `macos-14` ARM64 or `ubuntu-22.04` x64/glibc 2.35, strict property/file/mode/source-byte allowlists, and native-before-launcher assembly. Rust 1.85 remains a separate MSRV gate.
+
+The sole publish path is protected manual `.github/workflows/npm-publish.yml` with `npm-production`, explicit temporary-token bootstrap/recovery or default token-free OIDC trusted publishing, npm public access/provenance, exact registry integrity/SLSA-attestation/idempotence/conflict checks, and final no-secret public acceptance on both hosts. Package-contained SHA-256 is consistency-only; npm registry provenance is separate; independent native-binary signatures remain explicitly absent. After npm and both public acceptance jobs pass, the parent maintainer creates the annotated-tag GitHub Release with dated notes and no custom assets. No crate publication, signing, or notarization is part of this phase.
+
+This phase must preserve byte-equivalent Core algorithms, public schemas, capabilities, operation catalog, operation outputs/order/warnings/evidence/uncertainty/assisted authority, the 33,554,432-byte successful machine-output bound, and Swift behavior. The existing `pi-career` runtime-artifact path remains transitional until exact public package acceptance and the separate consumer migration pass.
+
+Implementation now includes:
+
+- exact private source templates plus bounded user-facing launcher README/public metadata
+- glibc 2.35 runtime/package/provenance/build-symbol floor and strict release toolchain/runner records
+- clean main/annotated-tag/SHA source gate; public native staging; exact three-tarball assembly; `career.npm_publication_candidate.v1`
+- exact manifest/tar/mode/entry/source-byte verification, extracted candidate all-operation parity, and synthetic npx-equivalent execution
+- tracked minimal publish driver with explicit ephemeral bootstrap npmrc versus auth-free OIDC npmrc, partial/idempotent retry, conflicts, bounded transients, launcher-last checks, and mandatory registry attestations
+- manual publication workflow with corrected immutable action pins, protected environment, one-time bootstrap, steady OIDC, and public-registry matrix acceptance
+- registry-free synthetic Git and fake-npm adversarial tests, plus exact post-bootstrap `npm trust`/token-deletion governance
+- retained transitional `pi-career` artifacts and an exact public-package-only consumer handoff
+
+Maintainer discovery on 2026-08-09 observed npm `E404` for all three names and npm `whoami` `E401`: name availability was observed, while `@revazi` ownership remains unproven until successful authentication. The repository then had no Actions secrets, variables, or environments.
+
+Publication-completion local verification passed on Apple Silicon macOS on 2026-08-09; a new numbered independent review remains pending:
+
+- Node 22.19 passed 45 launcher/selection/glibc-floor/manifest/provenance/toolchain/runner/binary/argv/stdio/exit/signal/metadata/public-boundary test entries
+- private current-host staging passed offline exact tarball/install/README/license allowlists and every-operation native parity
+- publication fixtures passed canonical-origin/main/clean/annotated-tag/SHA/version gates; dirty/missing/lightweight/moved/non-main/credential-origin rejection; exact public property/file/mode/byte/order checks; extra directory/FIFO/nesting-style rejection; wrong SHA/target/toolchain/glibc/provenance/version/dependency/lifecycle mutations; extracted candidate every-operation parity; and synthetic npx-equivalent invocation
+- fake npm passed all-absent bootstrap, exact idempotence, first/second-package interruption recovery, partial/conflicting state rejection, token/OIDC isolation, OIDC prerequisites, transient retry, auth/permanent native failure, launcher-last protection, and missing/malformed/eventually consistent registry-attestation tests without npm contact
+- installed CLI, formatting, warnings-denied Clippy, all 143 Rust test entries, locked all-feature build, and Rust 1.85 all-target/all-feature check passed
+- pinned `check-jsonschema` 0.34.1 independently validated all managed bundles and representative instances; the complete required CLI ladder and exact goldens passed
+- transitional `pi-career` runtime-artifact verification passed
+- `scripts/verify-swift.sh` passed deterministic generated source, five Swift tests, all Apple slices/checksums/link/build gates, and no tracked Swift change
+- exact clean Phase 8 base parity passed for capabilities, operation catalog, schema catalog, all 26 exports, all 26 bundles, and all ten input operations
+- shell/Python/Node/JSON/YAML syntax, relative Markdown links, action/package/workflow/generated-payload/credential guards, `git diff --check`, and Fallow audit/all/changed/security passed with zero findings
+
+No hosted workflow was dispatched, so exact rustc/Cargo 1.97.1 native builds, npm bootstrap/OIDC publication, public registry provenance/acquisition smokes, trust setup, merge/tag, and the dated no-asset GitHub Release remain parent-maintainer gates after review. One unauthenticated public metadata lookup recorded npm 11.15.0 `dist.integrity` for the documented trust-only exception; no package-name/ownership query, npm authentication/publication, commit, push, merge, tag, workflow dispatch, environment/secret change, release, signature, upload, or `pi-career` edit occurred in the implementation session.
+
+## Completed Phase 8 status
+
+The demonstrated external `pi-career` consumer authorized deterministic CLI discovery/bundling/output-bound contracts and maintainer artifact compatibility evidence. Career Core still owns no Pi package, `career_run` runtime, handles, projection, persistence, provider/model behavior, networking, UI, extraction/export, or adapter state.
 
 Implemented on the Phase 8 branch:
 

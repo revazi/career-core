@@ -8,7 +8,7 @@ Career Core is primarily maintained by [Revaz Zakalashvili](https://github.com/r
 
 ## Scope
 
-The project is a deterministic, local-first Rust library with narrow CLI and Swift adapters. Keep LLM/provider calls, API keys, prompts, UI, persistence, remote fetching, billing, and platform-specific behavior outside the core package. Provider-neutral external proposals are untrusted input and must preserve the deterministic baseline.
+The project is a deterministic, local-first Rust library with narrow CLI/Swift adapters and one user-facing npm package, `@revazi/career`; native optional packages are internal implementation details. Keep LLM/provider calls, API keys, prompts, UI, persistence, remote fetching, billing, and platform-specific behavior outside the core package. npm launcher behavior must remain network-free, package-local, fail-closed, and transparent to native CLI bytes. Provider-neutral external proposals are untrusted input and must preserve the deterministic baseline.
 
 Read [`AGENTS.md`](AGENTS.md) and the active phase in [`.agents/current-phase.md`](.agents/current-phase.md) before making changes.
 
@@ -25,6 +25,9 @@ rustup default stable
 
 ```bash
 scripts/verify-installed-cli.sh
+node --test npm/tests/launcher.test.js
+scripts/test-npm-cli-packages.sh
+scripts/test-npm-publication.sh
 cargo fmt --all --check
 cargo clippy --workspace --all-targets --all-features -- -D warnings
 cargo test --workspace --all-features
@@ -80,7 +83,15 @@ RUSTUP_TOOLCHAIN=stable scripts/verify-swift.sh
 
 `scripts/verify-managed-adapter-contracts.sh` requires `check-jsonschema`; use reviewed pinned version `0.34.1` and set `CHECK_JSONSCHEMA_BIN` when it is not on `PATH`. It validates all emitted bundles against the Draft 2020-12 metaschema and representative instances independently of Rust tests.
 
-## Maintainer-only `pi-career` runtime inputs
+## npm package verification
+
+`scripts/test-npm-cli-packages.sh` performs private current-host staging, offline/ignore-scripts packing, exact allowlists, install outside the checkout, and all-operation packaged/native parity. Dirty staging is private/local/non-candidate only.
+
+`scripts/test-npm-publication.sh` uses synthetic Git repositories, external candidate staging, an opposite-target format fixture, offline install/parity, adversarial tar/provenance/tag tests, and a fake npm registry to exercise bootstrap/OIDC, partial/idempotent retry, conflicts, registry attestations, auth failure, and launcher-last policy without contacting npm. Run it with Node 22.19.0 and reviewed local npm 10.9.3 or publication npm 11.6.2.
+
+Source templates must stay `private: true`. Do not address internal native packages as user surfaces. Do not query/authenticate/publish npm, dispatch workflows, or create repository release state from an implementation session. See [`docs/contracts/npm-cli-distribution-v1.md`](docs/contracts/npm-cli-distribution-v1.md) and [`docs/releasing.md`](docs/releasing.md).
+
+## Maintainer-only transitional `pi-career` runtime inputs
 
 The normal verification ladder and normal manual CI do not produce binary artifacts. When changing the separate runtime-artifact script or workflow, validate the current native host into an external temporary directory:
 
@@ -88,7 +99,7 @@ The normal verification ladder and normal manual CI do not produce binary artifa
 scripts/test-pi-career-runtime-artifact.sh
 ```
 
-The test exercises fail-closed target selection, calls the reusable preparation script in an external temporary directory, validates the archive allowlist and metadata, and reruns discovery from the packaged executable. The underlying `--allow-dirty` option exists only so an uncommitted script change can be tested; it marks the archive dirty and that archive must not be imported. Reviewed maintainer transfer artifacts require a clean exact commit and the manual `.github/workflows/pi-career-runtime-artifacts.yml` workflow. They are unsigned short-retention inputs for separate `pi-career` review, not Core releases or end-user downloads.
+The test exercises fail-closed target selection, calls the reusable preparation script in an external temporary directory, validates the archive allowlist and metadata, and reruns discovery from the packaged executable. The underlying `--allow-dirty` option exists only so an uncommitted script change can be tested; it marks the archive dirty and that archive must not be imported. Reviewed maintainer transfer artifacts require a clean exact commit and the manual `.github/workflows/pi-career-runtime-artifacts.yml` workflow. They are transitional unsigned short-retention inputs for separate `pi-career` review, not Core releases or end-user downloads.
 
 ## Contributions
 

@@ -1,5 +1,5 @@
-name: Prepare pi-career runtime artifacts
-run-name: Prepare pi-career runtime artifacts at ${{ github.sha }}
+name: Prepare transitional pi-career runtime artifacts
+run-name: Prepare transitional pi-career runtime artifacts at ${{ github.sha }}
 
 on:
   workflow_dispatch:

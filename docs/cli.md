@@ -2,6 +2,8 @@
 
 The `career` executable is the universal local adapter for coding agents and scripts. It depends on `career-core`, performs no implicit network requests, and does not persist or modify source documents.
 
+Phase 9's Node 22+ `@revazi/career@0.1.0` launcher is a transparent distribution wrapper around this exact native executable. It does not change commands, JSON/text bytes, exit meanings, schemas, or the 33,554,432-byte successful machine-output bound. Launcher selection/verification failures use separate bounded `CAREER_NPM_*` stderr codes before the CLI starts; see [`contracts/npm-cli-distribution-v1.md`](contracts/npm-cli-distribution-v1.md). Checked-in templates remain private; only protected external candidate staging may create public tarballs. Native optional packages are not consumer interfaces.
+
 ## Command hierarchy
 
 ```text
@@ -89,6 +91,8 @@ A bundle retains the requested root schema's `$schema`, `$id`, keywords, and sem
 The bundler accepts only exact sibling file names present in the embedded schema catalog. Unknown files, URI/remote references, non-pointer fragments, malformed embedded JSON, or a collision with the reserved definition fail closed. It never opens a schema from the source checkout and never performs a network request. Emitted bundles contain no unresolved or non-local `$ref`.
 
 ## Exit statuses
+
+These statuses are emitted by the native CLI and pass unchanged through the npm launcher after a successful launch. A launcher verification/launch failure exits nonzero before native CLI output and reports one stable `CAREER_NPM_*` code.
 
 | Exit | Meaning |
 |---:|---|
