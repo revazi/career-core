@@ -17,6 +17,8 @@ Corresponding source: <https://github.com/mozilla/uniffi-rs/tree/v0.30.0>
 
 UniFFI is used only by `crates/career-swift` and the pinned local binding-generation tool. Generated Swift and C declarations are produced from project-authored interface metadata by that version.
 
-Any future distributed Swift/XCFramework artifact must include this notice, the project MIT/Apache licenses, and the source location above. No artifact is distributed or published during Phase 6.
+Any future distributed Swift/XCFramework artifact must include this notice, the project MIT/Apache licenses, and the source location above. No Swift artifact is currently published.
+
+The Phase 9 npm launcher uses only Node built-in modules and adds no third-party Node dependency. Private tests and public candidate packages include this complete notice with both project licenses because native implementation packages contain the same locked Rust CLI. The protected npm release does not publish the Swift adapter or XCFramework.
 
 Other Rust dependencies declare permissive license alternatives recorded in `Cargo.lock` and their crates.io package metadata. Release review must re-audit the exact locked dependency set before publication.

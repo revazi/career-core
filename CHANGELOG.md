@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-08-09
+
 ### Added
 
 - Initial Rust library and workspace foundation.
@@ -43,7 +45,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - A 33,554,432-byte (32 MiB) complete successful machine-JSON ceiling enforced after serialization and before stdout writes, with exact-bound and overflow coverage.
 - Versioned managed-adapter compatibility metadata for maintainer runtime artifacts, including catalog/schema digests, complete mappings, representative bundle digests, declared output bounds, deterministic result digests, and adversarial tamper tests.
 - Independent installed-binary validation for all schema bundles plus Draft 2020-12 metaschema and representative-instance checks.
+- Private source template for exact user-facing Node 22+ `@revazi/career@0.1.0`, with lockstep internal native optional packages for Apple Silicon macOS and x86-64 GNU/Linux glibc 2.35+.
+- Fail-closed package-local launcher verification for glibc/target, manifest/provenance/version, regular non-symlink binary mode/size/type/SHA-256, and argv/stdin/stdout/stderr/exit/signal transparency.
+- Versioned npm native provenance with explicit package-contained consistency-only hashing and absent independent-signature claims.
+- External current-host npm package preparation, offline exact-allowlist tarball/extracted-install/all-operation parity tests, and a manual two-platform preparation-only workflow with no publication or artifact upload.
+- Exact public-package-only `pi-career` package/bin/npx/provenance/error/transition handoff while retaining the old artifact path as transitional.
+- Clean annotated `v0.1.0`/`origin/main` publication source gate, exact rustc/Cargo 1.97.1 native candidate builds, strict ordered three-tarball assembly, public launcher README/metadata, and `career.npm_publication_candidate.v1` integrity manifest.
+- Registry-free candidate/adversarial/fake-npm tests covering manifest/file/mode/source-byte allowlists, dirty/missing/lightweight/moved tags, glibc 2.35, bootstrap/OIDC auth isolation, partial/idempotent recovery, conflicts, transients, launcher-last ordering, and npm registry attestations.
+- Protected manual `npm-production` workflow using exact Node 22.19.0/npm 11.6.2, temporary-token bootstrap or default OIDC trusted publishing, npm provenance/public access, corrected immutable GitHub Action pins, and no-secret public registry acceptance on macOS ARM64 and Ubuntu 22.04 x64; the parent maintainer creates a dated no-custom-assets `v0.1.0` GitHub Release only after acceptance.
 
 ### Changed
 
 - Externalized the native Pi package and bundled Agent Skill to the standalone [`pi-career`](https://github.com/revazi/pi-career) repository; Career Core no longer ships Pi package/runtime/test artifacts or a duplicate project skill.
+- Labeled the existing `pi-career` native archive workflow transitional; removal remains gated on exact public `@revazi/career@0.1.0` acceptance and separate consumer adoption.
+- Established `@revazi/career` as the only npm consumer surface; internal native packages are never direct user or `pi-career` dependencies.

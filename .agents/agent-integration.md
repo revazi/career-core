@@ -4,7 +4,7 @@
 
 The `career` executable is the primary agent interface. A CLI is portable across coding-agent harnesses, inspectable, scriptable, and does not require each harness to implement a protocol client.
 
-Harness-specific adapters and bundled skills are maintained outside this repository. The optional native Pi integration lives in [`pi-career`](https://github.com/revazi/pi-career); Career Core remains authoritative only through its Rust, CLI/schema, and Swift surfaces.
+Harness-specific adapters and bundled skills are maintained outside this repository. The optional native Pi integration lives in [`pi-career`](https://github.com/revazi/pi-career). Phase 9 adds exact `@revazi/career@0.1.0` distribution around the same CLI; internal optional native packages are launcher-owned implementation details and do not move `pi-career` runtime ownership or Core authority.
 
 The installed CLI embeds reviewed Draft 2020-12 schemas. Agents can discover exact contracts without a source checkout or network request:
 
@@ -53,6 +53,18 @@ All machine commands follow these rules as they are introduced:
 A separately reviewed managed adapter may invoke and validate `career operations` and required `career schema bundle` documents internally once per verified `core_version`. It may cache only this non-sensitive metadata so normal model-visible workflows do not need capability/schema bootstrap calls or copied schemas. The complete Core result must still be captured within the declared ceiling before projection. This permission does not authorize private document/result caching, handles, registries, persistence, repair, retries, authority upgrades, model/provider behavior, networking, or UI in Career Core.
 
 Schema bundles retain the requested embedded root and recursively place dependencies under the reserved `careerSchemaBundle` definition. Every `$ref` is a root-local JSON Pointer. Unknown sibling files, remote refs, unsupported fragments, and reserved-key collisions fail closed without filesystem or network lookup.
+
+## npm launcher contract
+
+The Node 22+ `@revazi/career@0.1.0` package exposes the same `career` bin. It resolves only its package-local internal optional native implementation, requires glibc 2.35 or newer on Linux, verifies strict versioned provenance and binary type/mode/size/target/SHA-256 consistency, and preserves argv/stdin/stdout/stderr/exit/signal behavior. It has no PATH fallback, runtime download, lifecycle script, provider/network behavior, telemetry, or bypass. Package-contained SHA-256 is not a signature.
+
+Agents and managed consumers address only the user-facing package:
+
+```bash
+npx --yes --package=@revazi/career@0.1.0 career <args>
+```
+
+Use exact `0.1.0`, never `latest`. Never install or resolve a native implementation package directly. npx acquisition is outside launcher runtime. The separate [`../docs/pi-career-npm-handoff.md`](../docs/pi-career-npm-handoff.md) defines the consumer transition gate.
 
 ## Agent safety rules
 
@@ -192,8 +204,10 @@ Low/unknown normalization or truncation bounds all category scores to 50–75, m
 
 1. source checkout via `cargo run --locked`
 2. local CLI install via `cargo install --path crates/career-cli --locked`
-3. checksummed release binaries only after explicit release approval
-4. package-manager publication only with a maintenance plan
+3. private external npm staging/testing through `scripts/prepare-npm-cli-packages.sh`
+4. exact clean/tagged npm candidate verification through `scripts/test-npm-publication.sh`
+5. protected `@revazi/career@0.1.0` publication only through `npm-publish.yml`, followed by both public-registry acceptance jobs
+6. every other package-manager or binary channel only after separate approval
 
 Source installation, future checksum verification, and the release-preparation gate are documented under `docs/`. Do not tell users to pipe remote scripts into a shell.
 
@@ -203,4 +217,4 @@ Consider MCP-over-stdio only if a concrete consumer requires structured tool dis
 
 ## External coding-agent packages
 
-Career Core does not ship harness-specific packages or skills. External integrations must treat the installed CLI and embedded schemas as authoritative rather than duplicating scoring, schemas, or repair behavior. Each future integration requires its own ownership and review.
+Career Core does not ship harness-specific packages or skills. Its user-facing npm package is only a generic launcher for the unchanged CLI. External integrations must treat `@revazi/career` and the installed CLI/embedded schemas as authoritative rather than addressing internal native packages or duplicating scoring, schemas, or repair behavior. Each future integration requires its own ownership and review.

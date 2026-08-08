@@ -1,0 +1,68 @@
+name: Prepare private npm CLI packages (no publish)
+run-name: Prepare private npm CLI packages at ${{ github.sha }}
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: npm-cli-package-preparation-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    name: Private native package (${{ matrix.platform_key }})
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-22.04
+            platform_key: linux-x64-gnu
+            target: x86_64-unknown-linux-gnu
+          - runner: macos-14
+            platform_key: darwin-arm64
+            target: aarch64-apple-darwin
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Configure exact reviewed release Rust
+        run: |
+          rustup toolchain install 1.97.1 --profile minimal --no-self-update
+          rustup default 1.97.1
+          rustc --version | grep -q '^rustc 1\.97\.1 '
+          cargo --version | grep -q '^cargo 1\.97\.1 '
+
+      - name: Configure Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22.19.0'
+
+      - name: Run launcher and package tests
+        run: |
+          node --test npm/tests/launcher.test.js
+          scripts/test-npm-cli-packages.sh
+
+      - name: Prepare private packages without publishing or upload
+        run: |
+          output_dir="$RUNNER_TEMP/career-npm-cli-packages"
+          scripts/prepare-npm-cli-packages.sh \
+            --output-dir "$output_dir" \
+            --expected-target "${{ matrix.target }}"
+          test "$(find "$output_dir/tarballs" -maxdepth 1 -type f -name '*.tgz' | wc -l | tr -d ' ')" = "2"
+          test -f "$output_dir/stage/${{ matrix.platform_key }}/provenance.json"
+          test -z "$(find "$output_dir" -type f \( -name '*.sig' -o -name '*.pem' -o -name '*.key' \) -print -quit)"
+
+      - name: Confirm workflow remains preparation-only
+        run: |
+          publish_command="npm pub""lish"
+          upload_action="actions/upload""-artifact"
+          release_command="gh rel""ease"
+          for forbidden in "$publish_command" "$upload_action" "$release_command"; do
+            test -z "$(grep -F "$forbidden" .github/workflows/npm-cli-packages.yml || true)"
+          done

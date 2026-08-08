@@ -1,6 +1,6 @@
 # Installation and distribution
 
-`career` is local-first software. The project does not provide a remote execution service or an installer that pipes network content into a shell.
+`career` is local-first software. The project does not provide a remote execution service or an installer that pipes network content into a shell. Phase 9 prepares the exact `@revazi/career@0.1.0` npm release; publication is complete only after the protected manual workflow and both public-registry acceptance jobs pass.
 
 ## Run from a source checkout
 
@@ -42,13 +42,46 @@ scripts/verify-installed-cli.sh
 
 The script uses a temporary Cargo root, executes capability/operation/schema discovery, emits every self-contained bundle from a temporary working directory outside the checkout, checks complete mapping/local refs/bounds independently, runs representative resume, job, and Phase 7 operations, and removes the temporary installation on exit.
 
+## npm package
+
+The only user-facing npm package is exact `@revazi/career@0.1.0`, exposing bin `career`:
+
+```bash
+npx --yes --package=@revazi/career@0.1.0 career --version
+npx --yes --package=@revazi/career@0.1.0 career capabilities --format json-compact
+```
+
+Use the exact version, never `latest`. npm/npx acquisition may contact npm; launcher runtime remains offline. Native platform packages are internal lockstep optional-dependency implementation details. Users and consumers must not install, invoke, or pin them directly.
+
+Supported hosts are Apple Silicon macOS and x86-64 GNU/Linux with locally detected glibc 2.35 or newer. Musl, older/malformed/unknown libc, and all other targets fail closed. Linux compatibility is not claimed below glibc 2.35.
+
+Checked-in templates remain `private: true` even after release. Private current-host tests are prepared outside the checkout with:
+
+```bash
+package_dir="$(mktemp -d)"
+trap 'rm -rf "$package_dir"' EXIT
+scripts/prepare-npm-cli-packages.sh --output-dir "$package_dir"
+```
+
+`--allow-dirty` is local-test-only and records a private dirty non-candidate. The explicit publication-candidate scripts require exact clean annotated `v0.1.0`, the reviewed `origin/main` SHA, Node 22.19.0/npm 11.6.2, rustc/Cargo 1.97.1, pinned native runners, and external empty outputs. They create exactly two internal native tarballs followed by the launcher; no candidate command publishes.
+
+Run registry-free package/candidate/publish-driver verification with local reviewed Node 22.19.0 and npm 10.9.3 or publication npm 11.6.2:
+
+```bash
+node --test npm/tests/launcher.test.js
+scripts/test-npm-cli-packages.sh
+scripts/test-npm-publication.sh
+```
+
+The package-contained SHA-256 is consistency evidence only. npm tarball integrity and npm SLSA registry provenance are separate acquisition evidence. No independent native-binary signature exists. After npm and both public acceptance jobs pass, the parent maintainer creates the dated `v0.1.0` GitHub Release with no custom assets. See [`contracts/npm-cli-distribution-v1.md`](contracts/npm-cli-distribution-v1.md) and [`releasing.md`](releasing.md).
+
 ## External integrations
 
-The optional native Pi package and bundled Agent Skill are maintained in the separate [`pi-career`](https://github.com/revazi/pi-career) repository. Career Core is not a Pi package; use the external repository's reviewed installation and security guidance rather than registering this checkout.
+The optional native Pi package and bundled Agent Skill are maintained in the separate [`pi-career`](https://github.com/revazi/pi-career) repository. Career Core is not a Pi package; use the external repository's reviewed installation and security guidance rather than registering this checkout. The future npm runner contract and transition gate are in [`pi-career-npm-handoff.md`](pi-career-npm-handoff.md).
 
-## Maintainer-only runtime inputs for `pi-career`
+## Transitional maintainer-only runtime inputs for `pi-career`
 
-`pi-career` may track reviewed native `career` binaries so its users need neither a separately installed CLI nor a Rust toolchain. Career Core provides a bounded preparation mechanism for that repository, not a public installation channel:
+Until the npm handoff removal gate passes, `pi-career` may track reviewed native `career` binaries so its users need neither a separately installed CLI nor a Rust toolchain. Career Core retains this transitional bounded preparation mechanism for that repository, not a public installation channel:
 
 - `.github/workflows/pi-career-runtime-artifacts.yml` runs only by explicit `workflow_dispatch` and is separate from normal Core CI.
 - `scripts/prepare-pi-career-runtime-artifact.sh` provides the same native preparation and verification locally.
@@ -114,7 +147,7 @@ Checksums detect accidental corruption and substitution relative to the release 
 
 ## Package managers
 
-Homebrew, Cargo registry publication, and other package-manager channels are not currently supported. Each channel requires an explicit maintenance and update plan before it can be documented as available.
+`@revazi/career@0.1.0` is the sole approved package-manager consumer surface. Its protected release workflow publishes no crate, Homebrew formula, GitHub Release asset, signature, or other channel. Every other package-manager channel still requires separate explicit maintenance, ownership, security, and publication approval.
 
 Maintainers preparing an approved release must follow [`releasing.md`](releasing.md).
 

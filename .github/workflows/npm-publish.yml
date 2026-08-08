@@ -1,0 +1,457 @@
+name: Publish npm CLI v0.1.0
+run-name: Publish npm CLI v0.1.0 from ${{ inputs.reviewed_sha }} (bootstrap=${{ inputs.bootstrap }})
+
+on:
+  workflow_dispatch:
+    inputs:
+      reviewed_sha:
+        description: Exact reviewed 40-character commit at annotated v0.1.0 and origin/main
+        required: true
+        type: string
+      bootstrap:
+        description: Explicit temporary-token first-publication/recovery mode (default is OIDC-only)
+        required: true
+        type: boolean
+        default: false
+
+permissions: {}
+
+concurrency:
+  group: npm-production-v0.1.0
+  cancel-in-progress: false
+
+jobs:
+  source:
+    name: Verify exact publication source and MSRV
+    runs-on: ubuntu-22.04
+    timeout-minutes: 35
+    permissions:
+      contents: read
+    steps:
+      - name: Check out exact selected tag
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Configure exact publication Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22.19.0'
+
+      - name: Configure exact trusted-publishing npm
+        run: |
+          set -euo pipefail
+          test "$(node --version)" = "v22.19.0"
+          npm install --global --ignore-scripts npm@11.6.2
+          test "$(npm --version)" = "11.6.2"
+
+      - name: Verify reviewed main/tag/version binding
+        env:
+          REVIEWED_SHA: ${{ inputs.reviewed_sha }}
+        run: |
+          set -euo pipefail
+          test "${GITHUB_REF}" = "refs/tags/v0.1.0"
+          test "${GITHUB_REF_NAME}" = "v0.1.0"
+          test "${GITHUB_SHA}" = "${REVIEWED_SHA}"
+          scripts/verify-npm-publication-source.sh \
+            --repository-root "$GITHUB_WORKSPACE" \
+            --expected-ref "$GITHUB_REF" \
+            --reviewed-sha "$REVIEWED_SHA"
+
+      - name: Verify Rust 1.85 MSRV separately
+        run: |
+          set -euo pipefail
+          rustup toolchain install 1.85.0 --profile minimal --no-self-update
+          rustup run 1.85.0 cargo check --workspace --all-targets --all-features --locked
+
+      - name: Configure exact release Rust for publication fixtures
+        run: |
+          set -euo pipefail
+          rustup toolchain install 1.97.1 --profile minimal --no-self-update
+          rustup default 1.97.1
+          rustc --version | grep -q '^rustc 1\.97\.1 '
+          cargo --version | grep -q '^cargo 1\.97\.1 '
+
+      - name: Run registry-free publication fixtures and policy tests
+        run: scripts/test-npm-publication.sh
+
+  native:
+    name: Build and execute internal native candidate (${{ matrix.platform_key }})
+    needs: source
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 35
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-14
+            platform_key: darwin-arm64
+            target: aarch64-apple-darwin
+            runner_os: macOS
+            runner_arch: ARM64
+          - runner: ubuntu-22.04
+            platform_key: linux-x64-gnu
+            target: x86_64-unknown-linux-gnu
+            runner_os: Linux
+            runner_arch: X64
+    steps:
+      - name: Check out exact selected tag
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Configure exact release Rust
+        run: |
+          set -euo pipefail
+          rustup toolchain install 1.97.1 --profile minimal --no-self-update
+          rustup default 1.97.1
+          test "$(rustc --version)" = "$(rustup run 1.97.1 rustc --version)"
+          test "$(cargo --version)" = "$(rustup run 1.97.1 cargo --version)"
+          rustc --version | grep -q '^rustc 1\.97\.1 '
+          cargo --version | grep -q '^cargo 1\.97\.1 '
+
+      - name: Configure exact publication Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22.19.0'
+
+      - name: Configure exact trusted-publishing npm
+        run: |
+          set -euo pipefail
+          test "$(node --version)" = "v22.19.0"
+          npm install --global --ignore-scripts npm@11.6.2
+          test "$(npm --version)" = "11.6.2"
+
+      - name: Reverify exact source on native runner
+        env:
+          REVIEWED_SHA: ${{ inputs.reviewed_sha }}
+        run: |
+          set -euo pipefail
+          test "${GITHUB_REF}" = "refs/tags/v0.1.0"
+          test "${GITHUB_SHA}" = "${REVIEWED_SHA}"
+          scripts/verify-npm-publication-source.sh \
+            --repository-root "$GITHUB_WORKSPACE" \
+            --expected-ref "$GITHUB_REF" \
+            --reviewed-sha "$REVIEWED_SHA"
+
+      - name: Execute launcher and private package parity
+        run: |
+          node --test npm/tests/launcher.test.js
+          scripts/test-npm-cli-packages.sh
+
+      - name: Build one exact public internal native candidate
+        env:
+          REVIEWED_SHA: ${{ inputs.reviewed_sha }}
+        run: |
+          set -euo pipefail
+          runner_image="${ImageOS}-${ImageVersion}"
+          output_dir="$RUNNER_TEMP/npm-native-${{ matrix.platform_key }}"
+          scripts/prepare-npm-publication-native.sh \
+            --output-dir "$output_dir" \
+            --expected-target "${{ matrix.target }}" \
+            --expected-ref "$GITHUB_REF" \
+            --reviewed-sha "$REVIEWED_SHA" \
+            --runner-os "${{ matrix.runner_os }}" \
+            --runner-arch "${{ matrix.runner_arch }}" \
+            --runner-image "$runner_image"
+          test "$(find "$output_dir/tarballs" -maxdepth 1 -type f -name '*.tgz' | wc -l | tr -d ' ')" = "1"
+          test -z "$(find "$output_dir" -type f \( -name '*.sig' -o -name '*.pem' -o -name '*.key' \) -print -quit)"
+
+      - name: Transfer exact native candidate to assembly job
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          name: npm-native-${{ matrix.platform_key }}
+          path: ${{ runner.temp }}/npm-native-${{ matrix.platform_key }}/tarballs/*.tgz
+          if-no-files-found: error
+          retention-days: 1
+          include-hidden-files: false
+
+  assemble:
+    name: Assemble and execute exact three-package candidate
+    needs: [source, native]
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - name: Check out exact selected tag
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Configure exact publication Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22.19.0'
+
+      - name: Configure exact trusted-publishing npm
+        run: |
+          set -euo pipefail
+          test "$(node --version)" = "v22.19.0"
+          npm install --global --ignore-scripts npm@11.6.2
+          test "$(npm --version)" = "11.6.2"
+
+      - name: Download only the two native candidates
+        uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v8.0.0
+        with:
+          pattern: npm-native-*
+          path: ${{ runner.temp }}/npm-native
+          merge-multiple: true
+
+      - name: Assemble launcher last and validate all candidate bytes
+        env:
+          REVIEWED_SHA: ${{ inputs.reviewed_sha }}
+        run: |
+          set -euo pipefail
+          test "${GITHUB_REF}" = "refs/tags/v0.1.0"
+          test "${GITHUB_SHA}" = "${REVIEWED_SHA}"
+          native_dir="$RUNNER_TEMP/npm-native"
+          python3 - "$native_dir" <<'PY'
+          import pathlib
+          import sys
+          root = pathlib.Path(sys.argv[1])
+          expected = {
+              "10-revazi-career-darwin-arm64-0.1.0.tgz",
+              "20-revazi-career-linux-x64-gnu-0.1.0.tgz",
+          }
+          entries = list(root.iterdir())
+          if {path.name for path in entries} != expected:
+              raise SystemExit("downloaded native artifact allowlist mismatch")
+          if any(path.is_symlink() or not path.is_file() for path in entries):
+              raise SystemExit("downloaded native artifacts must be flat regular files")
+          PY
+          scripts/assemble-npm-publication-candidate.sh \
+            --output-dir "$RUNNER_TEMP/npm-publication-candidate" \
+            --darwin-tarball "$native_dir/10-revazi-career-darwin-arm64-0.1.0.tgz" \
+            --linux-tarball "$native_dir/20-revazi-career-linux-x64-gnu-0.1.0.tgz" \
+            --expected-ref "$GITHUB_REF" \
+            --reviewed-sha "$REVIEWED_SHA"
+          scripts/verify-npm-publication-candidate.sh \
+            --candidate-dir "$RUNNER_TEMP/npm-publication-candidate" \
+            --reviewed-sha "$REVIEWED_SHA" \
+            --expected-target x86_64-unknown-linux-gnu
+
+      - name: Transfer only the reviewed publication candidate
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          name: npm-publication-candidate-v0.1.0
+          path: ${{ runner.temp }}/npm-publication-candidate/*
+          if-no-files-found: error
+          retention-days: 1
+          include-hidden-files: false
+
+  publish:
+    name: Publish exact npm candidate
+    needs: [source, assemble]
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    environment:
+      name: npm-production
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Check out only the reviewed publish driver
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+          path: publication-source
+          sparse-checkout: scripts/publish-npm-publication-candidate.sh
+          sparse-checkout-cone-mode: false
+
+      - name: Configure exact publication Node.js without an auth npmrc
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22.19.0'
+
+      - name: Configure exact trusted-publishing npm
+        run: |
+          set -euo pipefail
+          test "$(node --version)" = "v22.19.0"
+          npm install --global --ignore-scripts npm@11.6.2
+          test "$(npm --version)" = "11.6.2"
+
+      - name: Download the exact reviewed candidate
+        uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v8.0.0
+        with:
+          name: npm-publication-candidate-v0.1.0
+          path: ${{ runner.temp }}/npm-publication-candidate
+
+      - name: Recheck selected source identity before privileged mode
+        env:
+          REVIEWED_SHA: ${{ inputs.reviewed_sha }}
+        run: |
+          set -euo pipefail
+          test "${GITHUB_REF}" = "refs/tags/v0.1.0"
+          test "${GITHUB_SHA}" = "${REVIEWED_SHA}"
+          test -x "$GITHUB_WORKSPACE/publication-source/scripts/publish-npm-publication-candidate.sh"
+
+      - name: Publish explicit bootstrap/recovery with temporary granular token
+        if: ${{ inputs.bootstrap }}
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          REVIEWED_SHA: ${{ inputs.reviewed_sha }}
+        run: |
+          "$GITHUB_WORKSPACE/publication-source/scripts/publish-npm-publication-candidate.sh" \
+            --mode bootstrap \
+            --candidate-dir "$RUNNER_TEMP/npm-publication-candidate" \
+            --reviewed-sha "$REVIEWED_SHA"
+
+      - name: Publish default steady-state with OIDC trusted publishing only
+        if: ${{ !inputs.bootstrap }}
+        env:
+          REVIEWED_SHA: ${{ inputs.reviewed_sha }}
+        run: |
+          env -u NODE_AUTH_TOKEN \
+            "$GITHUB_WORKSPACE/publication-source/scripts/publish-npm-publication-candidate.sh" \
+            --mode oidc \
+            --candidate-dir "$RUNNER_TEMP/npm-publication-candidate" \
+            --reviewed-sha "$REVIEWED_SHA"
+
+  public-acceptance:
+    name: Public registry acceptance (${{ matrix.platform_key }})
+    needs: publish
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-14
+            platform_key: darwin-arm64
+            native_package: '@revazi/career-darwin-arm64'
+            other_native_package: '@revazi/career-linux-x64-gnu'
+          - runner: ubuntu-22.04
+            platform_key: linux-x64-gnu
+            native_package: '@revazi/career-linux-x64-gnu'
+            other_native_package: '@revazi/career-darwin-arm64'
+    steps:
+      - name: Check out only reviewed deterministic fixtures
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+          path: acceptance-source
+          sparse-checkout: fixtures
+          sparse-checkout-cone-mode: true
+
+      - name: Configure exact public acceptance Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22.19.0'
+
+      - name: Configure exact public acceptance npm
+        run: |
+          set -euo pipefail
+          test "$(node --version)" = "v22.19.0"
+          npm install --global --ignore-scripts npm@11.6.2
+          test "$(npm --version)" = "11.6.2"
+
+      - name: Wait boundedly for exact public package and registry provenance
+        run: |
+          set -euo pipefail
+          export npm_config_audit=false npm_config_fund=false npm_config_update_notifier=false
+          ready=false
+          for attempt in $(seq 1 12); do
+            if version="$(npm view '@revazi/career@0.1.0' version --json 2>/dev/null)" && \
+              attestations="$(npm view '@revazi/career@0.1.0' dist.attestations --json 2>/dev/null)" && \
+              VERSION_JSON="$version" ATTESTATIONS_JSON="$attestations" node - <<'NODE'
+          const version = JSON.parse(process.env.VERSION_JSON);
+          const attestations = JSON.parse(process.env.ATTESTATIONS_JSON);
+          if (version !== "0.1.0") process.exit(1);
+          if (attestations?.provenance?.predicateType !== "https://slsa.dev/provenance/v1") process.exit(1);
+          if (typeof attestations?.url !== "string" || attestations.url.length > 512) process.exit(1);
+          const url = new URL(attestations.url);
+          if (url.protocol !== "https:" || url.hostname !== "registry.npmjs.org") process.exit(1);
+          NODE
+            then
+              ready=true
+              break
+            fi
+            sleep 10
+          done
+          test "$ready" = true
+
+      - name: Acquire only exact public launcher and verify selected native package
+        env:
+          NATIVE_PACKAGE: ${{ matrix.native_package }}
+          OTHER_NATIVE_PACKAGE: ${{ matrix.other_native_package }}
+        run: |
+          set -euo pipefail
+          export npm_config_audit=false npm_config_fund=false npm_config_update_notifier=false
+          export npm_config_cache="$RUNNER_TEMP/npm-public-cache"
+          npx_ready=false
+          for attempt in $(seq 1 6); do
+            if npx --yes --package=@revazi/career@0.1.0 career --version \
+              >"$RUNNER_TEMP/npx-version.stdout" 2>"$RUNNER_TEMP/npx-version.stderr"; then
+              npx_ready=true
+              break
+            fi
+            sleep 10
+          done
+          test "$npx_ready" = true
+          test "$(cat "$RUNNER_TEMP/npx-version.stdout")" = "career 0.1.0"
+          test ! -s "$RUNNER_TEMP/npx-version.stderr"
+
+          consumer="$RUNNER_TEMP/public-consumer"
+          mkdir -p "$consumer"
+          printf '%s\n' \
+            '{' \
+            '  "name": "career-public-registry-acceptance",' \
+            '  "version": "0.0.0",' \
+            '  "private": true,' \
+            '  "dependencies": {"@revazi/career": "0.1.0"}' \
+            '}' >"$consumer/package.json"
+          install_ready=false
+          for attempt in $(seq 1 6); do
+            if (cd "$consumer" && npm install --ignore-scripts --no-audit --no-fund --no-package-lock) \
+              >"$RUNNER_TEMP/public-install.stdout" 2>"$RUNNER_TEMP/public-install.stderr"; then
+              install_ready=true
+              break
+            fi
+            rm -rf "$consumer/node_modules"
+            sleep 10
+          done
+          test "$install_ready" = true
+          test -x "$consumer/node_modules/.bin/career"
+          test -x "$consumer/node_modules/${NATIVE_PACKAGE}/career"
+          test ! -e "$consumer/node_modules/${OTHER_NATIVE_PACKAGE}"
+          test "$(find "$consumer/node_modules/@revazi" -mindepth 1 -maxdepth 1 -type d | wc -l | tr -d ' ')" = "2"
+
+      - name: Verify public launcher deterministic parity without source/PATH fallback
+        env:
+          NATIVE_PACKAGE: ${{ matrix.native_package }}
+        run: |
+          set -euo pipefail
+          consumer="$RUNNER_TEMP/public-consumer"
+          launcher="$consumer/node_modules/.bin/career"
+          native="$consumer/node_modules/${NATIVE_PACKAGE}/career"
+          fixtures="$GITHUB_WORKSPACE/acceptance-source/fixtures"
+          test "$($launcher --version)" = "career 0.1.0"
+          test "$($native --version)" = "career 0.1.0"
+          "$launcher" capabilities >"$RUNNER_TEMP/capabilities.json"
+          cmp "$RUNNER_TEMP/capabilities.json" "$fixtures/managed-adapter/phase8/capabilities.pre-phase8.expected.json"
+          "$launcher" operations >"$RUNNER_TEMP/operations.json"
+          cmp "$RUNNER_TEMP/operations.json" "$fixtures/managed-adapter/phase8/operation-catalog.expected.json"
+          "$launcher" schema list --format json-compact >"$RUNNER_TEMP/schema-list.json"
+          "$launcher" schema export --id career.job_match.v1 --format json-compact >"$RUNNER_TEMP/schema-export.json"
+          "$launcher" schema bundle --id career.job_match_input.v1 --format json-compact >"$RUNNER_TEMP/schema-bundle.json"
+          python3 -m json.tool "$RUNNER_TEMP/schema-list.json" >/dev/null
+          python3 -m json.tool "$RUNNER_TEMP/schema-export.json" >/dev/null
+          python3 -m json.tool "$RUNNER_TEMP/schema-bundle.json" >/dev/null
+          "$launcher" resume analyze \
+            --input "$fixtures/resume/phase3/complete-analysis.input.json" \
+            >"$RUNNER_TEMP/resume-analysis.json"
+          cmp "$RUNNER_TEMP/resume-analysis.json" "$fixtures/resume/phase3/complete-analysis.expected.json"
+          "$launcher" job match \
+            --input "$fixtures/job/phase4b/complete-match.input.json" \
+            >"$RUNNER_TEMP/job-match.json"
+          cmp "$RUNNER_TEMP/job-match.json" "$fixtures/job/phase4b/complete-match.expected.json"

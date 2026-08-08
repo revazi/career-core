@@ -375,6 +375,45 @@ The native Pi package, bundled Agent Skill, `career_run` implementation, handles
 - artifact metadata retains prior provenance/target/executable/license/synthetic gates and proves every new compatibility contract
 - complete Rust/CLI/schema/MSRV/Swift/artifact verification passes with no Swift output change
 
+## Phase 9 — npm CLI distribution and publication completion
+
+### Goal
+
+Publish the unchanged native `career` CLI through one exact user-facing npm package while preserving deterministic Core authority and leaving only the separate `pi-career` consumer migration.
+
+### Scope
+
+- private source template for exact `@revazi/career@0.1.0`, bin `career`, annotated tag `v0.1.0`
+- exactly two lockstep internal optional native implementation packages for `aarch64-apple-darwin` and `x86_64-unknown-linux-gnu`; never consumer surfaces
+- package-local resolution, glibc 2.35 minimum, and mandatory older/malformed/musl/unknown rejection
+- strict versioned package/provenance/binary type/mode/size/format/SHA-256 checks and transparent argv/inherited-stdio/exit/signal behavior
+- explicit separation of npm registry integrity/SLSA provenance, package-contained consistency hashing, and absent independent native signatures
+- private dirty non-candidate testing plus clean reviewed main/annotated-tag candidate staging outside the checkout
+- exact Node 22.19.0/npm 11.6.2, rustc/Cargo 1.97.1, `macos-14` ARM64, and `ubuntu-22.04` x64/glibc 2.35 release builds; separate Rust 1.85 MSRV verification
+- exactly Darwin native, Linux native, then launcher tarballs with strict flat allowlists and publication manifest
+- protected manual `npm-production` workflow with explicit temporary-token bootstrap/recovery and default OIDC-only steady state, no fallback
+- exact integrity/provenance/idempotence/conflict gates and no-secret public-registry acceptance on both supported hosts
+- parent-maintainer GitHub Release with dated notes only after npm/public acceptance, attached to annotated `v0.1.0` and containing no custom assets
+- retained transitional `pi-career` runtime-artifact path and exact public-package consumer handoff
+
+### Out of scope
+
+- runtime downloads/network/telemetry/provider/model behavior, install hooks, PATH fallback inside the launcher, musl or older glibc support, independent binary signatures/signing keys, notarization, crate publication, custom GitHub Release assets, additional targets, or `pi-career` source changes
+- any change to Core algorithms, schemas, capabilities, operation catalog, successful operation bytes/order/warnings/evidence/uncertainty/assisted authority, the 32 MiB output ceiling, or Swift behavior
+- repository/registry operations from implementation agents; merge/tag/workflow dispatch/bootstrap/trust/publication are parent-maintainer actions after approval
+
+### Acceptance
+
+- all source templates remain `private: true`; only exact external candidate staging removes guards and adds public/provenance metadata
+- exact clean fetched `origin/main`, explicit reviewed SHA, annotated unmoved `v0.1.0`, lockstep Rust/npm versions, and exact release toolchain/runners are mandatory
+- Linux package/runtime requires glibc 2.35+, with build-host and symbol-floor checks; all unsupported libc/targets fail closed
+- candidate package/property/file/mode/source-byte and artifact-directory allowlists reject extra fields/files/directories/FIFOs/symlinks/nesting, lifecycle scripts, dependencies, and provenance/target/hash drift
+- offline extracted candidates preserve every stable operation and synthetic npx-equivalent package-bin behavior
+- fake-registry tests prove bootstrap/OIDC isolation, no token fallback, exact partial/idempotent recovery, conflicts, transient/auth failure, native-before-launcher ordering, and missing/malformed/eventually-consistent attestations
+- publish workflow uses pinned immutable GitHub-owned actions, minimum permissions, protected environment, exact npm provenance/public access, and no unrelated publication/release/signing behavior
+- actual completion requires both public-registry matrix smokes acquiring only exact `@revazi/career@0.1.0` and verifying the correct internal native implementation plus deterministic parity
+- complete Rust/MSRV/Swift/managed-adapter/transitional-artifact/npm/parity/Fallow verification and independent review pass with no existing contract-byte change
+
 ### Other candidate work (not approved)
 
-Python bindings, MCP, WASM, package-manager distribution, signed binaries, and every other adapter still require their own design note, threat model, maintenance owner, and explicit approval.
+Python bindings, MCP, WASM, signed binaries, additional package-manager channels, and every other adapter still require their own design note, threat model, maintenance owner, and explicit approval.

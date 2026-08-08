@@ -1,0 +1,48 @@
+{
+  "name": "@revazi/career",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Deterministic local Career Core CLI for resume evaluation and job matching",
+  "license": "MIT OR Apache-2.0",
+  "author": "Revaz Zakalashvili",
+  "homepage": "https://github.com/revazi/career-core#readme",
+  "bugs": {
+    "url": "https://github.com/revazi/career-core/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/revazi/career-core.git"
+  },
+  "keywords": [
+    "career",
+    "resume",
+    "job-search",
+    "matching",
+    "cli"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "bin": {
+    "career": "bin/career.js"
+  },
+  "files": [
+    "bin/career.js",
+    "README.md",
+    "LICENSE-MIT",
+    "LICENSE-APACHE",
+    "THIRD_PARTY_NOTICES.md"
+  ],
+  "optionalDependencies": {
+    "@revazi/career-darwin-arm64": "0.1.0",
+    "@revazi/career-linux-x64-gnu": "0.1.0"
+  },
+  "career_launcher": {
+    "schema_version": "career.npm_launcher.v1",
+    "executable": "career",
+    "platform_packages": [
+      "@revazi/career-darwin-arm64",
+      "@revazi/career-linux-x64-gnu"
+    ]
+  }
+}

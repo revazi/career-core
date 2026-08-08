@@ -43,6 +43,9 @@ Before review:
 
 ```bash
 scripts/verify-installed-cli.sh
+node --test npm/tests/launcher.test.js
+scripts/test-npm-cli-packages.sh
+scripts/test-npm-publication.sh
 cargo fmt --all --check
 cargo clippy --workspace --all-targets --all-features -- -D warnings
 cargo test --workspace --all-features
@@ -79,7 +82,7 @@ scripts/test-pi-career-runtime-artifact.sh
 git diff --check
 ```
 
-If the CLI contract changes, also invoke every changed command in canonical and compact modes (plus text where supported) and parse JSON independently. Managed-adapter changes require pinned `check-jsonschema` 0.34.1 through `CHECK_JSONSCHEMA_BIN`, all emitted bundles checked against the Draft 2020-12 metaschema, representative instances validated against bundles, and exact-bound/one-byte-over output checks. For distribution changes, install the CLI into a temporary root from a clean clone and run capability/operation/schema discovery and bundling through the installed binary outside the checkout.
+If the CLI contract changes, also invoke every changed command in canonical and compact modes (plus text where supported) and parse JSON independently. Managed-adapter changes require pinned `check-jsonschema` 0.34.1 through `CHECK_JSONSCHEMA_BIN`, all emitted bundles checked against the Draft 2020-12 metaschema, representative instances validated against bundles, and exact-bound/one-byte-over output checks. For distribution changes, install the CLI into a temporary root from a clean clone and run capability/operation/schema discovery and bundling through the installed binary outside the checkout. Phase 9 npm changes additionally require Node launcher/adversarial/signal tests; private offline `npm pack`; exact tarball/install allowlists/licenses/modes; current-host all-operation parity; and `scripts/test-npm-publication.sh`. Publication fixtures must cover clean annotated main/tag/SHA binding, dirty/missing/lightweight/moved/non-main/version rejection, exact candidate property sets/bytes/modes/order, wrong SHA/target/provenance, artifact nesting/extra entry types, bootstrap/OIDC auth isolation, exact partial retries/conflicts, native-before-launcher behavior, npm registry attestation validation, and synthetic npx-equivalent execution without contacting npm. Dirty local stages remain private non-candidates.
 
 For Swift-boundary or final phase-status changes on macOS:
 
@@ -94,7 +97,9 @@ Regeneration must leave checked-in `CareerCore.swift` byte-equivalent. Inspect X
 
 The normal hosted CI workflow runs only by explicit `workflow_dispatch`; pull requests and pushes do not start Linux or macOS jobs automatically. Complete local verification first, then dispatch that workflow once for the final reviewed head when hosted verification is required. Concurrency cancellation prevents a superseded manual run from continuing to consume runner time.
 
-The separate `pi-career-runtime-artifacts.yml` workflow is also manual-only and must not be folded into normal CI. It prepares short-retention unsigned native CLI archives only as maintainer inputs to the external `pi-career` repository. Run it only for an exact reviewed commit; importing or tracking an archive is a separate `pi-career` review step, not a Core release.
+The separate `pi-career-runtime-artifacts.yml` workflow is also manual-only and must not be folded into normal CI. It remains a transitional short-retention unsigned native CLI handoff to the external `pi-career` repository. Run it only for an exact reviewed commit; importing or tracking an archive is a separate `pi-career` review step, not a Core release.
+
+The Phase 9 `npm-cli-packages.yml` workflow remains manual preparation-only. The separate `npm-publish.yml` workflow is the only npm publication path: exact manual `v0.1.0`/reviewed SHA, protected `npm-production`, pinned Node 22.19.0/npm 11.6.2 and rustc/Cargo 1.97.1, `macos-14`/`ubuntu-22.04`, explicit bootstrap or default OIDC-only mode, exact npm provenance/integrity checks, native packages before launcher, and final no-secret public acceptance on both hosts. It publishes no crate, signature, notarization, GitHub Release, or custom asset. Do not dispatch publication during implementation; the parent maintainer does so only after merge/tag/review and external npm/bootstrap gates.
 
 ## Dependency policy
 

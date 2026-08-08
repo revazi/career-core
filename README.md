@@ -4,7 +4,7 @@
 
 The project is intentionally **not an AI service**. The core performs no network requests and has no LLM dependency. Native applications, command-line tools, and coding-agent integrations can use its versioned evidence and scoring contracts. An opted-in host may submit an external source-grounded proposal for deterministic validation, but provider calls remain outside the authoritative core.
 
-> **Status:** Phases 0–8 are complete. Phase 8 adds only deterministic managed-adapter discovery contracts, self-contained schema bundles, bounded complete machine output, and artifact compatibility evidence. Career Core still owns no managed runtime, handles, persistence, provider/model behavior, UI, or harness package. Further adapters, release publication, and the SwiftUI product remain separately gated.
+> **Status:** Phases 0–8 are complete; Phase 9 prepares exact `@revazi/career@0.1.0` publication around the unchanged CLI. Source templates remain private, publication is protected/manual, and completion requires npm provenance plus public macOS/Linux acceptance. Managed runtime, handles, persistence, providers, UI, independent binary signing, other release channels, and the SwiftUI product remain separately gated.
 
 ## Maintainer and support
 
@@ -34,6 +34,7 @@ Project-authored source is dual-licensed under `MIT OR Apache-2.0` at your optio
 ├── crates/career-cli/           `career` command-line adapter
 ├── crates/career-swift/         narrow UniFFI adapter and pinned bindgen tool
 ├── swift/CareerCoreSwift/       local Swift Package wrapper and smoke tests
+├── npm/                         private npm source templates and launcher tests
 ├── schemas/                     versioned public JSON schemas
 ├── fixtures/                    synthetic reviewed golden contracts
 ├── docs/contracts/              public scoring and limit rules
@@ -48,10 +49,14 @@ The repository root is the `career-core` library package. The CLI is a separate 
 ## Requirements
 
 - Rust 1.85 or newer
+- Node 22.19.0 for npm publication tests (launcher runtime supports Node 22+)
 
 ## Build and verify
 
 ```bash
+node --test npm/tests/launcher.test.js
+scripts/test-npm-cli-packages.sh
+scripts/test-npm-publication.sh
 cargo fmt --all --check
 cargo clippy --workspace --all-targets --all-features -- -D warnings
 cargo test --workspace --all-features
@@ -68,9 +73,15 @@ career capabilities --format json-compact
 career operations --format json-compact
 ```
 
-No release binaries or package-manager channels are published yet. See [`docs/distribution.md`](docs/distribution.md) for source installation and future checksum verification.
+Run the exact npm package after its protected release completes:
 
-The optional native Pi integration and its bundled skill are maintained separately in [`pi-career`](https://github.com/revazi/pi-career). This repository is not a Pi package.
+```bash
+npx --yes --package=@revazi/career@0.1.0 career --version
+```
+
+The only approved package-manager consumer surface is exact `@revazi/career@0.1.0`, bin `career`; native optional packages are internal implementation details. Source templates remain `private: true`, and only the protected reviewed candidate/workflow path may create and publish external tarballs. No crate, GitHub Release binary, Homebrew formula, or other channel is included. See [`docs/distribution.md`](docs/distribution.md), [`docs/contracts/npm-cli-distribution-v1.md`](docs/contracts/npm-cli-distribution-v1.md), and [`docs/releasing.md`](docs/releasing.md).
+
+The optional native Pi integration and its bundled skill are maintained separately in [`pi-career`](https://github.com/revazi/pi-career). This repository is not a Pi package; [`docs/pi-career-npm-handoff.md`](docs/pi-career-npm-handoff.md) is only a future transition contract.
 
 ## Coding-agent discovery
 
@@ -335,10 +346,11 @@ The detailed, gated roadmap lives in [`.agents/phases.md`](.agents/phases.md). I
 6. Swift bindings for a later SwiftUI application
 7. evidence-linked assisted resume review
 8. managed-adapter discovery support for the approved external consumer, while harness-specific runtime packages remain separately owned
+9. exact `@revazi/career` npm launcher/native packaging and protected publication completion
 
 ## Security and privacy
 
-The core is designed to process sensitive career documents locally. It must not add telemetry, remote fetching, hidden model calls, or payload logging. External enrichment is explicit and host-controlled: the host owns consent, keys, prompts, and network calls, while the core validates only the submitted proposal. See [`SECURITY.md`](SECURITY.md) and [`.agents/architecture.md`](.agents/architecture.md).
+The core is designed to process sensitive career documents locally. It must not add telemetry, remote fetching, hidden model calls, or payload logging. The npm launcher also performs no network request: it fails closed on target/libc/package/provenance/binary inconsistencies and preserves native process bytes. npm/npx acquisition is a separate registry action; publication uses protected OIDC/provenance controls. External enrichment remains explicit and host-controlled. See [`SECURITY.md`](SECURITY.md) and [`.agents/architecture.md`](.agents/architecture.md).
 
 ## Contributing
 

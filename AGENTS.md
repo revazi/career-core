@@ -53,6 +53,7 @@ Pi loads this `AGENTS.md` automatically. The detailed `.agents/*.md` files are d
 - Root package `career-core`: pure domain models and deterministic algorithms.
 - `crates/career-cli`: argument parsing, files/stdin, JSON serialization, exit codes, and human output.
 - `crates/career-swift`: pinned UniFFI JSON facade, Swift error mapping, and local binding generation only.
+- `npm/`: private source templates for the `@revazi/career` launcher and internal native optional packages; public candidates, generated binaries, and provenance are staged outside the checkout only.
 - Future Python or agent adapters depend on `career-core`; the core never depends on adapters.
 - Keep CLI-only dependencies out of the root library package.
 
@@ -86,6 +87,9 @@ Run all checks before requesting review. The managed-adapter validator requires 
 
 ```bash
 scripts/verify-installed-cli.sh
+node --test npm/tests/launcher.test.js
+scripts/test-npm-cli-packages.sh
+scripts/test-npm-publication.sh
 cargo fmt --all --check
 cargo clippy --workspace --all-targets --all-features -- -D warnings
 cargo test --workspace --all-features
@@ -121,6 +125,8 @@ cargo run --quiet -p career-cli -- job match \
 scripts/test-pi-career-runtime-artifact.sh
 ```
 
+The npm tests use offline/ignore-scripts temporary staging and fake-registry publication-driver fixtures; they do not contact npm or publish. Source templates must retain `private: true`. Only the protected reviewed candidate path may remove guards outside the checkout. Do not invoke either manual npm workflow, use credentials, query/publish npm, create tags/releases, or perform parent-maintainer repository operations from an implementation session.
+
 On macOS with Xcode and the reviewed Rust Apple targets installed, also run:
 
 ```bash
@@ -136,7 +142,7 @@ Also run `git diff --check`. If a public schema changes, validate examples and e
 - Do not push feature work directly to `main`.
 - Keep commits imperative and narrowly scoped.
 - Use squash merges after explicit approval and green CI.
-- Do not create a release or publish a crate without explicit approval.
+- Do not create a release or publish a crate/package from an implementation session; approved npm repository/registry operations belong to the parent maintainer after review.
 
 ## Expected task report
 

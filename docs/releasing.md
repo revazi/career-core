@@ -1,6 +1,6 @@
 # Release preparation checklist
 
-This checklist defines a repeatable release process but does not authorize publication. Creating a tag, GitHub release, crate publication, or binary upload requires explicit maintainer approval.
+This checklist defines the reviewed release process. The Phase 9 change authorizes the parent maintainer to merge, create annotated `v0.1.0`, and run the protected npm workflow after approval; implementation agents still must not commit, push, merge, tag, dispatch, authenticate, release, or publish.
 
 The current release maintenance owner is [Revaz Zakalashvili](https://github.com/revazi). Ownership and governance are documented in [`../MAINTAINERS.md`](../MAINTAINERS.md).
 
@@ -11,8 +11,9 @@ The current release maintenance owner is [Revaz Zakalashvili](https://github.com
 - record the supported target triples and maintenance owner
 - confirm both licenses and security documentation are included
 - obtain explicit approval to create and upload release artifacts
+- for npm, prove control of `@revazi`, review exact `@revazi/career@0.1.0`, public access, bootstrap/trusted-publisher ownership, and the explicit absent independent-binary-signature policy
 
-No platform is implied merely because it can compile in CI.
+Maintainer observations from 2026-08-09—`npm view` `E404` for all three names, `npm whoami` `E401`, and no GitHub environment/secrets/variables—showed apparent name availability but did not prove `@revazi` ownership. Successful authenticated scope verification remains mandatory. No platform is implied merely because it can compile in CI.
 
 ## 2. Verify a clean source tree
 
@@ -24,6 +25,8 @@ cargo fmt --all --check
 cargo clippy --workspace --all-targets --all-features -- -D warnings
 cargo test --workspace --all-features --locked
 cargo build --workspace --all-features --locked
+node --test npm/tests/launcher.test.js
+scripts/test-npm-cli-packages.sh
 RUSTDOCFLAGS="-D warnings" cargo doc --workspace --all-features --no-deps
 ```
 
@@ -82,6 +85,109 @@ tar -tzf "dist/${artifact}.tar.gz"
 
 Record the runner image, Rust version, target triple, source commit, and exact command in the release notes. Bit-for-bit reproducibility across different archive implementations is not currently claimed.
 
+### npm publication candidate and protected workflow
+
+Keep private local verification available:
+
+```bash
+npm_output="$(mktemp -d)"
+trap 'rm -rf "$npm_output"' EXIT
+scripts/prepare-npm-cli-packages.sh --output-dir "$npm_output"
+node --test npm/tests/launcher.test.js
+scripts/test-npm-cli-packages.sh
+scripts/test-npm-publication.sh
+```
+
+Source templates must remain `private: true`. Never hand-edit a tarball. The candidate path requires exact clean fetched `origin/main`, reviewed SHA, annotated unmoved `v0.1.0`, Node 22.19.0/npm 11.6.2, and exact rustc/Cargo 1.97.1. Linux builds only on `ubuntu-22.04` and must record/require glibc 2.35; Darwin builds on `macos-14` ARM64. Rust 1.85 remains a separate MSRV check, not the release build toolchain.
+
+The protected `.github/workflows/npm-publish.yml` dispatch inputs are:
+
+- `reviewed_sha`: exact 40-character tagged `origin/main` commit;
+- `bootstrap=false`: default OIDC-only steady state;
+- `bootstrap=true`: explicitly approved temporary granular-token first publication or interrupted-bootstrap recovery.
+
+The `npm-production` environment must require maintainer approval. The workflow builds and executes both native packages, assembles exactly Darwin native, Linux native, then `@revazi/career`, validates package and provenance bytes, and publishes with `--access public --provenance --ignore-scripts`. The publish job has only read-only contents plus `id-token: write`; it checks out only the tracked publish driver. No project dependency install, crate publication, signing, notarization, GitHub Release, or custom release asset is allowed.
+
+#### One-time first-publication bootstrap
+
+Package-level trusted publishers cannot be configured before each package exists. Before the first dispatch:
+
+1. Prove npm account/scope ownership independently of the prior `E404` results.
+2. Create one shortest-lived granular npm token with only the minimum public-publish access available for these three package names/scope. Do not use it for interactive trusted-publisher configuration.
+3. Create protected GitHub environment `npm-production` and add the temporary environment secret `NPM_TOKEN`; add no repository-level token fallback.
+4. Dispatch exact `v0.1.0`/reviewed SHA with `bootstrap=true`.
+
+Bootstrap accepts only an absent package name or exact already-published `name@0.1.0` with matching candidate integrity and valid npm SLSA provenance. This permits safe rerun after interruption. A name with no exact reviewed version, conflicting integrity, or missing/malformed registry provenance blocks publication. Native packages always finish before the launcher.
+
+Immediately after successful bootstrap, delete the GitHub environment secret and revoke/delete the granular token in npm. For example, after confirming the workflow result:
+
+```bash
+gh secret delete NPM_TOKEN --env npm-production --repo revazi/career-core
+```
+
+Token revocation in the npm account is also mandatory; the GitHub command alone does not revoke it.
+
+#### Configure steady-state trusted publishing
+
+Trusted-publisher setup is post-bootstrap only. Use exact Node 22.19.0 and exact npm CLI 11.15.0 with supported interactive npm authentication and account 2FA; do not use a bypass-2FA granular access token for `npm trust`. This is a narrow reviewed maintainer-only exception: publication and public acceptance remain pinned to npm 11.6.2, while official `npm trust` is unavailable before npm 11.15.0 and is never executed in the publication workflow. It performs no Career Core package build or publication.
+
+The reviewed npm 11.15.0 registry integrity observed on 2026-08-09 is:
+
+```text
+sha512-+k0tk7lRnpMUPnC7kTuU/yrV/mnFoPhJQ75VfLtZ6fwbzOVXaPsTE/Il9Pn1DHi482byMyqkHv/XsQ76mNjXLw==
+```
+
+Record that value and the successful comparison in the dated release notes. Install the trust-only CLI into a temporary prefix, with scripts disabled, only after exact verification:
+
+```bash
+test "$(node --version)" = "v22.19.0"
+expected_trust_npm_integrity='sha512-+k0tk7lRnpMUPnC7kTuU/yrV/mnFoPhJQ75VfLtZ6fwbzOVXaPsTE/Il9Pn1DHi482byMyqkHv/XsQ76mNjXLw=='
+actual_trust_npm_integrity="$(
+  npm view npm@11.15.0 dist.integrity --json |
+    node -e 'const fs=require("node:fs"); process.stdout.write(JSON.parse(fs.readFileSync(0,"utf8")))'
+)"
+test "$actual_trust_npm_integrity" = "$expected_trust_npm_integrity"
+trust_npm_root="$(mktemp -d)"
+trap 'rm -rf "$trust_npm_root"' EXIT
+npm install --global --prefix "$trust_npm_root" --ignore-scripts npm@11.15.0
+trust_npm="$trust_npm_root/bin/npm"
+test "$($trust_npm --version)" = "11.15.0"
+unset NODE_AUTH_TOKEN NPM_TOKEN
+"$trust_npm" login
+
+"$trust_npm" trust github @revazi/career-darwin-arm64 \
+  --repo revazi/career-core \
+  --file npm-publish.yml \
+  --environment npm-production \
+  --allow-publish
+"$trust_npm" trust github @revazi/career-linux-x64-gnu \
+  --repo revazi/career-core \
+  --file npm-publish.yml \
+  --environment npm-production \
+  --allow-publish
+"$trust_npm" trust github @revazi/career \
+  --repo revazi/career-core \
+  --file npm-publish.yml \
+  --environment npm-production \
+  --allow-publish
+
+"$trust_npm" trust list @revazi/career-darwin-arm64
+"$trust_npm" trust list @revazi/career-linux-x64-gnu
+"$trust_npm" trust list @revazi/career
+```
+
+Review each list result for repository `revazi/career-core`, workflow file `npm-publish.yml`, environment `npm-production`, and publish permission. Keep `NPM_TOKEN` absent, then use only default `bootstrap=false`. OIDC mode creates no auth-token npmrc and fails if `NODE_AUTH_TOKEN` is present or any package name lacks the configured trusted-publisher prerequisite.
+
+Publication success additionally requires exact registry integrity plus bounded validation of `dist.attestations.provenance.predicateType == https://slsa.dev/provenance/v1` and the registry attestations URL. npm registry provenance, npm registry signatures, package-contained SHA-256, and the explicitly absent independent native-binary signature are distinct.
+
+The workflow is not complete until no-secret public-registry acceptance passes on both approved runners using only exact:
+
+```bash
+npx --yes --package=@revazi/career@0.1.0 career --version
+```
+
+The smokes confirm the selected internal optional package and deterministic version/discovery/schema/resume/job parity without a source or PATH binary fallback.
+
 ### Swift artifact preparation
 
 If Swift/XCFramework publication is separately approved, run on a reviewed Apple Silicon macOS runner with the documented Xcode and Rust toolchains:
@@ -114,13 +220,13 @@ Shell glob order keeps the manifest stable for the same asset names. Review `SHA
 
 ## 5. Publish only after final approval
 
-- verify CI is green for the exact source commit
-- review archive contents and execute each binary on its supported platform
-- create the annotated tag and GitHub release only after approval
-- upload archives and `SHA256SUMS` together
-- publish no crate or package-manager formula unless separately approved
-- verify public downloads against the uploaded checksum manifest
-- update installation documentation only for artifacts that actually exist
+- verify local review and CI are green for the exact source commit
+- merge the reviewed change to `main`, then create annotated `v0.1.0` only at that exact commit
+- run only the protected manual npm workflow with the exact reviewed SHA/mode
+- require both no-secret public-registry acceptance jobs to pass before declaring npm complete
+- only after both public acceptance jobs pass, create the GitHub Release for annotated `v0.1.0` with dated notes identifying exact `@revazi/career@0.1.0`, source SHA, npm provenance, supported hosts/glibc floor, and known limitations
+- attach no custom binary asset, checksum archive, signature, notarization, crate publication, or formula to that GitHub Release
+- update installation status only for the exact package/version that passed public acceptance
 
 ## 6. Record provenance
 
@@ -130,7 +236,7 @@ Release notes must include:
 - core and public schema versions
 - supported platforms and target triples
 - Rust toolchain and runner images
-- SHA-256 checksums
+- candidate SHA-256/SHA-512 integrity and npm registry SLSA provenance results
 - known limitations and compatibility impact
 - confirmation that the binary performs no implicit network requests
 

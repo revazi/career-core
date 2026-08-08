@@ -5,6 +5,7 @@
 ```text
 career-cli ─────────► career-core
 career-swift ───────► career-core
+npm launcher ──────► verified native career-cli ─► career-core
 external adapters ─► installed career-cli ─► career-core
 future bindings ───► career-core
 
@@ -14,6 +15,10 @@ career-core ─X─► adapters, UI, persistence, network, LLMs
 The repository root is the default `career-core` library package. Workspace packages are adapters. An adapter may translate inputs and outputs but must not duplicate or override authoritative scoring.
 
 The CLI also owns additive managed-adapter discovery: `career.operation_catalog.v1`, deterministic embedded schema bundles, and successful machine-output enforcement. These remain CLI metadata/transport behavior and do not enter the pure library. Generic raw agents discover capabilities and schemas explicitly. A separately reviewed managed adapter may cache only non-sensitive operation/schema discovery per verified Core version; source documents, complete results, handles, projections, and persistence remain outside this repository.
+
+The Phase 9 `@revazi/career` npm launcher is a distribution adapter around the unchanged native CLI and the only npm consumer surface. Platform packages are internal exact-version optional-dependency implementation details. The launcher owns exact platform/minimum-libc selection, package-local resolution, bounded manifest/provenance/binary consistency checks, and transparent argv/stdin/stdout/stderr/exit/signal process behavior. It has no scoring authority, network/provider behavior, install hook, PATH fallback, runtime dependency, or verification bypass. Linux requires locally confirmed glibc 2.35 or newer; older, malformed, musl, and unknown libc fail closed.
+
+Checked-in templates remain private. The external publication-candidate boundary requires clean annotated `v0.1.0` at exact fetched `origin/main`, reviewed SHA, exact Node/npm and Rust toolchains, approved native runners, strict tar/file/mode/source-byte allowlists, ordered native-before-launcher assembly, and registry-free adversarial verification. The protected publish boundary adds explicit bootstrap-token or default OIDC-only authentication, npm provenance, exact-registry-integrity/idempotence checks, and no-secret public acceptance on both hosts. Generated binaries/provenance remain external staging outputs. npm registry provenance, package-contained SHA-256 consistency, and the absent independent native-binary signature remain distinct.
 
 Authoritative resume analysis always follows the deterministic path:
 
@@ -162,6 +167,7 @@ Do not create empty modules or placeholder traits in advance.
 ## Determinism requirements
 
 - Same core version + same input contract must produce byte-equivalent canonical JSON where documented.
+- The npm launcher must not add, remove, or rewrite native stdout/stderr bytes; packaged/native output remains byte-equivalent.
 - Successful CLI machine JSON is completely serialized before a 33,554,432-byte (32 MiB) ceiling check and any stdout write; it is never silently truncated.
 - Schema bundles retain the requested embedded root and rewrite only recursively known sibling references to root-local JSON Pointers; unknown, remote, or unresolved references fail closed.
 - Use stable collection ordering. Prefer `Vec` and ordered maps at public boundaries.

@@ -1,0 +1,39 @@
+{
+  "name": "@revazi/career-darwin-arm64",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Internal Career Core CLI implementation for Apple Silicon macOS",
+  "license": "MIT OR Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/revazi/career-core.git"
+  },
+  "os": [
+    "darwin"
+  ],
+  "cpu": [
+    "arm64"
+  ],
+  "files": [
+    "career",
+    "provenance.json",
+    "LICENSE-MIT",
+    "LICENSE-APACHE",
+    "THIRD_PARTY_NOTICES.md"
+  ],
+  "exports": {
+    "./package.json": "./package.json"
+  },
+  "career_native": {
+    "schema_version": "career.npm_native_package.v1",
+    "platform_key": "darwin-arm64",
+    "node_platform": "darwin",
+    "node_arch": "arm64",
+    "rust_target": "aarch64-apple-darwin",
+    "binary_file": "career",
+    "provenance_file": "provenance.json",
+    "executable_mode": "0755",
+    "maximum_binary_size_bytes": 16777216,
+    "minimum_glibc_version": null
+  }
+}

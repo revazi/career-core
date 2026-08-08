@@ -48,3 +48,5 @@ This is an additive CLI/public-schema change:
 - Swift facade functions and generated Swift bytes are unchanged
 
 Generic raw agents remain capability/schema discovery-first. A separately reviewed managed adapter may discover the operation catalog and required bundles once per verified `core_version`, cache only this non-sensitive metadata, and keep those bootstrap calls out of model-visible normal workflow.
+
+Phase 9's `@revazi/career` npm launcher is transparent to this contract: it validates and starts the same native executable without rewriting stdout/stderr. Operation catalog, bundle bytes, complete mapping, input/output bounds, and the 33,554,432-byte ceiling remain unchanged. npm package/provenance metadata is a separate distribution contract and does not enter the schema catalog.

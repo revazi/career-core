@@ -14,6 +14,9 @@ List any files, policy versions, and fixtures consulted in `../resume-ai`. Write
 
 List exact commands and results.
 
+- [ ] `node --test npm/tests/launcher.test.js`
+- [ ] `scripts/test-npm-cli-packages.sh`
+- [ ] `scripts/test-npm-publication.sh`
 - [ ] `cargo fmt --all --check`
 - [ ] `cargo clippy --workspace --all-targets --all-features -- -D warnings`
 - [ ] `cargo test --workspace --all-features`
@@ -28,7 +31,8 @@ List exact commands and results.
 - [ ] `cargo run --quiet -p career-cli -- job normalize --input fixtures/job/phase4a/complete-normalization.input.json`
 - [ ] `cargo run --quiet -p career-cli -- job match --input fixtures/job/phase4b/complete-match.input.json`
 - [ ] `git diff --check`
-- [ ] Swift-boundary changes only: `scripts/verify-swift.sh`
+- [ ] Swift-boundary or phase-status changes: `scripts/verify-swift.sh`
+- [ ] npm distribution changes: private current-host staging, publication source/candidate/fake-registry adversarial tests, exact tarball/install allowlists, and packaged/native parity
 
 ## Security and privacy
 
