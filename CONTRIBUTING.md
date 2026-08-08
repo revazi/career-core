@@ -2,6 +2,10 @@
 
 Thank you for helping build `career-core`.
 
+## Maintainer and governance
+
+Career Core is primarily maintained by [Revaz Zakalashvili](https://github.com/revazi). See [`MAINTAINERS.md`](MAINTAINERS.md) for contact, support, ownership, and release-governance details. Use public issues only for sanitized reports; follow [`SECURITY.md`](SECURITY.md) for vulnerabilities.
+
 ## Scope
 
 The project is a deterministic, local-first Rust library with narrow CLI and Swift adapters. Keep LLM/provider calls, API keys, prompts, UI, persistence, remote fetching, billing, and platform-specific behavior outside the core package. Provider-neutral external proposals are untrusted input and must preserve the deterministic baseline.

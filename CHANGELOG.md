@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Versioned, network-free capability discovery.
 - JSON-first `career` CLI for coding-agent discovery.
 - Detailed project and agent workflow documentation.
+- Public maintainer, contact, support, security, ownership, and release-governance documentation.
 - Dual MIT/Apache-2.0 licensing.
 - Versioned `career.resume_input.v1`, `career.resume_evaluation.v1`, and `career.error.v1` contracts.
 - Bounded deterministic resume section-coverage evaluation with exact header aliases, evidence, and uncertainty warnings.
