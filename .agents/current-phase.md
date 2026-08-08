@@ -2,19 +2,41 @@
 
 ## Active phase
 
-**No active implementation phase — Phases 0–7 are complete.**
+**No active implementation phase — Phases 0–8 are complete.**
 
 ## Status
 
-Career Core currently owns the deterministic Rust library, the `career` CLI and embedded public schemas, and the Swift binding boundary. No Core algorithm, CLI/public JSON contract, schema, fixture, dependency, or Swift behavior change is authorized.
+The demonstrated external `pi-career` consumer authorizes only deterministic CLI discovery/bundling/output-bound contracts and maintainer artifact compatibility evidence. Career Core still owns no Pi package, `career_run` runtime, handles, projection, persistence, provider/model behavior, networking, UI, extraction/export, or adapter state.
 
-The native Pi package and bundled Agent Skill are maintained separately in [`pi-career`](https://github.com/revazi/pi-career). This repository does not own Pi adapter source, package metadata, skill discovery, build behavior, or adapter security policy. The generic installed-CLI verifier remains part of Career Core.
+Implemented on the Phase 8 branch:
 
-A bounded maintenance exception is authorized for preparing unsigned native `career` archives as inputs to `pi-career`: only explicitly dispatched native Ubuntu x86_64 GNU/Linux and Apple Silicon macOS jobs, with short retention and machine-readable provenance. This is not an active implementation phase, public Core release/install channel, adapter ownership reversal, or approval for additional targets.
+- additive `career.operation_catalog.v1` with exact runtime `core_version`, 11 one-to-one available capability mappings, four explicit bootstrap operations, stable order/CLI paths/transports/schemas, input ceilings, and a 33,554,432-byte (32 MiB) successful machine-output ceiling
+- deterministic `career schema bundle --id ...` with recursively embedded dependencies, retained root resource, root-local JSON Pointers, and fail-closed unknown/remote reference handling
+- full serialization before successful machine stdout, with exact-bound/one-byte-over tests and schema-valid `output_write_failed` overflow reporting
+- operation-catalog public schema/golden, all-bundle deterministic/local-ref tests, independent installed-binary inspection, Draft 2020-12 metaschema checks, and representative bundled-schema instance validation
+- versioned `career.pi_career_managed_adapter_compatibility.v1` artifact evidence retaining existing source/target/dirty/executable/license/synthetic/no-release gates and adding catalog, mapping, bundle, output-bound, and deterministic-result proofs
+- installed-CLI and CI coverage outside the checkout; generic agents remain discovery-first while reviewed managed adapters may internally cache only non-sensitive metadata per exact Core version
 
-Local maintenance verification passed on Apple Silicon macOS on 2026-08-05: dirty transfer and mismatched-target rejection, locked native release build, bounded metadata/digests, exact five-file archive contents and executable mode, packaged-binary discovery, synthetic resume/job golden parity, the complete Core verification ladder, and the Swift/XCFramework gate. The new artifact workflow was not dispatched during implementation; clean-run macOS and Ubuntu artifact evidence remains a later reviewed-head gate.
+`career.capabilities.v1`, existing capability-backed successful output bytes, unbundled schema-export bytes, Core algorithms, dependencies, Swift facade behavior, and generated Swift bytes are unchanged.
 
-Optional future Core bindings or adapters remain gated by a demonstrated consumer, design/threat review, maintenance owner, and explicit authorization. MCP, provider/model behavior, networking, persistence, UI, publication, release artifacts, and signing remain unapproved.
+Local Phase 8 verification passed on Apple Silicon macOS on 2026-08-08:
+
+- formatting, warnings-denied Clippy, 143 Rust unit/integration test entries, and locked all-feature workspace build passed
+- Rust 1.85.0 checked every workspace target/feature with the lockfile
+- all 11 pre-Phase 8 successful capability outputs and all 25 existing unbundled schema exports were byte-equivalent to clean base `60d4a04a7be1ebd5ca7c7577458bd45fdbb41ab2`
+- actual 32 MiB exact-bound machine JSON succeeded; one byte over failed before stdout and reported schema-valid `output_write_failed`
+- installed-CLI acceptance ran outside the checkout, generated every bundle, and independently proved catalog completeness, schemas, transports, input/output bounds, local refs, and deterministic framing
+- pinned `check-jsonschema` 0.34.1 validated all 26 emitted bundles against the Draft 2020-12 metaschema and validated discovery plus representative operation inputs/outputs against those bundles
+- the complete required CLI ladder passed, including operation catalog and bundle discovery
+- maintainer artifact shell/metadata tests passed target/dirty/output-location/archive/license/synthetic gates plus catalog/mapping/bundle/bound/result compatibility proofs and five adversarial metadata mutations
+- complete `scripts/verify-swift.sh` passed deterministic generated-source, exact Rust/Swift operation parity, macOS/iOS/iOS-simulator XCFramework/checksum/link/build gates with no tracked Swift change
+- shell/Python/CI-YAML syntax, `git diff --check`, Fallow changed-code/all/security, and Markdown link inspection passed; Fallow reported zero findings but recognized no Rust/Swift source files
+
+The manual hosted CI and runtime-artifact workflows were not dispatched from the implementation branch. Final reviewed-head Linux/macOS workflow evidence remains a maintainer review gate, not implementation-time publication approval.
+
+The native Pi package and bundled Agent Skill remain separately maintained in [`pi-career`](https://github.com/revazi/pi-career). Unsigned native archives remain short-retention maintainer handoff inputs for approved native Ubuntu x86_64 GNU/Linux and Apple Silicon macOS runners, not releases or end-user downloads.
+
+MCP, additional bindings/adapters, publication, release artifacts, signing, and additional targets remain unapproved.
 
 ## Earlier completed phase
 

@@ -8,10 +8,11 @@ Start with discovery:
 
 ```bash
 career capabilities --format json-compact
+career operations --format json-compact
 career schema list --format json-compact
 ```
 
-Invoke only capabilities whose status is `available`. Use an explicit input file and capture stdout separately from stderr:
+Invoke only capabilities whose status is `available`. Use `career operations` to map those capabilities to exact CLI paths, transports, schemas, and byte bounds. Bootstrap entries with `capability_id: null` describe operation/schema discovery rather than new Core capabilities. Use an explicit input file and capture stdout separately from stderr:
 
 ```bash
 input_path="/absolute/path/to/job-match-input.json"
@@ -53,13 +54,15 @@ Career Core ships no harness-specific package or bundled Agent Skill. The option
 
 All harnesses may invoke the installed `career` CLI directly using the safe process rules in this document.
 
+Generic raw agents remain discovery-first and should make capability/schema decisions from current installed output. A separately reviewed managed adapter may discover `career operations` and required `schema bundle` documents internally once per verified `core_version`, then cache only that non-sensitive metadata. It must not hide warnings or authority boundaries, cache private documents/results by default, or expose schema bootstrap calls to the model merely to reconstruct exact envelopes.
+
 ## Claude Code and Codex
 
 Grant the agent access only to the local executable and the specific input paths required for the task. In project instructions, require it to:
 
 1. run `career capabilities`
-2. export schemas when it needs an exact contract
-3. use `json-compact` for machine parsing
+2. run `career operations` and export or bundle schemas when it needs an exact contract
+3. use `json-compact` for machine parsing and enforce the declared 33,554,432-byte (32 MiB) complete-result ceiling
 4. preserve evidence, uncertainty, and warnings
 5. request approval before sending any source content to an external service
 
@@ -73,7 +76,7 @@ Pass an argument vector rather than constructing a shell string. For example:
 ["career", "job", "match", "--input", input_path, "--format", "json-compact"]
 ```
 
-Read stdout and stderr independently, enforce a caller-owned timeout, and branch on the documented exit status. Do not retry typed validation failures without changing the input.
+Read stdout and stderr independently, enforce a caller-owned timeout, and branch on the documented exit status. Capture stdout through the operation's declared successful-output ceiling and reject any incomplete/oversized stream; the CLI itself serializes before writing and never truncates successful JSON. Do not retry typed validation failures without changing the input.
 
 ## Interpretation rules
 

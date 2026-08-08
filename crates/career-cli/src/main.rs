@@ -1,5 +1,6 @@
 #![forbid(unsafe_code)]
 
+mod operation;
 mod schema;
 
 use std::fs::File;
@@ -23,11 +24,13 @@ use career_core::{
     review_resume_analysis_suggestions, review_resume_variant,
 };
 use clap::{Parser, Subcommand, ValueEnum, error::ErrorKind};
-use schema::{SchemaCatalogV1, SchemaId, embedded_schema, schema_catalog};
+use operation::{
+    MAX_CLI_COMPOSITE_INPUT_BYTES, MAX_CLI_INPUT_BYTES, MAX_SUCCESSFUL_MACHINE_OUTPUT_BYTES,
+    operation_catalog,
+};
+use schema::{SchemaCatalogV1, SchemaId, embedded_schema, schema_bundle, schema_catalog};
 use serde_json::json;
 
-const MAX_CLI_INPUT_BYTES: usize = 262_144;
-const MAX_CLI_JOB_MATCH_INPUT_BYTES: usize = 1_048_576;
 const EXIT_INPUT_IO: u8 = 3;
 const EXIT_INVALID_JSON: u8 = 4;
 const EXIT_INVALID_INPUT: u8 = 5;
@@ -51,6 +54,12 @@ enum Command {
         /// Select machine-readable JSON or concise human-readable text.
         #[arg(long, value_enum, default_value_t = OutputFormat::Json)]
         format: OutputFormat,
+    },
+    /// Report stable callable CLI operations and their exact machine contracts.
+    Operations {
+        /// Select canonical pretty JSON or one-line compact JSON.
+        #[arg(long, value_enum, default_value_t = JsonOutputFormat::Json)]
+        format: JsonOutputFormat,
     },
     /// Discover or export embedded public JSON schemas.
     Schema {
@@ -79,6 +88,15 @@ enum SchemaCommand {
     },
     /// Export one embedded JSON Schema document by contract ID.
     Export {
+        /// Exact contract ID reported by `career schema list`.
+        #[arg(long, value_enum)]
+        id: SchemaId,
+        /// Select canonical pretty JSON or one-line compact JSON.
+        #[arg(long, value_enum, default_value_t = JsonOutputFormat::Json)]
+        format: JsonOutputFormat,
+    },
+    /// Bundle one embedded schema and every recursive sibling reference.
+    Bundle {
         /// Exact contract ID reported by `career schema list`.
         #[arg(long, value_enum)]
         id: SchemaId,
@@ -326,9 +344,9 @@ impl CliFailure {
                     "message": message,
                     "field_path": field_path,
                 });
-                serialize_json_line(error_output, &document, format)
+                write_json_line_unbounded(error_output, &document, format)
             }
-            Self::Core(error) => serialize_json_line(error_output, error, format),
+            Self::Core(error) => write_json_line_unbounded(error_output, error, format),
         };
 
         let _ = result;
@@ -373,9 +391,12 @@ impl Cli {
     fn output_format(&self) -> OutputFormat {
         match &self.command {
             Command::Capabilities { format } => *format,
+            Command::Operations { format } => (*format).into(),
             Command::Schema { command } => match command {
                 SchemaCommand::List { format } => *format,
-                SchemaCommand::Export { format, .. } => (*format).into(),
+                SchemaCommand::Export { format, .. } | SchemaCommand::Bundle { format, .. } => {
+                    (*format).into()
+                }
             },
             Command::Resume { command } => match command {
                 ResumeCommand::Evaluate { format, .. }
@@ -407,6 +428,7 @@ fn run(
                 _ => write_json(output, &document, format),
             }
         }
+        Command::Operations { format } => write_json(output, &operation_catalog(), format.into()),
         Command::Schema {
             command: SchemaCommand::List { format },
         } => {
@@ -419,6 +441,12 @@ fn run(
         Command::Schema {
             command: SchemaCommand::Export { id, format },
         } => write_embedded_schema(output, id, format.into()),
+        Command::Schema {
+            command: SchemaCommand::Bundle { id, format },
+        } => {
+            let bundle = schema_bundle(id).map_err(|_| CliFailure::output_failure())?;
+            write_json(output, &bundle, format.into())
+        }
         Command::Resume {
             command: ResumeCommand::Evaluate { input, format },
         } => {
@@ -518,7 +546,7 @@ fn run(
                 &input,
                 standard_input,
                 "resume-variant-review",
-                MAX_CLI_JOB_MATCH_INPUT_BYTES,
+                MAX_CLI_COMPOSITE_INPUT_BYTES,
             )?;
             let review_input = serde_json::from_slice::<ResumeVariantReviewInputV1>(&input_bytes)
                 .map_err(|error| {
@@ -537,7 +565,7 @@ fn run(
                 &input,
                 standard_input,
                 "resume-variant-materialization",
-                MAX_CLI_JOB_MATCH_INPUT_BYTES,
+                MAX_CLI_COMPOSITE_INPUT_BYTES,
             )?;
             let materialization_input =
                 serde_json::from_slice::<ResumeVariantMaterializationInputV1>(&input_bytes)
@@ -573,7 +601,7 @@ fn run(
                 &input,
                 standard_input,
                 "job-match",
-                MAX_CLI_JOB_MATCH_INPUT_BYTES,
+                MAX_CLI_COMPOSITE_INPUT_BYTES,
             )?;
             let match_input = serde_json::from_slice::<JobMatchInputV1>(&input_bytes)
                 .map_err(|error| CliFailure::invalid_json(&error, "career.job_match_input.v1"))?;
@@ -628,16 +656,26 @@ fn read_bounded(
 }
 
 fn serialize_json_line(
+    document: &impl serde::Serialize,
+    format: OutputFormat,
+) -> Result<Vec<u8>, serde_json::Error> {
+    let mut bytes = Vec::new();
+    if format.is_compact() {
+        serde_json::to_writer(&mut bytes, document)?;
+    } else {
+        serde_json::to_writer_pretty(&mut bytes, document)?;
+    }
+    bytes.push(b'\n');
+    Ok(bytes)
+}
+
+fn write_json_line_unbounded(
     output: &mut impl Write,
     document: &impl serde::Serialize,
     format: OutputFormat,
 ) -> Result<(), serde_json::Error> {
-    if format.is_compact() {
-        serde_json::to_writer(&mut *output, document)?;
-    } else {
-        serde_json::to_writer_pretty(&mut *output, document)?;
-    }
-    writeln!(output).map_err(serde_json::Error::io)
+    let bytes = serialize_json_line(document, format)?;
+    output.write_all(&bytes).map_err(serde_json::Error::io)
 }
 
 fn write_json(
@@ -645,7 +683,35 @@ fn write_json(
     document: &impl serde::Serialize,
     format: OutputFormat,
 ) -> Result<(), CliFailure> {
-    serialize_json_line(output, document, format).map_err(|_| CliFailure::output_failure())
+    write_json_with_maximum(
+        output,
+        document,
+        format,
+        MAX_SUCCESSFUL_MACHINE_OUTPUT_BYTES,
+    )
+}
+
+fn write_json_with_maximum(
+    output: &mut impl Write,
+    document: &impl serde::Serialize,
+    format: OutputFormat,
+    maximum_bytes: usize,
+) -> Result<(), CliFailure> {
+    let bytes = serialize_json_line(document, format).map_err(|_| CliFailure::output_failure())?;
+    write_machine_bytes(output, &bytes, maximum_bytes)
+}
+
+fn write_machine_bytes(
+    output: &mut impl Write,
+    bytes: &[u8],
+    maximum_bytes: usize,
+) -> Result<(), CliFailure> {
+    if bytes.len() > maximum_bytes {
+        return Err(CliFailure::output_failure());
+    }
+    output
+        .write_all(bytes)
+        .map_err(|_| CliFailure::output_failure())
 }
 
 fn write_embedded_schema(
@@ -660,14 +726,11 @@ fn write_embedded_schema(
         return write_json(output, &document, format);
     }
 
-    output
-        .write_all(schema.document.as_bytes())
-        .map_err(|_| CliFailure::output_failure())?;
-    if schema.document.ends_with('\n') {
-        Ok(())
-    } else {
-        writeln!(output).map_err(|_| CliFailure::output_failure())
+    let mut bytes = schema.document.as_bytes().to_vec();
+    if !schema.document.ends_with('\n') {
+        bytes.push(b'\n');
     }
+    write_machine_bytes(output, &bytes, MAX_SUCCESSFUL_MACHINE_OUTPUT_BYTES)
 }
 
 fn write_schema_catalog_text(
@@ -1178,6 +1241,45 @@ fn write_resume_variant_text(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn successful_machine_output_bound_accepts_exact_size_and_rejects_one_byte_over() {
+        assert_eq!(
+            serialize_json_line(&"\u{001f}", OutputFormat::JsonCompact)
+                .expect("control scalar should serialize"),
+            b"\"\\u001f\"\n"
+        );
+
+        let exact_document = "x".repeat(MAX_SUCCESSFUL_MACHINE_OUTPUT_BYTES - 3);
+        let mut exact_output = Vec::new();
+        write_json(
+            &mut exact_output,
+            &exact_document,
+            OutputFormat::JsonCompact,
+        )
+        .expect("exact-bound output should succeed");
+        assert_eq!(exact_output.len(), MAX_SUCCESSFUL_MACHINE_OUTPUT_BYTES);
+        assert_eq!(exact_output.first(), Some(&b'"'));
+        assert!(exact_output.ends_with(b"\"\n"));
+        drop(exact_output);
+        drop(exact_document);
+
+        let oversized_document = "x".repeat(MAX_SUCCESSFUL_MACHINE_OUTPUT_BYTES - 2);
+        let mut oversized_output = Vec::new();
+        let error = write_json(
+            &mut oversized_output,
+            &oversized_document,
+            OutputFormat::JsonCompact,
+        )
+        .expect_err("one-byte-over output should fail");
+        assert_eq!(error.exit_code(), EXIT_OUTPUT_FAILURE);
+        assert!(oversized_output.is_empty());
+        let mut error_output = Vec::new();
+        error.report(OutputFormat::JsonCompact, &mut error_output);
+        let error_document: serde_json::Value =
+            serde_json::from_slice(&error_output).expect("output failure should be JSON");
+        assert_eq!(error_document["code"], "output_write_failed");
+    }
 
     #[test]
     fn text_output_identifies_available_features() {

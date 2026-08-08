@@ -27,7 +27,7 @@ cargo build --workspace --all-features --locked
 RUSTDOCFLAGS="-D warnings" cargo doc --workspace --all-features --no-deps
 ```
 
-Run every CLI golden command listed in [`../AGENTS.md`](../AGENTS.md), export every embedded schema, and validate the schema catalog plus all exported documents with an independent Draft 2020-12 validator.
+Run every CLI golden command listed in [`../AGENTS.md`](../AGENTS.md), preserve the capability and operation-catalog goldens, export every embedded schema, emit every self-contained bundle, and run `scripts/verify-managed-adapter-contracts.sh target/debug/career` with pinned `check-jsonschema` 0.34.1. The independent gate validates every bundle against the Draft 2020-12 metaschema and representative instances.
 
 Repeat installation from a clean clone:
 
@@ -36,6 +36,9 @@ install_root="$(mktemp -d)"
 cargo install --path crates/career-cli --locked --root "$install_root"
 "$install_root/bin/career" --version
 "$install_root/bin/career" capabilities --format json-compact
+"$install_root/bin/career" operations --format json-compact
+"$install_root/bin/career" schema bundle \
+  --id career.job_match_input.v1 --format json-compact
 rm -rf "$install_root"
 ```
 
@@ -61,8 +64,12 @@ Before packaging, run the built binary directly:
 ```bash
 "dist/$artifact/career" --version
 "dist/$artifact/career" capabilities --format json-compact
+"dist/$artifact/career" operations --format json-compact
 "dist/$artifact/career" schema export \
   --id career.job_match.v1 \
+  --format json-compact
+"dist/$artifact/career" schema bundle \
+  --id career.job_match_input.v1 \
   --format json-compact
 ```
 

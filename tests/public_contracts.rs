@@ -20,6 +20,10 @@ const SCHEMAS: &[(&str, &str)] = &[
         include_str!("../schemas/schema-catalog-v1.schema.json"),
     ),
     (
+        "operation-catalog-v1",
+        include_str!("../schemas/operation-catalog-v1.schema.json"),
+    ),
+    (
         "resume-input-v1",
         include_str!("../schemas/resume-input-v1.schema.json"),
     ),

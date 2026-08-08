@@ -20,8 +20,13 @@ run_installed() {
 }
 
 run_installed capabilities --format json-compact
+run_installed operations --format json-compact
 run_installed schema list --format json-compact
 run_installed schema export --id career.job_match_input.v1 --format json-compact
+run_installed schema bundle --id career.job_match_input.v1 --format json-compact
+python3 "$repository_root/scripts/validate-managed-adapter-contracts.py" \
+  --career "$career" \
+  --output-dir "$temporary_root/managed-adapter-validation"
 run_installed resume analyze \
   --input "$repository_root/fixtures/resume/phase3/complete-analysis.input.json" \
   --format json-compact

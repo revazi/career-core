@@ -38,6 +38,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Separate review-only external resume-analysis replacement contracts with fresh deterministic baseline reruns, action/check binding, exact source before/proposed-after values, no-change rejection, core-assigned identifiers, payload-free discards, and CLI/schema/Swift parity for non-authoritative diff display.
 - Temporary-root installed-CLI acceptance covering capability/schema discovery and representative resume, job, and assisted-review commands outside the checkout.
 - Separate maintainer-dispatched native runtime artifact preparation for reviewed `pi-career` imports, with fail-closed target checks, bounded provenance/digests, synthetic execution, and short retention; this is not a public Core release channel.
+- Versioned `career.operation_catalog.v1` discovery with stable capability/operation mapping, bootstrap commands, exact CLI paths, input transports, schemas, and byte ceilings.
+- Deterministic offline `career schema bundle` output with recursive embedded-reference rewriting and no unresolved or remote `$ref`.
+- A 33,554,432-byte (32 MiB) complete successful machine-JSON ceiling enforced after serialization and before stdout writes, with exact-bound and overflow coverage.
+- Versioned managed-adapter compatibility metadata for maintainer runtime artifacts, including catalog/schema digests, complete mappings, representative bundle digests, declared output bounds, deterministic result digests, and adversarial tamper tests.
+- Independent installed-binary validation for all schema bundles plus Draft 2020-12 metaschema and representative-instance checks.
 
 ### Changed
 

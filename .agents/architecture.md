@@ -13,6 +13,8 @@ career-core ─X─► adapters, UI, persistence, network, LLMs
 
 The repository root is the default `career-core` library package. Workspace packages are adapters. An adapter may translate inputs and outputs but must not duplicate or override authoritative scoring.
 
+The CLI also owns additive managed-adapter discovery: `career.operation_catalog.v1`, deterministic embedded schema bundles, and successful machine-output enforcement. These remain CLI metadata/transport behavior and do not enter the pure library. Generic raw agents discover capabilities and schemas explicitly. A separately reviewed managed adapter may cache only non-sensitive operation/schema discovery per verified Core version; source documents, complete results, handles, projections, and persistence remain outside this repository.
+
 Authoritative resume analysis always follows the deterministic path:
 
 ```text
@@ -160,6 +162,8 @@ Do not create empty modules or placeholder traits in advance.
 ## Determinism requirements
 
 - Same core version + same input contract must produce byte-equivalent canonical JSON where documented.
+- Successful CLI machine JSON is completely serialized before a 33,554,432-byte (32 MiB) ceiling check and any stdout write; it is never silently truncated.
+- Schema bundles retain the requested embedded root and rewrite only recursively known sibling references to root-local JSON Pointers; unknown, remote, or unresolved references fail closed.
 - Use stable collection ordering. Prefer `Vec` and ordered maps at public boundaries.
 - Normalize case and whitespace explicitly; never depend on host locale.
 - Define integer score ranges and rounding rules before implementation.

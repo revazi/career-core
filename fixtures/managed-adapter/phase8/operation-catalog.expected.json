@@ -1,0 +1,214 @@
+{
+  "schema_version": "career.operation_catalog.v1",
+  "core_version": "0.1.0",
+  "operations": [
+    {
+      "operation_id": "core.capabilities",
+      "capability_id": "core.capabilities",
+      "availability": "available",
+      "cli_path": [
+        "capabilities"
+      ],
+      "input_transport": "none",
+      "input_schema_id": null,
+      "output_schema_id": "career.capabilities.v1",
+      "maximum_input_bytes": null,
+      "maximum_successful_machine_output_bytes": 33554432
+    },
+    {
+      "operation_id": "core.operations",
+      "capability_id": null,
+      "availability": "available",
+      "cli_path": [
+        "operations"
+      ],
+      "input_transport": "none",
+      "input_schema_id": null,
+      "output_schema_id": "career.operation_catalog.v1",
+      "maximum_input_bytes": null,
+      "maximum_successful_machine_output_bytes": 33554432
+    },
+    {
+      "operation_id": "schema.list",
+      "capability_id": null,
+      "availability": "available",
+      "cli_path": [
+        "schema",
+        "list"
+      ],
+      "input_transport": "none",
+      "input_schema_id": null,
+      "output_schema_id": "career.schema_catalog.v1",
+      "maximum_input_bytes": null,
+      "maximum_successful_machine_output_bytes": 33554432
+    },
+    {
+      "operation_id": "schema.export",
+      "capability_id": null,
+      "availability": "available",
+      "cli_path": [
+        "schema",
+        "export"
+      ],
+      "input_transport": "cli_arguments",
+      "input_schema_id": null,
+      "output_schema_id": "https://json-schema.org/draft/2020-12/schema",
+      "maximum_input_bytes": null,
+      "maximum_successful_machine_output_bytes": 33554432
+    },
+    {
+      "operation_id": "schema.bundle",
+      "capability_id": null,
+      "availability": "available",
+      "cli_path": [
+        "schema",
+        "bundle"
+      ],
+      "input_transport": "cli_arguments",
+      "input_schema_id": null,
+      "output_schema_id": "https://json-schema.org/draft/2020-12/schema",
+      "maximum_input_bytes": null,
+      "maximum_successful_machine_output_bytes": 33554432
+    },
+    {
+      "operation_id": "resume.evaluate",
+      "capability_id": "resume.evaluate",
+      "availability": "available",
+      "cli_path": [
+        "resume",
+        "evaluate"
+      ],
+      "input_transport": "json_file_or_stdin",
+      "input_schema_id": "career.resume_input.v1",
+      "output_schema_id": "career.resume_evaluation.v1",
+      "maximum_input_bytes": 262144,
+      "maximum_successful_machine_output_bytes": 33554432
+    },
+    {
+      "operation_id": "resume.analyze",
+      "capability_id": "resume.analyze",
+      "availability": "available",
+      "cli_path": [
+        "resume",
+        "analyze"
+      ],
+      "input_transport": "json_file_or_stdin",
+      "input_schema_id": "career.resume_input.v1",
+      "output_schema_id": "career.resume_analysis.v1",
+      "maximum_input_bytes": 262144,
+      "maximum_successful_machine_output_bytes": 33554432
+    },
+    {
+      "operation_id": "resume.normalize",
+      "capability_id": "resume.normalize",
+      "availability": "available",
+      "cli_path": [
+        "resume",
+        "normalize"
+      ],
+      "input_transport": "json_file_or_stdin",
+      "input_schema_id": "career.resume_input.v1",
+      "output_schema_id": "career.resume_normalization.v1",
+      "maximum_input_bytes": 262144,
+      "maximum_successful_machine_output_bytes": 33554432
+    },
+    {
+      "operation_id": "resume.enrich",
+      "capability_id": "resume.enrich",
+      "availability": "available",
+      "cli_path": [
+        "resume",
+        "enrich"
+      ],
+      "input_transport": "json_file_or_stdin",
+      "input_schema_id": "career.resume_enrichment_input.v1",
+      "output_schema_id": "career.resume_enrichment_result.v1",
+      "maximum_input_bytes": 262144,
+      "maximum_successful_machine_output_bytes": 33554432
+    },
+    {
+      "operation_id": "resume.analysis-suggestions.review",
+      "capability_id": "resume.analysis-suggestions.review",
+      "availability": "available",
+      "cli_path": [
+        "resume",
+        "analysis-suggestions-review"
+      ],
+      "input_transport": "json_file_or_stdin",
+      "input_schema_id": "career.resume_analysis_suggestion_review_input.v1",
+      "output_schema_id": "career.resume_analysis_suggestion_review.v1",
+      "maximum_input_bytes": 262144,
+      "maximum_successful_machine_output_bytes": 33554432
+    },
+    {
+      "operation_id": "resume.analysis-replacements.review",
+      "capability_id": "resume.analysis-replacements.review",
+      "availability": "available",
+      "cli_path": [
+        "resume",
+        "analysis-replacements-review"
+      ],
+      "input_transport": "json_file_or_stdin",
+      "input_schema_id": "career.resume_analysis_replacement_review_input.v1",
+      "output_schema_id": "career.resume_analysis_replacement_review.v1",
+      "maximum_input_bytes": 262144,
+      "maximum_successful_machine_output_bytes": 33554432
+    },
+    {
+      "operation_id": "resume.variant.review",
+      "capability_id": "resume.variant.review",
+      "availability": "available",
+      "cli_path": [
+        "resume",
+        "variant-review"
+      ],
+      "input_transport": "json_file_or_stdin",
+      "input_schema_id": "career.resume_variant_review_input.v1",
+      "output_schema_id": "career.resume_variant_review.v1",
+      "maximum_input_bytes": 1048576,
+      "maximum_successful_machine_output_bytes": 33554432
+    },
+    {
+      "operation_id": "resume.variant.materialize",
+      "capability_id": "resume.variant.materialize",
+      "availability": "available",
+      "cli_path": [
+        "resume",
+        "variant-materialize"
+      ],
+      "input_transport": "json_file_or_stdin",
+      "input_schema_id": "career.resume_variant_materialization_input.v1",
+      "output_schema_id": "career.resume_variant.v1",
+      "maximum_input_bytes": 1048576,
+      "maximum_successful_machine_output_bytes": 33554432
+    },
+    {
+      "operation_id": "job.normalize",
+      "capability_id": "job.normalize",
+      "availability": "available",
+      "cli_path": [
+        "job",
+        "normalize"
+      ],
+      "input_transport": "json_file_or_stdin",
+      "input_schema_id": "career.job_input.v1",
+      "output_schema_id": "career.job_normalization.v1",
+      "maximum_input_bytes": 262144,
+      "maximum_successful_machine_output_bytes": 33554432
+    },
+    {
+      "operation_id": "job.match",
+      "capability_id": "job.match",
+      "availability": "available",
+      "cli_path": [
+        "job",
+        "match"
+      ],
+      "input_transport": "json_file_or_stdin",
+      "input_schema_id": "career.job_match_input.v1",
+      "output_schema_id": "career.job_match.v1",
+      "maximum_input_bytes": 1048576,
+      "maximum_successful_machine_output_bytes": 33554432
+    }
+  ]
+}

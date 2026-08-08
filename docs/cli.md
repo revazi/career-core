@@ -6,8 +6,10 @@ The `career` executable is the universal local adapter for coding agents and scr
 
 ```text
 career capabilities
+career operations
 career schema list
 career schema export --id <contract-id>
+career schema bundle --id <contract-id>
 career resume evaluate --input <path|->
 career resume analyze --input <path|->
 career resume analysis-suggestions-review --input <path|->
@@ -22,7 +24,17 @@ career job match --input <path|->
 
 Run `career <command> --help` for complete flags. Every document operation requires an explicit path; `--input -` reads one JSON document from stdin.
 
-## Output formats
+## Discovery contracts
+
+`career capabilities` remains the unchanged `career.capabilities.v1` availability document. `career operations` is a separate `career.operation_catalog.v1` document with bounded `core_version` and stable descriptor order. It catalogs the complete callable machine surface:
+
+- the 11 existing capability-backed operations use the same `operation_id` and non-null `capability_id`; every available capability appears exactly once
+- `core.operations`, `schema.list`, `schema.export`, and `schema.bundle` are bootstrap operations with `capability_id: null`
+- every descriptor declares availability, CLI path segments, input transport, exact input schema and byte ceiling when it accepts JSON, output schema, and successful machine-output ceiling
+
+This superset is intentional: schema and operation discovery are callable bootstrap commands, but adding them to `career.capabilities.v1` would break that closed v1 schema and its reviewed bytes.
+
+## Output formats and bound
 
 Document operations, capability discovery, and schema listing accept:
 
@@ -33,17 +45,21 @@ Document operations, capability discovery, and schema listing accept:
 | `json-compact` | One JSON document on one line, followed by one newline |
 | `text` | Concise human-readable output; never use it for agent decisions |
 
-`schema export` accepts the three JSON formats but not `text`. Existing `--format json` output remains byte-equivalent to reviewed goldens.
+`operations`, `schema export`, and `schema bundle` accept the three JSON formats but not `text`. Existing operation and unbundled `schema export` bytes remain unchanged.
+
+Every successful machine JSON document, including its trailing newline, is limited to **33,554,432 bytes (32 MiB)**. The CLI serializes the complete document in memory, checks the byte count, and only then writes stdout. It never truncates a successful result. An internal bound violation exits `6`, leaves stdout empty, and reports the existing schema-valid `output_write_failed` code on stderr. Exact-bound and one-byte-over behavior is regression-tested. See [`contracts/managed-adapter-v1.md`](contracts/managed-adapter-v1.md) for the conservative bound derivation.
 
 Machine modes write a successful result only to stdout. Failures write one `career.error.v1` document to stderr and leave stdout empty. No progress indicator, ANSI escape, or log line is mixed into machine output.
 
 ## Contract map
 
-| Command | Input | JSON output |
+| Command | Input transport/schema | JSON output schema |
 |---|---|---|
 | `capabilities` | none | `career.capabilities.v1` |
+| `operations` | none | `career.operation_catalog.v1` |
 | `schema list` | none | `career.schema_catalog.v1` |
-| `schema export` | exact catalog ID | Draft 2020-12 JSON Schema |
+| `schema export` | exact catalog ID in CLI arguments | Draft 2020-12 JSON Schema |
+| `schema bundle` | exact catalog ID in CLI arguments | self-contained Draft 2020-12 JSON Schema |
 | `resume evaluate` | `career.resume_input.v1` | `career.resume_evaluation.v1` |
 | `resume analyze` | `career.resume_input.v1` | `career.resume_analysis.v1` |
 | `resume analysis-suggestions-review` | `career.resume_analysis_suggestion_review_input.v1` | `career.resume_analysis_suggestion_review.v1` |
@@ -55,14 +71,22 @@ Machine modes write a successful result only to stdout. Failures write one `care
 | `job normalize` | `career.job_input.v1` | `career.job_normalization.v1` |
 | `job match` | `career.job_match_input.v1` | `career.job_match.v1` |
 
-Discover schemas without a source checkout or network connection:
+Discover contracts without a source checkout or network connection:
 
 ```bash
+career operations --format json-compact
 career schema list --format json-compact
 career schema export --id career.job_match_input.v1 > job-match-input.schema.json
+career schema bundle --id career.job_match_input.v1 > job-match-input.bundle.schema.json
 ```
 
-Schemas are reviewed repository files embedded into the binary at compile time. They are not inferred from command arguments or generated from Rust types at runtime.
+Schemas are reviewed repository files embedded into the binary. They are not inferred from command arguments or Rust types.
+
+### Bundle root and `$ref` policy
+
+A bundle retains the requested root schema's `$schema`, `$id`, keywords, and semantics. Recursive embedded dependencies are placed under the reserved root definition `#/$defs/careerSchemaBundle/$defs/<file-name>`. Dependency-level `$schema` and `$id` declarations are removed, and every dependency-local or sibling-file `$ref` is rewritten to a root-local JSON Pointer.
+
+The bundler accepts only exact sibling file names present in the embedded schema catalog. Unknown files, URI/remote references, non-pointer fragments, malformed embedded JSON, or a collision with the reserved definition fail closed. It never opens a schema from the source checkout and never performs a network request. Emitted bundles contain no unresolved or non-local `$ref`.
 
 ## Exit statuses
 
@@ -73,7 +97,7 @@ Schemas are reviewed repository files embedded into the binary at compile time. 
 | `3` | explicit input path/read failure or CLI byte-limit failure |
 | `4` | malformed or structurally invalid JSON |
 | `5` | valid JSON rejected by core input validation |
-| `6` | output write or serialization failure |
+| `6` | output write, serialization, or successful-output-bound failure |
 
 Argument errors use canonical pretty JSON because the requested output format may not have parsed. Once arguments parse, JSON errors follow the selected pretty or compact mode; text commands receive concise text errors.
 
@@ -81,7 +105,7 @@ Argument errors use canonical pretty JSON because the requested output format ma
 
 - Single-document command input is limited to 262,144 bytes before JSON parsing.
 - `job match` and resume-variant review/materialization envelopes are limited to 1,048,576 bytes.
-- Resume analysis-suggestion and analysis-replacement review are limited to the ordinary 262,144-byte single-document envelope because each contains one resume and a deliberately small proposal.
+- Resume analysis-suggestion and analysis-replacement review use the ordinary 262,144-byte envelope.
 - Core character, line, string, list, and evidence limits still apply after parsing.
 - Missing paths are not echoed in errors.
 - Resume and job text is never logged or repeated in diagnostics.

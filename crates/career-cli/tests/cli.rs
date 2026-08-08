@@ -1,3 +1,4 @@
+use std::collections::BTreeSet;
 use std::fs;
 use std::io::Write;
 use std::path::PathBuf;
@@ -45,6 +46,31 @@ fn phase4b_fixture_path(name: &str) -> PathBuf {
         .join(name)
 }
 
+fn phase8_fixture_path(name: &str) -> PathBuf {
+    PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("../../fixtures/managed-adapter/phase8")
+        .join(name)
+}
+
+fn collect_schema_references<'a>(value: &'a serde_json::Value, references: &mut Vec<&'a str>) {
+    match value {
+        serde_json::Value::Object(object) => {
+            if let Some(reference) = object.get("$ref") {
+                references.push(reference.as_str().expect("$ref should be a string"));
+            }
+            for child in object.values() {
+                collect_schema_references(child, references);
+            }
+        }
+        serde_json::Value::Array(values) => {
+            for child in values {
+                collect_schema_references(child, references);
+            }
+        }
+        _ => {}
+    }
+}
+
 #[test]
 fn capabilities_default_to_valid_json() {
     let output = Command::new(env!("CARGO_BIN_EXE_career"))
@@ -85,6 +111,82 @@ fn capabilities_default_to_valid_json() {
     assert_eq!(value["capabilities"][9]["status"], "available");
     assert_eq!(value["capabilities"][10]["id"], "job.match");
     assert_eq!(value["capabilities"][10]["status"], "available");
+    assert_eq!(
+        output.stdout,
+        fs::read(phase8_fixture_path("capabilities.pre-phase8.expected.json"))
+            .expect("pre-Phase 8 capabilities golden should load")
+    );
+}
+
+#[test]
+fn operation_catalog_matches_golden_and_maps_available_capabilities_once() {
+    let output = Command::new(env!("CARGO_BIN_EXE_career"))
+        .arg("operations")
+        .output()
+        .expect("career binary should run");
+    assert!(output.status.success());
+    assert!(output.stderr.is_empty());
+    assert_eq!(
+        output.stdout,
+        fs::read(phase8_fixture_path("operation-catalog.expected.json"))
+            .expect("operation catalog golden should load")
+    );
+
+    let catalog: serde_json::Value =
+        serde_json::from_slice(&output.stdout).expect("operation catalog should be JSON");
+    assert_eq!(catalog["schema_version"], "career.operation_catalog.v1");
+    assert_eq!(catalog["core_version"], env!("CARGO_PKG_VERSION"));
+    let operations = catalog["operations"]
+        .as_array()
+        .expect("operations should be an array");
+    let operation_ids = operations
+        .iter()
+        .map(|operation| {
+            operation["operation_id"]
+                .as_str()
+                .expect("operation ID should be a string")
+        })
+        .collect::<BTreeSet<_>>();
+    assert_eq!(operation_ids.len(), operations.len());
+    assert!(operation_ids.contains("core.operations"));
+    assert!(operation_ids.contains("schema.list"));
+    assert!(operation_ids.contains("schema.export"));
+    assert!(operation_ids.contains("schema.bundle"));
+
+    let capabilities_output = Command::new(env!("CARGO_BIN_EXE_career"))
+        .arg("capabilities")
+        .output()
+        .expect("career binary should run");
+    let capabilities: serde_json::Value =
+        serde_json::from_slice(&capabilities_output.stdout).expect("capabilities should be JSON");
+    let available_capability_ids = capabilities["capabilities"]
+        .as_array()
+        .expect("capabilities should be an array")
+        .iter()
+        .filter(|capability| capability["status"] == "available")
+        .map(|capability| {
+            capability["id"]
+                .as_str()
+                .expect("capability ID should be a string")
+        })
+        .collect::<Vec<_>>();
+    let mapped_capability_ids = operations
+        .iter()
+        .filter_map(|operation| operation["capability_id"].as_str())
+        .collect::<Vec<_>>();
+
+    assert_eq!(mapped_capability_ids, available_capability_ids);
+    for operation in operations {
+        assert_eq!(operation["availability"], "available");
+        assert_eq!(
+            operation["maximum_successful_machine_output_bytes"],
+            33_554_432
+        );
+        if operation["input_transport"] == "json_file_or_stdin" {
+            assert!(operation["input_schema_id"].is_string());
+            assert!(operation["maximum_input_bytes"].is_u64());
+        }
+    }
 }
 
 #[test]
@@ -1034,6 +1136,7 @@ fn embedded_schema_catalog_lists_and_exports_every_public_schema() {
             "career.resume_variant_review_input.v1",
             "career.resume_variant.v1",
             "career.schema_catalog.v1",
+            "career.operation_catalog.v1",
         ]
     );
 
@@ -1062,6 +1165,42 @@ fn embedded_schema_catalog_lists_and_exports_every_public_schema() {
         assert_eq!(schema["type"], "object");
         assert_eq!(schema["title"], entry["title"]);
         assert_eq!(schema["properties"]["schema_version"]["const"], id);
+
+        let first_bundle = Command::new(env!("CARGO_BIN_EXE_career"))
+            .args(["schema", "bundle", "--id", id, "--format", "json-compact"])
+            .output()
+            .expect("career binary should run");
+        let second_bundle = Command::new(env!("CARGO_BIN_EXE_career"))
+            .args(["schema", "bundle", "--id", id, "--format", "json-compact"])
+            .output()
+            .expect("career binary should run");
+        assert!(first_bundle.status.success(), "schema {id} should bundle");
+        assert!(first_bundle.stderr.is_empty());
+        assert_eq!(first_bundle.stdout, second_bundle.stdout);
+        let bundle: serde_json::Value =
+            serde_json::from_slice(&first_bundle.stdout).expect("schema bundle should be JSON");
+        assert_eq!(
+            bundle["$schema"],
+            "https://json-schema.org/draft/2020-12/schema"
+        );
+        let mut references = Vec::new();
+        collect_schema_references(&bundle, &mut references);
+        for reference in references {
+            assert!(
+                reference.starts_with('#'),
+                "non-local bundle ref: {reference}"
+            );
+            assert!(
+                bundle
+                    .pointer(
+                        reference
+                            .strip_prefix('#')
+                            .expect("local ref should start #")
+                    )
+                    .is_some(),
+                "unresolved bundle ref: {reference}"
+            );
+        }
     }
 
     let text = Command::new(env!("CARGO_BIN_EXE_career"))
@@ -1093,10 +1232,17 @@ fn explicit_pretty_json_preserves_canonical_default_output() {
 fn every_machine_operation_supports_one_line_compact_json() {
     let commands = vec![
         vec!["capabilities".to_owned()],
+        vec!["operations".to_owned()],
         vec!["schema".to_owned(), "list".to_owned()],
         vec![
             "schema".to_owned(),
             "export".to_owned(),
+            "--id".to_owned(),
+            "career.job_match.v1".to_owned(),
+        ],
+        vec![
+            "schema".to_owned(),
+            "bundle".to_owned(),
             "--id".to_owned(),
             "career.job_match.v1".to_owned(),
         ],

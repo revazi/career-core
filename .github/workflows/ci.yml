@@ -58,20 +58,43 @@ jobs:
           cargo install --path crates/career-cli --locked --root "$RUNNER_TEMP/career-install"
           "$RUNNER_TEMP/career-install/bin/career" capabilities --format json-compact \
             > "$RUNNER_TEMP/installed-capabilities.json"
+          "$RUNNER_TEMP/career-install/bin/career" operations --format json-compact \
+            > "$RUNNER_TEMP/installed-operations.json"
           python3 -m json.tool "$RUNNER_TEMP/installed-capabilities.json" > /dev/null
+          python3 -m json.tool "$RUNNER_TEMP/installed-operations.json" > /dev/null
           (
             cd "$RUNNER_TEMP"
             "$RUNNER_TEMP/career-install/bin/career" schema export \
               --id career.job_match.v1 --format json-compact \
               > installed-job-match-schema.json
+            "$RUNNER_TEMP/career-install/bin/career" schema bundle \
+              --id career.job_match_input.v1 --format json-compact \
+              > installed-job-match-input-bundle.json
           )
           python3 -m json.tool "$RUNNER_TEMP/installed-job-match-schema.json" > /dev/null
+          python3 -m json.tool "$RUNNER_TEMP/installed-job-match-input-bundle.json" > /dev/null
+          python3 scripts/validate-managed-adapter-contracts.py \
+            --career "$RUNNER_TEMP/career-install/bin/career" \
+            --output-dir "$RUNNER_TEMP/installed-managed-adapter-validation"
+
+      - name: Independently validate managed-adapter schemas
+        if: runner.os == 'Linux'
+        run: |
+          python3 -m venv "$RUNNER_TEMP/schema-validator"
+          "$RUNNER_TEMP/schema-validator/bin/python" -m pip install \
+            --disable-pip-version-check check-jsonschema==0.34.1
+          CHECK_JSONSCHEMA_BIN="$RUNNER_TEMP/schema-validator/bin/check-jsonschema" \
+            scripts/verify-managed-adapter-contracts.sh target/debug/career
 
       - name: Verify agent JSON contracts
         run: |
           cargo run --quiet --locked -p career-cli -- capabilities > /tmp/capabilities.json
           python3 -m json.tool /tmp/capabilities.json > /dev/null
           grep -q '"schema_version": "career.capabilities.v1"' /tmp/capabilities.json
+
+          cargo run --quiet --locked -p career-cli -- operations > /tmp/operations.json
+          python3 -m json.tool /tmp/operations.json > /dev/null
+          cmp /tmp/operations.json fixtures/managed-adapter/phase8/operation-catalog.expected.json
 
           cargo run --quiet --locked -p career-cli -- schema list \
             > /tmp/schema-catalog.json
@@ -83,6 +106,13 @@ jobs:
             > /tmp/job-match-schema.json
           python3 -m json.tool /tmp/job-match-schema.json > /dev/null
           test "$(wc -l < /tmp/job-match-schema.json | tr -d ' ')" = "1"
+
+          cargo run --quiet --locked -p career-cli -- \
+            schema bundle --id career.job_match_input.v1 --format json-compact \
+            > /tmp/job-match-input-bundle.json
+          python3 -m json.tool /tmp/job-match-input-bundle.json > /dev/null
+          test "$(wc -l < /tmp/job-match-input-bundle.json | tr -d ' ')" = "1"
+          test -z "$(grep -o '\"\$ref\":\"[^#]' /tmp/job-match-input-bundle.json || true)"
 
           cargo run --quiet --locked -p career-cli -- \
             resume evaluate \
