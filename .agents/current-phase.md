@@ -27,9 +27,12 @@ Implementation now includes:
 
 Maintainer discovery on 2026-08-09 observed npm `E404` for all three names and npm `whoami` `E401`: name availability was observed, while `@revazi` ownership remains unproven until successful authentication. The repository then had no Actions secrets, variables, or environments.
 
-Publication-completion local verification passed on Apple Silicon macOS on 2026-08-09; a new numbered independent review remains pending:
+Hosted PR-head CI run `31284082728` exposed a real Linux cancellation race: the inherited native stdout pipe could report readiness before the launcher returned from `spawn()` and installed signal handlers, allowing default launcher termination and an orphan native process holding the pipe open. The local follow-up at committed base `3fc8cdc73e677c8bd80327b5423602fea27d7d46` installs handlers before spawn, queues a signal received before child assignment, and removes handlers on synchronous launch failure. A deterministic ordering regression and Linux `/proc` caught-signal readiness gate precede cancellation; cleanup polls for process absence with a bound rather than relying on a fixed sleep.
 
-- Node 22.19 passed 45 launcher/selection/glibc-floor/manifest/provenance/toolchain/runner/binary/argv/stdio/exit/signal/metadata/public-boundary test entries
+Publication-completion local verification passed on Apple Silicon macOS on 2026-08-09; the Linux cancellation follow-up is awaiting a new numbered independent review:
+
+- Node 22.19 passed 46 launcher/selection/glibc-floor/manifest/provenance/toolchain/runner/binary/argv/stdio/exit/signal/metadata/public-boundary test entries
+- Linux amd64 under Docker/QEMU with exact Node 22.19.0 and Rust 1.97.1 passed all 46 entries and 50/50 focused cancellation iterations; macOS passed 100/100 focused cancellation iterations
 - private current-host staging passed offline exact tarball/install/README/license allowlists and every-operation native parity
 - publication fixtures passed canonical-origin/main/clean/annotated-tag/SHA/version gates; dirty/missing/lightweight/moved/non-main/credential-origin rejection; exact public property/file/mode/byte/order checks; extra directory/FIFO/nesting-style rejection; wrong SHA/target/toolchain/glibc/provenance/version/dependency/lifecycle mutations; extracted candidate every-operation parity; and synthetic npx-equivalent invocation
 - fake npm passed all-absent bootstrap, exact idempotence, first/second-package interruption recovery, partial/conflicting state rejection, token/OIDC isolation, OIDC prerequisites, transient retry, auth/permanent native failure, launcher-last protection, and missing/malformed/eventually consistent registry-attestation tests without npm contact

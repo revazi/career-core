@@ -6,6 +6,7 @@ const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
 const { spawn, spawnSync } = require("node:child_process");
+const { EventEmitter } = require("node:events");
 const { after, before, test } = require("node:test");
 
 const ROOT = path.resolve(__dirname, "..");
@@ -20,6 +21,54 @@ function makeTemporaryRoot(prefix) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), prefix));
   temporaryRoots.push(root);
   return root;
+}
+
+async function waitForCondition(description, predicate, timeoutMs = 3_000) {
+  const deadline = Date.now() + timeoutMs;
+  while (!predicate()) {
+    if (Date.now() >= deadline) throw new Error(`Timed out waiting for ${description}.`);
+    await new Promise((resolve) => setTimeout(resolve, 10));
+  }
+}
+
+function linuxProcessCatchesSignal(pid, signal) {
+  if (process.platform !== "linux") return true;
+  const status = fs.readFileSync(`/proc/${pid}/status`, "utf8");
+  const caughtField = status.match(/^SigCgt:\s+([0-9a-f]+)$/imu);
+  assert.ok(caughtField, "Linux process status must expose SigCgt");
+  const signalNumber = os.constants.signals[signal];
+  const signalBit = 1n << BigInt(signalNumber - 1);
+  return (BigInt(`0x${caughtField[1]}`) & signalBit) !== 0n;
+}
+
+function processIsGone(pid) {
+  try {
+    process.kill(pid, 0);
+    return false;
+  } catch (error) {
+    if (error?.code === "ESRCH") return true;
+    throw error;
+  }
+}
+
+function throwUnlessProcessIsGone(error) {
+  if (error?.code === "ESRCH") return;
+  throw error;
+}
+
+function killProcessForCleanup(pid) {
+  if (!Number.isInteger(pid)) return;
+  try {
+    process.kill(pid, "SIGKILL");
+  } catch (error) {
+    throwUnlessProcessIsGone(error);
+  }
+}
+
+function cleanupCancellationProcesses(child, pidFile) {
+  if (child.exitCode === null && child.signalCode === null) child.kill("SIGKILL");
+  if (!fs.existsSync(pidFile)) return;
+  killProcessForCleanup(Number(fs.readFileSync(pidFile, "utf8")));
 }
 
 before(() => {
@@ -546,12 +595,37 @@ test("inherits stdin/stdout/stderr and preserves the native exit code", () => {
   assert.equal(result.stderr, `stderr:${input}`);
 });
 
-test("propagates cancellation to the child and terminates with the same signal", { timeout: 10_000 }, async () => {
+test("installs cancellation handlers before spawning the native process", async () => {
+  const signals = ["SIGINT", "SIGTERM", "SIGHUP"];
+  const listenerCounts = new Map(signals.map((signal) => [signal, process.listenerCount(signal)]));
+  const fakeChild = new EventEmitter();
+  fakeChild.kill = () => true;
+  let observedInstalledHandlers = false;
+  const completion = launcher.launchVerifiedBinary("/synthetic/career", [], () => {
+    for (const signal of signals) {
+      assert.equal(process.listenerCount(signal), listenerCounts.get(signal) + 1);
+    }
+    observedInstalledHandlers = true;
+    return fakeChild;
+  });
+  assert.equal(observedInstalledHandlers, true);
+  fakeChild.emit("close", 0, null);
+  await completion;
+  for (const signal of signals) {
+    assert.equal(process.listenerCount(signal), listenerCounts.get(signal));
+  }
+});
+
+test("propagates cancellation to the child and terminates with the same signal", { timeout: 10_000 }, async (t) => {
   const tree = makeInstalledTree();
   const pidFile = path.join(tree.root, "helper.pid");
   const child = spawn(process.execPath, [tree.launcherBin, "--test-signal"], {
     stdio: ["ignore", "pipe", "pipe"],
     env: { ...process.env, CAREER_NPM_HELPER_PID_FILE: pidFile },
+  });
+  let cleanupComplete = false;
+  t.after(() => {
+    if (!cleanupComplete) cleanupCancellationProcesses(child, pidFile);
   });
   let stdout = "";
   let stderr = "";
@@ -559,20 +633,26 @@ test("propagates cancellation to the child and terminates with the same signal",
   child.stderr.setEncoding("utf8");
   child.stdout.on("data", (chunk) => {
     stdout += chunk;
-    if (stdout.includes("READY")) child.kill("SIGTERM");
   });
   child.stderr.on("data", (chunk) => {
     stderr += chunk;
   });
-  const result = await new Promise((resolve, reject) => {
+  const closed = new Promise((resolve, reject) => {
     child.once("error", reject);
     child.once("close", (code, signal) => resolve({ code, signal }));
   });
+  await waitForCondition("native readiness", () => stdout.includes("READY\n"));
+  await waitForCondition(
+    "the launcher SIGTERM handler",
+    () => linuxProcessCatchesSignal(child.pid, "SIGTERM"),
+  );
+  assert.equal(child.kill("SIGTERM"), true);
+  const result = await closed;
   assert.deepEqual(result, { code: null, signal: "SIGTERM" }, stderr);
   assert.match(stdout, /^READY\n$/u);
   const nativePid = Number(fs.readFileSync(pidFile, "utf8"));
-  await new Promise((resolve) => setTimeout(resolve, 50));
-  assert.throws(() => process.kill(nativePid, 0), /ESRCH/u);
+  await waitForCondition("the native process to exit", () => processIsGone(nativePid));
+  cleanupComplete = true;
 });
 
 test("reports launch failures with one stable bounded error code", async () => {

@@ -877,12 +877,15 @@ function launchError() {
   );
 }
 
-function spawnVerifiedChild(binaryPath, argv, spawnImplementation, reject) {
+function spawnVerifiedChild(state, binaryPath, argv, spawnImplementation) {
   try {
-    return spawnImplementation(binaryPath, argv, { shell: false, stdio: "inherit" });
+    state.child = spawnImplementation(binaryPath, argv, { shell: false, stdio: "inherit" });
+    return true;
   } catch {
-    reject(launchError());
-    return null;
+    state.settled = true;
+    removeSignalHandlers(state);
+    state.reject(launchError());
+    return false;
   }
 }
 
@@ -892,6 +895,7 @@ function removeSignalHandlers(state) {
 
 function forwardSignal(state, signal) {
   if (state.forwardedSignal === null) state.forwardedSignal = signal;
+  if (state.child === null) return;
   try {
     state.child.kill(signal);
   } catch {
@@ -947,10 +951,8 @@ function handleChildClose(state, code, childSignal) {
 }
 
 function runVerifiedChild(binaryPath, argv, spawnImplementation, resolve, reject) {
-  const child = spawnVerifiedChild(binaryPath, argv, spawnImplementation, reject);
-  if (child === null) return;
   const state = {
-    child,
+    child: null,
     forwardedSignal: null,
     handlers: new Map(),
     reject,
@@ -958,8 +960,10 @@ function runVerifiedChild(binaryPath, argv, spawnImplementation, resolve, reject
     settled: false,
   };
   installSignalHandlers(state);
-  child.once("error", () => handleChildError(state));
-  child.once("close", (code, signal) => handleChildClose(state, code, signal));
+  if (!spawnVerifiedChild(state, binaryPath, argv, spawnImplementation)) return;
+  state.child.once("error", () => handleChildError(state));
+  state.child.once("close", (code, signal) => handleChildClose(state, code, signal));
+  if (state.forwardedSignal !== null) forwardSignal(state, state.forwardedSignal);
 }
 
 function launchVerifiedBinary(binaryPath, argv, spawnImplementation = spawn) {
