@@ -9,16 +9,19 @@ Harness-specific adapters and bundled skills are maintained outside this reposit
 The installed CLI embeds reviewed Draft 2020-12 schemas. Agents can discover exact contracts without a source checkout or network request:
 
 ```bash
+career operations --format json-compact
 career schema list --format json-compact
 career schema export --id career.job_match_input.v1
+career schema bundle --id career.job_match_input.v1 --format json-compact
 ```
 
 ## Discovery first
 
-Agents must begin with:
+Generic raw agents must begin with:
 
 ```bash
 career capabilities
+career operations --format json-compact
 ```
 
 Inside a source checkout:
@@ -27,13 +30,14 @@ Inside a source checkout:
 cargo run --quiet -p career-cli -- capabilities
 ```
 
-JSON is the default. Only capabilities with `status: "available"` may be invoked. Planned entries are roadmap visibility, not callable behavior.
+JSON is the default. Only capabilities with `status: "available"` may be invoked. Planned entries are roadmap visibility, not callable behavior. `career.operation_catalog.v1` maps each available capability exactly once to a stable operation descriptor and separately catalogs `core.operations`, `schema.list`, `schema.export`, and `schema.bundle` as bootstrap operations with null capability IDs.
 
 ## Process contract
 
 All machine commands follow these rules as they are introduced:
 
 - One JSON result goes to stdout; `json-compact` keeps it on one line.
+- Every successful machine result, including its trailing newline, is at most 33,554,432 bytes (32 MiB) and is completely serialized/bound-checked before stdout is written.
 - `json` is compatibility-preserving canonical pretty output; `json-pretty` is explicit pretty output; `text` is human-only.
 - Diagnostics go to stderr.
 - Success exits `0`.
@@ -43,6 +47,12 @@ All machine commands follow these rules as they are introduced:
 - Commands never make implicit network requests.
 - Commands never modify input files unless a future explicit mutation command is reviewed.
 - Source payloads are not repeated in diagnostics.
+
+## Managed-adapter discovery
+
+A separately reviewed managed adapter may invoke and validate `career operations` and required `career schema bundle` documents internally once per verified `core_version`. It may cache only this non-sensitive metadata so normal model-visible workflows do not need capability/schema bootstrap calls or copied schemas. The complete Core result must still be captured within the declared ceiling before projection. This permission does not authorize private document/result caching, handles, registries, persistence, repair, retries, authority upgrades, model/provider behavior, networking, or UI in Career Core.
+
+Schema bundles retain the requested embedded root and recursively place dependencies under the reserved `careerSchemaBundle` definition. Every `$ref` is a root-local JSON Pointer. Unknown sibling files, remote refs, unsupported fragments, and reserved-key collisions fail closed without filesystem or network lookup.
 
 ## Agent safety rules
 

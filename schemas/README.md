@@ -13,6 +13,7 @@ Current schemas:
 
 - `capabilities-v1.schema.json` — capability discovery
 - `schema-catalog-v1.schema.json` — embedded offline schema discovery from `career schema list`
+- `operation-catalog-v1.schema.json` — stable callable operations, capability mapping, transports, schemas, and byte bounds from `career operations`
 - `resume-input-v1.schema.json` — bounded plain-text resume input
 - `resume-evaluation-v1.schema.json` — Phase 1 section-coverage evaluation
 - `resume-analysis-v1.schema.json` — full deterministic resume-readiness scoring, checks, evidence, uncertainty, and actions
@@ -37,13 +38,21 @@ Current schemas:
 - `job-match-v1.schema.json` — conservative deterministic scores, evidence, confidence, strengths, gaps, and recommendation gates
 - `error-v1.schema.json` — machine-readable core and CLI failures
 
-Composite analysis, enrichment, and matching schemas reference sibling schema files. Offline validators should resolve them from this directory; for `check-jsonschema`, pass `--base-uri "file://$(pwd)/schemas/"` from the repository root.
+Composite analysis, enrichment, and matching schemas reference sibling schema files. Offline validators may resolve them from this directory; for `check-jsonschema`, pass `--base-uri "file://$(pwd)/schemas/"` from the repository root. An installed CLI can instead emit a recursively self-contained schema whose refs all use root-local JSON Pointers:
+
+```bash
+career schema bundle --id career.resume_variant_materialization_input.v1
+```
+
+The requested root retains its Draft 2020-12 marker and `$id`; embedded dependency resources are placed under the reserved `careerSchemaBundle` definition with dependency `$schema`/`$id` removed. Only exact embedded sibling references are accepted. Unknown, remote, or unresolved references fail closed without source-tree or network lookup.
 
 An installed CLI embeds these exact reviewed files:
 
 ```bash
+career operations --format json-compact
 career schema list --format json-compact
 career schema export --id career.resume_input.v1
+career schema bundle --id career.job_match_input.v1
 ```
 
-The catalog is static and ordered. Schema export performs no source-tree lookup, runtime generation, or network request.
+Both catalogs are static and ordered. Schema export preserves reviewed file bytes. Bundle construction uses only embedded documents and deterministic local-reference rewriting; neither command performs source-tree lookup or network requests.

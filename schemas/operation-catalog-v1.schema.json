@@ -1,0 +1,144 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/revazi/career-core/main/schemas/operation-catalog-v1.schema.json",
+  "title": "career CLI operation catalog v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "core_version", "operations"],
+  "properties": {
+    "schema_version": {
+      "const": "career.operation_catalog.v1"
+    },
+    "core_version": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "operations": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 64,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/operation"
+      }
+    }
+  },
+  "$defs": {
+    "contractId": {
+      "type": "string",
+      "pattern": "^career\\.[a-z0-9_]+\\.v[1-9][0-9]*$",
+      "maxLength": 100
+    },
+    "operationId": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*(\\.[a-z][a-z0-9-]*)+$",
+      "maxLength": 100
+    },
+    "operation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation_id",
+        "capability_id",
+        "availability",
+        "cli_path",
+        "input_transport",
+        "input_schema_id",
+        "output_schema_id",
+        "maximum_input_bytes",
+        "maximum_successful_machine_output_bytes"
+      ],
+      "properties": {
+        "operation_id": {
+          "$ref": "#/$defs/operationId"
+        },
+        "capability_id": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/operationId"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "availability": {
+          "const": "available"
+        },
+        "cli_path": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 3,
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]*$",
+            "maxLength": 64
+          }
+        },
+        "input_transport": {
+          "enum": ["none", "cli_arguments", "json_file_or_stdin"]
+        },
+        "input_schema_id": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/contractId"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "output_schema_id": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/contractId"
+            },
+            {
+              "const": "https://json-schema.org/draft/2020-12/schema"
+            }
+          ]
+        },
+        "maximum_input_bytes": {
+          "type": ["integer", "null"],
+          "enum": [null, 262144, 1048576]
+        },
+        "maximum_successful_machine_output_bytes": {
+          "const": 33554432
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "input_transport": {
+                "const": "json_file_or_stdin"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "input_schema_id": {
+                "$ref": "#/$defs/contractId"
+              },
+              "maximum_input_bytes": {
+                "type": "integer",
+                "enum": [262144, 1048576]
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "input_schema_id": {
+                "type": "null"
+              },
+              "maximum_input_bytes": {
+                "type": "null"
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

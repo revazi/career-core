@@ -48,9 +48,13 @@ cargo clippy --workspace --all-targets --all-features -- -D warnings
 cargo test --workspace --all-features
 cargo build --workspace --all-features --locked
 cargo run --quiet -p career-cli -- capabilities
+cargo run --quiet -p career-cli -- operations --format json-compact
 cargo run --quiet -p career-cli -- schema list
 cargo run --quiet -p career-cli -- schema export \
   --id career.job_match.v1 --format json-compact
+cargo run --quiet -p career-cli -- schema bundle \
+  --id career.job_match_input.v1 --format json-compact
+scripts/verify-managed-adapter-contracts.sh target/debug/career
 cargo run --quiet -p career-cli -- resume evaluate \
   --input fixtures/resume/phase1/complete-sections.input.json
 cargo run --quiet -p career-cli -- resume analyze \
@@ -71,10 +75,11 @@ cargo run --quiet -p career-cli -- job normalize \
   --input fixtures/job/phase4a/complete-normalization.input.json
 cargo run --quiet -p career-cli -- job match \
   --input fixtures/job/phase4b/complete-match.input.json
+scripts/test-pi-career-runtime-artifact.sh
 git diff --check
 ```
 
-If the CLI contract changes, also invoke every changed command in canonical, compact, and text modes where supported; parse JSON with an independent parser. For distribution changes, install the CLI into a temporary root from a clean clone and run capability/schema discovery through the installed binary.
+If the CLI contract changes, also invoke every changed command in canonical and compact modes (plus text where supported) and parse JSON independently. Managed-adapter changes require pinned `check-jsonschema` 0.34.1 through `CHECK_JSONSCHEMA_BIN`, all emitted bundles checked against the Draft 2020-12 metaschema, representative instances validated against bundles, and exact-bound/one-byte-over output checks. For distribution changes, install the CLI into a temporary root from a clean clone and run capability/operation/schema discovery and bundling through the installed binary outside the checkout.
 
 For Swift-boundary or final phase-status changes on macOS:
 

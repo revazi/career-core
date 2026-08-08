@@ -168,8 +168,19 @@ version_output="$($stage_dir/career --version)"
 [[ "$version_output" == career\ * ]] || fail "career --version output has an unexpected prefix"
 
 run_json capabilities 131072 capabilities --format json-compact
+run_json operations 131072 operations --format json-compact
 run_json schema-catalog 131072 schema list --format json-compact
+run_json operation-catalog-schema 262144 schema export \
+  --id career.operation_catalog.v1 --format json-compact
 run_json job-match-schema 262144 schema export --id career.job_match.v1 --format json-compact
+run_json analysis-replacement-input-bundle 1048576 schema bundle \
+  --id career.resume_analysis_replacement_review_input.v1 --format json-compact
+run_json job-match-input-bundle 1048576 schema bundle \
+  --id career.job_match_input.v1 --format json-compact
+run_json variant-review-input-bundle 1048576 schema bundle \
+  --id career.resume_variant_review_input.v1 --format json-compact
+run_json variant-materialization-input-bundle 1048576 schema bundle \
+  --id career.resume_variant_materialization_input.v1 --format json-compact
 run_json resume-analysis 1048576 resume analyze --input - --format json-compact \
   < fixtures/resume/phase3/complete-analysis.input.json
 run_json job-match 1048576 job match --input - --format json-compact \
@@ -263,7 +274,15 @@ for value, maximum, label in (
 ):
     bounded_text(value, maximum, label)
 
-capabilities = result_record("capabilities", 131072, "career.capabilities.v1")
+capabilities_value, capabilities_path = load_object("capabilities", 131072)
+if capabilities_value.get("schema_version") != "career.capabilities.v1":
+    raise SystemExit("unexpected capabilities schema version")
+capabilities = {
+    "schema_version": "career.capabilities.v1",
+    "size_bytes": capabilities_path.stat().st_size,
+    "sha256": digest(capabilities_path),
+}
+
 schema_catalog_value, schema_catalog_path = load_object("schema-catalog", 131072)
 if schema_catalog_value.get("schema_version") != "career.schema_catalog.v1":
     raise SystemExit("unexpected schema catalog version")
@@ -272,6 +291,7 @@ if not isinstance(schemas, list) or not 1 <= len(schemas) <= 100:
     raise SystemExit("schema catalog count is outside bounds")
 if any(not isinstance(entry, dict) or not isinstance(entry.get("id"), str) for entry in schemas):
     raise SystemExit("schema catalog entries are invalid")
+schema_ids = {entry["id"] for entry in schemas}
 schema_catalog = {
     "schema_version": "career.schema_catalog.v1",
     "schema_count": len(schemas),
@@ -284,13 +304,150 @@ expected_schema_id = "career.job_match.v1"
 expected_uri = "https://raw.githubusercontent.com/revazi/career-core/main/schemas/job-match-v1.schema.json"
 if schema_export_value.get("$id") != expected_uri:
     raise SystemExit("job-match schema export has an unexpected identifier")
-if expected_schema_id not in {entry["id"] for entry in schemas}:
+if expected_schema_id not in schema_ids:
     raise SystemExit("job-match schema is missing from the catalog")
 schema_export = {
     "schema_id": expected_schema_id,
     "size_bytes": schema_export_path.stat().st_size,
     "sha256": digest(schema_export_path),
 }
+
+operation_schema_value, operation_schema_path = load_object("operation-catalog-schema", 262144)
+operation_schema_id = "career.operation_catalog.v1"
+operation_schema_uri = (
+    "https://raw.githubusercontent.com/revazi/career-core/main/schemas/operation-catalog-v1.schema.json"
+)
+if operation_schema_value.get("$id") != operation_schema_uri:
+    raise SystemExit("operation catalog schema export has an unexpected identifier")
+if operation_schema_id not in schema_ids:
+    raise SystemExit("operation catalog schema is missing from the catalog")
+
+operations_value, operations_path = load_object("operations", 131072)
+if set(operations_value) != {"schema_version", "core_version", "operations"}:
+    raise SystemExit("operation catalog has an unexpected property set")
+if operations_value.get("schema_version") != operation_schema_id:
+    raise SystemExit("unexpected operation catalog schema version")
+if career_version != f"career {operations_value.get('core_version')}":
+    raise SystemExit("operation catalog core version does not match executable")
+operations = operations_value.get("operations")
+if not isinstance(operations, list) or not 1 <= len(operations) <= 64:
+    raise SystemExit("operation catalog count is outside bounds")
+operation_ids = [entry.get("operation_id") for entry in operations if isinstance(entry, dict)]
+if len(operation_ids) != len(operations) or len(set(operation_ids)) != len(operation_ids):
+    raise SystemExit("operation catalog IDs are invalid or duplicated")
+available_capability_ids = [
+    entry.get("id")
+    for entry in capabilities_value.get("capabilities", [])
+    if isinstance(entry, dict) and entry.get("status") == "available"
+]
+capability_mapping = [
+    {"capability_id": entry["capability_id"], "operation_id": entry["operation_id"]}
+    for entry in operations
+    if entry.get("capability_id") is not None
+]
+if [entry["capability_id"] for entry in capability_mapping] != available_capability_ids:
+    raise SystemExit("available capability mapping is incomplete or out of order")
+if any(entry["capability_id"] != entry["operation_id"] for entry in capability_mapping):
+    raise SystemExit("capability-backed operation IDs are unstable")
+bootstrap_ids = {
+    entry["operation_id"] for entry in operations if entry.get("capability_id") is None
+}
+if bootstrap_ids != {"core.operations", "schema.list", "schema.export", "schema.bundle"}:
+    raise SystemExit("bootstrap operation mapping is incomplete")
+operation_output_bounds = []
+for entry in operations:
+    bound = entry.get("maximum_successful_machine_output_bytes")
+    if bound != 33554432:
+        raise SystemExit("operation catalog contains an unexpected output bound")
+    if entry.get("input_transport") == "json_file_or_stdin":
+        if entry.get("input_schema_id") not in schema_ids:
+            raise SystemExit("operation catalog contains an unknown input schema")
+        if entry.get("maximum_input_bytes") not in (262144, 1048576):
+            raise SystemExit("operation catalog contains an invalid input bound")
+    elif entry.get("input_transport") in ("none", "cli_arguments"):
+        if entry.get("input_schema_id") is not None or entry.get("maximum_input_bytes") is not None:
+            raise SystemExit("non-document operation declares a JSON input")
+    else:
+        raise SystemExit("operation catalog contains an unknown input transport")
+    output_schema = entry.get("output_schema_id")
+    if output_schema not in schema_ids and output_schema != "https://json-schema.org/draft/2020-12/schema":
+        raise SystemExit("operation catalog contains an unknown output schema")
+    operation_output_bounds.append(
+        {
+            "operation_id": entry["operation_id"],
+            "maximum_successful_machine_output_bytes": bound,
+        }
+    )
+operation_catalog_record = {
+    "schema_version": operation_schema_id,
+    "schema_size_bytes": operation_schema_path.stat().st_size,
+    "schema_sha256": digest(operation_schema_path),
+    "catalog_size_bytes": operations_path.stat().st_size,
+    "catalog_sha256": digest(operations_path),
+}
+
+
+def resolve_pointer(document: dict, reference: str) -> object:
+    if not reference.startswith("#"):
+        raise SystemExit("schema bundle contains a non-local reference")
+    fragment = reference[1:]
+    if not fragment:
+        return document
+    if not fragment.startswith("/"):
+        raise SystemExit("schema bundle contains a non-pointer reference")
+    current = document
+    for encoded_token in fragment[1:].split("/"):
+        token = encoded_token.replace("~1", "/").replace("~0", "~")
+        if isinstance(current, dict) and token in current:
+            current = current[token]
+        elif isinstance(current, list) and token.isdigit() and int(token) < len(current):
+            current = current[int(token)]
+        else:
+            raise SystemExit("schema bundle contains an unresolved local reference")
+    return current
+
+
+def inspect_bundle_references(value: object, root: dict) -> None:
+    if isinstance(value, dict):
+        reference = value.get("$ref")
+        if reference is not None:
+            if not isinstance(reference, str):
+                raise SystemExit("schema bundle contains a non-string reference")
+            resolve_pointer(root, reference)
+        for child in value.values():
+            inspect_bundle_references(child, root)
+    elif isinstance(value, list):
+        for child in value:
+            inspect_bundle_references(child, root)
+
+
+bundle_specs = [
+    (
+        "analysis-replacement-input-bundle",
+        "career.resume_analysis_replacement_review_input.v1",
+    ),
+    ("job-match-input-bundle", "career.job_match_input.v1"),
+    ("variant-review-input-bundle", "career.resume_variant_review_input.v1"),
+    (
+        "variant-materialization-input-bundle",
+        "career.resume_variant_materialization_input.v1",
+    ),
+]
+bundle_records = []
+for result_name, schema_id in bundle_specs:
+    bundle_value, bundle_path = load_object(result_name, 1048576)
+    if bundle_value.get("$schema") != "https://json-schema.org/draft/2020-12/schema":
+        raise SystemExit("schema bundle has an unexpected dialect")
+    if bundle_value.get("properties", {}).get("schema_version", {}).get("const") != schema_id:
+        raise SystemExit("schema bundle root does not match its requested contract")
+    inspect_bundle_references(bundle_value, bundle_value)
+    bundle_records.append(
+        {
+            "schema_id": schema_id,
+            "size_bytes": bundle_path.stat().st_size,
+            "sha256": digest(bundle_path),
+        }
+    )
 
 analysis_value, analysis_path = load_object("resume-analysis", 1048576)
 expected_analysis = json.loads(pathlib.Path("fixtures/resume/phase3/complete-analysis.expected.json").read_text())
@@ -355,6 +512,30 @@ metadata = {
         "capabilities": capabilities,
         "schema_catalog": schema_catalog,
         "schema_export": schema_export,
+    },
+    "managed_adapter_compatibility": {
+        "schema_version": "career.pi_career_managed_adapter_compatibility.v1",
+        "core_version": operations_value["core_version"],
+        "operation_catalog": operation_catalog_record,
+        "available_capability_operation_mapping": capability_mapping,
+        "representative_schema_bundles": bundle_records,
+        "declared_operation_output_bounds": operation_output_bounds,
+        "representative_operation_outputs": [
+            {
+                "operation_id": "resume.analyze",
+                "input_schema_id": "career.resume_input.v1",
+                "output_schema_id": "career.resume_analysis.v1",
+                "output_size_bytes": analysis_path.stat().st_size,
+                "output_sha256": digest(analysis_path),
+            },
+            {
+                "operation_id": "job.match",
+                "input_schema_id": "career.job_match_input.v1",
+                "output_schema_id": "career.job_match.v1",
+                "output_size_bytes": match_path.stat().st_size,
+                "output_sha256": digest(match_path),
+            },
+        ],
     },
     "native_verification": [
         {
@@ -451,6 +632,32 @@ if executable.get("size_bytes") != len(binary):
     raise SystemExit("metadata executable size mismatch")
 if executable.get("sha256") != hashlib.sha256(binary).hexdigest():
     raise SystemExit("metadata executable digest mismatch")
+compatibility = metadata.get("managed_adapter_compatibility", {})
+if compatibility.get("schema_version") != "career.pi_career_managed_adapter_compatibility.v1":
+    raise SystemExit("managed-adapter compatibility metadata is missing")
+operation_catalog = compatibility.get("operation_catalog", {})
+if operation_catalog.get("schema_version") != "career.operation_catalog.v1":
+    raise SystemExit("operation catalog metadata schema is invalid")
+for digest_key in ("schema_sha256", "catalog_sha256"):
+    value = operation_catalog.get(digest_key)
+    if not isinstance(value, str) or len(value) != 64:
+        raise SystemExit("operation catalog metadata digest is invalid")
+mapping = compatibility.get("available_capability_operation_mapping")
+if not isinstance(mapping, list) or not mapping:
+    raise SystemExit("capability mapping metadata is empty")
+if any(entry.get("capability_id") != entry.get("operation_id") for entry in mapping):
+    raise SystemExit("capability mapping metadata is invalid")
+bundles = compatibility.get("representative_schema_bundles")
+if not isinstance(bundles, list) or len(bundles) != 4:
+    raise SystemExit("representative schema bundle metadata is incomplete")
+bounds = compatibility.get("declared_operation_output_bounds")
+if not isinstance(bounds, list) or not bounds:
+    raise SystemExit("declared output bound metadata is empty")
+if any(entry.get("maximum_successful_machine_output_bytes") != 33554432 for entry in bounds):
+    raise SystemExit("declared output bound metadata is invalid")
+representative_outputs = compatibility.get("representative_operation_outputs")
+if not isinstance(representative_outputs, list) or len(representative_outputs) != 2:
+    raise SystemExit("representative operation output metadata is incomplete")
 if metadata.get("package", {}).get("contents") != expected_names:
     raise SystemExit("metadata package allowlist mismatch")
 print(f"Verified runtime archive: {archive}")

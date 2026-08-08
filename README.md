@@ -4,7 +4,7 @@
 
 The project is intentionally **not an AI service**. The core performs no network requests and has no LLM dependency. Native applications, command-line tools, and coding-agent integrations can use its versioned evidence and scoring contracts. An opted-in host may submit an external source-grounded proposal for deterministic validation, but provider calls remain outside the authoritative core.
 
-> **Status:** Phases 0–7 are complete, with no active implementation phase. Career Core owns the deterministic Rust library, CLI/public JSON and schemas, and Swift binding boundary. Optional adapters, release publication, and the SwiftUI product application remain separately gated.
+> **Status:** Phases 0–8 are complete. Phase 8 adds only deterministic managed-adapter discovery contracts, self-contained schema bundles, bounded complete machine output, and artifact compatibility evidence. Career Core still owns no managed runtime, handles, persistence, provider/model behavior, UI, or harness package. Further adapters, release publication, and the SwiftUI product remain separately gated.
 
 ## Maintainer and support
 
@@ -65,6 +65,7 @@ Install the local CLI from a reviewed checkout:
 ```bash
 cargo install --path crates/career-cli --locked
 career capabilities --format json-compact
+career operations --format json-compact
 ```
 
 No release binaries or package-manager channels are published yet. See [`docs/distribution.md`](docs/distribution.md) for source installation and future checksum verification.
@@ -155,14 +156,18 @@ For concise human output:
 cargo run --quiet -p career-cli -- capabilities --format text
 ```
 
-Discover and export exact Draft 2020-12 contracts from the installed binary without network or filesystem lookup:
+Discover exact callable routes and Draft 2020-12 contracts from the installed binary without network or source-checkout lookup:
 
 ```bash
+career operations --format json-compact
 career schema list --format json-compact
 career schema export --id career.job_match_input.v1
+career schema bundle --id career.job_match_input.v1 --format json-compact
 ```
 
-`--format json` remains canonical pretty output. `json-pretty` selects it explicitly, `json-compact` emits one JSON document on one line, and `text` is for human display. See [`docs/cli.md`](docs/cli.md) for the stable hierarchy, contract map, stream rules, formats, input limits, and exit statuses.
+`career.operation_catalog.v1` maps each available capability exactly once and also catalogs the operation/schema bootstrap commands with null capability IDs. It declares exact CLI paths, transports, input/output schemas, input ceilings, and the 33,554,432-byte (32 MiB) complete successful machine-output ceiling. Bundles recursively rewrite only embedded sibling references into root-local pointers; unknown or remote refs fail closed. Existing capability, operation-result, and unbundled schema-export bytes remain unchanged.
+
+`--format json` remains canonical pretty output. `json-pretty` selects it explicitly, `json-compact` emits one JSON document on one line, and `text` is for human display. Machine JSON is fully serialized and bound-checked before stdout is written. See [`docs/cli.md`](docs/cli.md) and [`docs/contracts/managed-adapter-v1.md`](docs/contracts/managed-adapter-v1.md).
 
 Coding agents should invoke the installed CLI directly and preserve its evidence, uncertainty, baseline, and assisted-authority boundaries. Shell-safe generic subprocess guidance is documented in [`docs/agent-usage.md`](docs/agent-usage.md).
 
@@ -329,7 +334,7 @@ The detailed, gated roadmap lives in [`.agents/phases.md`](.agents/phases.md). I
 5. hardened CLI and coding-agent distribution
 6. Swift bindings for a later SwiftUI application
 7. evidence-linked assisted resume review
-8. optional adapters only for concrete approved consumers, with harness-specific packages owned separately
+8. managed-adapter discovery support for the approved external consumer, while harness-specific runtime packages remain separately owned
 
 ## Security and privacy
 

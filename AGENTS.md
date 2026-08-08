@@ -82,7 +82,7 @@ The sibling repository `../resume-ai` is read-only reference material. It is not
 
 ## Required verification
 
-Run all checks before requesting review:
+Run all checks before requesting review. The managed-adapter validator requires a reviewed `check-jsonschema` executable; CI provisions pinned `0.34.1`, and local maintainers may point `CHECK_JSONSCHEMA_BIN` to the same pinned version.
 
 ```bash
 scripts/verify-installed-cli.sh
@@ -91,9 +91,13 @@ cargo clippy --workspace --all-targets --all-features -- -D warnings
 cargo test --workspace --all-features
 cargo build --workspace --all-features --locked
 cargo run --quiet -p career-cli -- capabilities
+cargo run --quiet -p career-cli -- operations --format json-compact
 cargo run --quiet -p career-cli -- schema list
 cargo run --quiet -p career-cli -- schema export \
   --id career.job_match.v1 --format json-compact
+cargo run --quiet -p career-cli -- schema bundle \
+  --id career.job_match_input.v1 --format json-compact
+scripts/verify-managed-adapter-contracts.sh target/debug/career
 cargo run --quiet -p career-cli -- resume evaluate \
   --input fixtures/resume/phase1/complete-sections.input.json
 cargo run --quiet -p career-cli -- resume analyze \
@@ -114,6 +118,7 @@ cargo run --quiet -p career-cli -- job normalize \
   --input fixtures/job/phase4a/complete-normalization.input.json
 cargo run --quiet -p career-cli -- job match \
   --input fixtures/job/phase4b/complete-match.input.json
+scripts/test-pi-career-runtime-artifact.sh
 ```
 
 On macOS with Xcode and the reviewed Rust Apple targets installed, also run:

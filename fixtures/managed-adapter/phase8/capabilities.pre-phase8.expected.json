@@ -1,0 +1,63 @@
+{
+  "schema_version": "career.capabilities.v1",
+  "core_version": "0.1.0",
+  "deterministic": true,
+  "performs_network_requests": false,
+  "capabilities": [
+    {
+      "id": "core.capabilities",
+      "status": "available",
+      "summary": "Discover versioned functionality exposed by this build."
+    },
+    {
+      "id": "resume.evaluate",
+      "status": "available",
+      "summary": "Evaluate recognized resume section coverage with explainable deterministic checks."
+    },
+    {
+      "id": "resume.analyze",
+      "status": "available",
+      "summary": "Analyze resume readiness with 18 explainable deterministic checks and confidence-aware evidence."
+    },
+    {
+      "id": "resume.normalize",
+      "status": "available",
+      "summary": "Normalize bounded resume text into source-grounded deterministic facts and confidence."
+    },
+    {
+      "id": "resume.enrich",
+      "status": "available",
+      "summary": "Validate and conservatively merge an explicit source-grounded external proposal without network access."
+    },
+    {
+      "id": "resume.analysis-suggestions.review",
+      "status": "available",
+      "summary": "Review bounded external suggestions against a freshly rerun deterministic analysis without changing it."
+    },
+    {
+      "id": "resume.analysis-replacements.review",
+      "status": "available",
+      "summary": "Review bounded exact external replacements against a freshly rerun deterministic analysis without changing it."
+    },
+    {
+      "id": "resume.variant.review",
+      "status": "available",
+      "summary": "Review bounded evidence-linked external resume changes without certifying generated prose."
+    },
+    {
+      "id": "resume.variant.materialize",
+      "status": "available",
+      "summary": "Revalidate and deterministically materialize only explicitly selected assisted resume changes."
+    },
+    {
+      "id": "job.normalize",
+      "status": "available",
+      "summary": "Normalize bounded job-description text into source-grounded deterministic facts and confidence."
+    },
+    {
+      "id": "job.match",
+      "status": "available",
+      "summary": "Match deterministic resume and job baselines with conservative equivalence and confidence-aware evidence."
+    }
+  ]
+}

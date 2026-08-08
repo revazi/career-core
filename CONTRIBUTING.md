@@ -30,9 +30,13 @@ cargo clippy --workspace --all-targets --all-features -- -D warnings
 cargo test --workspace --all-features
 cargo build --workspace --all-features --locked
 cargo run --quiet -p career-cli -- capabilities
+cargo run --quiet -p career-cli -- operations --format json-compact
 cargo run --quiet -p career-cli -- schema list
 cargo run --quiet -p career-cli -- schema export \
   --id career.job_match.v1 --format json-compact
+cargo run --quiet -p career-cli -- schema bundle \
+  --id career.job_match_input.v1 --format json-compact
+scripts/verify-managed-adapter-contracts.sh target/debug/career
 cargo run --quiet -p career-cli -- resume evaluate \
   --input fixtures/resume/phase1/complete-sections.input.json
 cargo run --quiet -p career-cli -- resume analyze \
@@ -53,6 +57,7 @@ cargo run --quiet -p career-cli -- job normalize \
   --input fixtures/job/phase4a/complete-normalization.input.json
 cargo run --quiet -p career-cli -- job match \
   --input fixtures/job/phase4b/complete-match.input.json
+scripts/test-pi-career-runtime-artifact.sh
 git diff --check
 ```
 
@@ -72,6 +77,8 @@ installation and verification:
 RUSTUP_TOOLCHAIN=stable rustup target add aarch64-apple-ios aarch64-apple-ios-sim
 RUSTUP_TOOLCHAIN=stable scripts/verify-swift.sh
 ```
+
+`scripts/verify-managed-adapter-contracts.sh` requires `check-jsonschema`; use reviewed pinned version `0.34.1` and set `CHECK_JSONSCHEMA_BIN` when it is not on `PATH`. It validates all emitted bundles against the Draft 2020-12 metaschema and representative instances independently of Rust tests.
 
 ## Maintainer-only `pi-career` runtime inputs
 
