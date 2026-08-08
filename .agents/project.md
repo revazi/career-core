@@ -6,6 +6,10 @@ Build a portable, open-source engine that evaluates career documents with determ
 
 The project should remain useful when no LLM, API key, account, server, or network connection exists.
 
+## Maintenance
+
+Career Core is primarily maintained by [Revaz Zakalashvili](https://github.com/revazi). Public contact, support, ownership, and release-governance details are recorded in [`../MAINTAINERS.md`](../MAINTAINERS.md).
+
 ## Primary consumers
 
 1. `career` CLI users and coding agents

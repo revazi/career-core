@@ -2,6 +2,8 @@
 
 This checklist defines a repeatable release process but does not authorize publication. Creating a tag, GitHub release, crate publication, or binary upload requires explicit maintainer approval.
 
+The current release maintenance owner is [Revaz Zakalashvili](https://github.com/revazi). Ownership and governance are documented in [`../MAINTAINERS.md`](../MAINTAINERS.md).
+
 ## 1. Approve scope and platforms
 
 - choose one reviewed commit from synchronized `main`

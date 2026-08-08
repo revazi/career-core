@@ -6,6 +6,8 @@
 
 It is intended for native applications, command-line tools, and coding agents. It is not an LLM wrapper and performs no network requests.
 
+Primary maintainer and project governance are documented in [`MAINTAINERS.md`](MAINTAINERS.md).
+
 ## Required context
 
 Before changing code:

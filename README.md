@@ -8,7 +8,12 @@ The project is intentionally **not an AI service**. The core performs no network
 
 ## Maintainer and support
 
-Maintainer/support: [Revaz Zakalashvili](https://github.com/revazi)
+**Revaz Zakalashvili** is the primary maintainer of Career Core.
+
+- GitHub: [@revazi](https://github.com/revazi)
+- Contact: [revaz.zakalashvili@gmail.com](mailto:revaz.zakalashvili@gmail.com)
+- Ownership, support, and governance: [`MAINTAINERS.md`](MAINTAINERS.md)
+- Private vulnerability reporting: [`SECURITY.md`](SECURITY.md)
 
 Project-authored source is dual-licensed under `MIT OR Apache-2.0` at your option. See [`LICENSE-MIT`](LICENSE-MIT) and [`LICENSE-APACHE`](LICENSE-APACHE).
 

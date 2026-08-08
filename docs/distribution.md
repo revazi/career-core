@@ -113,3 +113,7 @@ Checksums detect accidental corruption and substitution relative to the release 
 Homebrew, Cargo registry publication, and other package-manager channels are not currently supported. Each channel requires an explicit maintenance and update plan before it can be documented as available.
 
 Maintainers preparing an approved release must follow [`releasing.md`](releasing.md).
+
+## Support and maintenance
+
+Career Core is primarily maintained by [Revaz Zakalashvili](https://github.com/revazi). Use the repository's [issue tracker](https://github.com/revazi/career-core/issues) for sanitized support requests, [`../SECURITY.md`](../SECURITY.md) for private vulnerability reporting, and [`../MAINTAINERS.md`](../MAINTAINERS.md) for ownership and governance details.

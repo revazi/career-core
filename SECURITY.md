@@ -4,9 +4,11 @@
 
 `career-core` is pre-release software. Security fixes are applied to the latest revision on `main` until the first stable release policy is documented.
 
-## Reporting a vulnerability
+## Security maintainer and reporting
 
-Use GitHub private vulnerability reporting for this public repository. Do not include sensitive resume content, job descriptions, credentials, or API keys in a report. If GitHub private vulnerability reporting is unavailable, contact [Revaz Zakalashvili](https://github.com/revazi) before sharing exploit details publicly.
+The primary security maintainer is [Revaz Zakalashvili](https://github.com/revazi). Maintainer and governance details are recorded in [`MAINTAINERS.md`](MAINTAINERS.md).
+
+Use GitHub private vulnerability reporting for this public repository. Do not include sensitive resume content, job descriptions, credentials, API keys, or exploit details in a public issue. If private vulnerability reporting is unavailable, contact [revaz.zakalashvili@gmail.com](mailto:revaz.zakalashvili@gmail.com) before sharing details publicly.
 
 ## Security model
 
