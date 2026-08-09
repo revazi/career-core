@@ -59,7 +59,12 @@ if "$prepare_script" \
   printf 'npm CLI package test expected in-checkout output rejection\n' >&2
   exit 1
 fi
-grep -Fq 'output directory must be outside the source checkout' "$temporary_root/inside.stderr"
+if ! grep -Fq 'output directory must be outside the source checkout' "$temporary_root/inside.stderr"; then
+  printf 'unexpected in-checkout rejection: ' >&2
+  head -c 512 "$temporary_root/inside.stderr" >&2 || true
+  printf '\n' >&2
+  exit 1
+fi
 [[ ! -e "$inside_output" ]] || {
   printf 'npm CLI package test found an in-checkout staging side effect\n' >&2
   exit 1
