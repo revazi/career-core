@@ -984,6 +984,12 @@ for value in (
 for forbidden in ("requests", "urllib", "http.client", "qemu", "--platform"):
     if forbidden in inspection.lower():
         raise SystemExit(f"native inspection script contains forbidden mechanism: {forbidden}")
+expected_dynamic_symbol_line = (
+    '  dynamic_symbols="$(LC_ALL=C readelf --dyn-syms --wide '
+    '"$platform_stage/career")"'
+)
+if preparation.splitlines().count(expected_dynamic_symbol_line) != 1:
+    raise SystemExit("musl candidate dynamic-symbol inspection line is not exact")
 for value in (
     "20-revazi-career-darwin-x64-0.1.1.tgz",
     "40-revazi-career-linux-arm64-gnu-0.1.1.tgz",
