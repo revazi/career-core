@@ -45,7 +45,7 @@ jobs:
         run: |
           apt-get update
           DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-            binutils build-essential ca-certificates curl file git python3
+            binutils build-essential ca-certificates curl diffutils file git python3
           rm -rf /var/lib/apt/lists/*
 
       - name: Check out repository
