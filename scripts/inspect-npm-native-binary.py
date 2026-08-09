@@ -94,7 +94,7 @@ def bounded_regular_bytes(path: pathlib.Path, maximum: int, label: str) -> bytes
     before = path.lstat()
     if not stat.S_ISREG(before.st_mode) or not 1 <= before.st_size <= maximum:
         fail(f"{label} must be one bounded regular non-symlink file")
-    flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0)
+    flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_BINARY", 0)
     descriptor = os.open(path, flags)
     try:
         opened = os.fstat(descriptor)

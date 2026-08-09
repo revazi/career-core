@@ -994,6 +994,7 @@ for value in (
     "MAX_EVIDENCE_BYTES",
     "verify_unchanged_bytes",
     "O_NOFOLLOW",
+    "O_BINARY",
     '"glibc 2.35"',
     '"career.npm_native_inspection.v1"',
 ):
