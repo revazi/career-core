@@ -464,7 +464,12 @@ def main() -> int:
             if not shim.is_file() or comspec is None:
                 fail("installed Windows npm command shim is missing")
             shim_stdout, shim_stderr = run(
-                [comspec, "/d", "/s", "/c", f'call "{shim}" --version'],
+                [
+                    comspec,
+                    "/d",
+                    "/c",
+                    r"node_modules\.bin\career.cmd --version",
+                ],
                 "installed Windows npm command shim",
                 cwd=consumer,
             )

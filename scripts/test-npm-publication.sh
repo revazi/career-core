@@ -1059,6 +1059,9 @@ for path in (preparation_path, test_path):
     for forbidden in ("requests", "urllib", "http.client", "qemu", "--platform"):
         if forbidden in text.lower():
             raise SystemExit(f"Windows package script contains forbidden mechanism: {path.name}: {forbidden}")
+test_source = test_path.read_text(encoding="utf-8")
+if r"node_modules\.bin\career.cmd --version" not in test_source:
+    raise SystemExit("Windows package test does not use the fixed relative npm shim path")
 preparation = preparation_path.read_text(encoding="utf-8")
 for value in ("windows_regular_non_symlink_exe", "0644"):
     if value not in preparation:
