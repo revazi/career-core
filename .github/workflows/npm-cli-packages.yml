@@ -130,6 +130,7 @@ jobs:
             runner_arch: X64
             machine: x86_64
             node_arch: x64
+            expected_linkage: static-pie
             platform_key: linux-x64-musl
             target: x86_64-unknown-linux-musl
             runner_image: ubuntu-22.04+node:22.19.0-alpine3.22+sha256:d2166de198f26e17e5a442f537754dd616ab069c47cc57b889310a717e0abbf9
@@ -137,6 +138,7 @@ jobs:
             runner_arch: ARM64
             machine: aarch64
             node_arch: arm64
+            expected_linkage: static
             platform_key: linux-arm64-musl
             target: aarch64-unknown-linux-musl
             runner_image: ubuntu-24.04-arm+node:22.19.0-alpine3.22+sha256:d2166de198f26e17e5a442f537754dd616ab069c47cc57b889310a717e0abbf9
@@ -157,6 +159,7 @@ jobs:
 
       - name: Build, package, execute, and inspect in exact native musl
         env:
+          EXPECTED_LINKAGE: ${{ matrix.expected_linkage }}
           EXPECTED_MACHINE: ${{ matrix.machine }}
           EXPECTED_NODE_ARCH: ${{ matrix.node_arch }}
           EXPECTED_TARGET: ${{ matrix.target }}
@@ -169,6 +172,7 @@ jobs:
           mkdir -p "$output_dir"
           test -z "$(find "$output_dir" -mindepth 1 -print -quit)"
           docker run --rm --interactive \
+            --env EXPECTED_LINKAGE \
             --env EXPECTED_MACHINE \
             --env EXPECTED_NODE_ARCH \
             --env EXPECTED_TARGET \
@@ -215,6 +219,7 @@ jobs:
             --output /output/evidence.json
           python3 - /output/evidence.json <<'PY'
           import json
+          import os
           import pathlib
           value = json.loads(pathlib.Path("/output/evidence.json").read_bytes())
           assert value["evidence_kind"] == "exact_native_ci"
@@ -223,10 +228,11 @@ jobs:
               "dynamic_imports": [],
               "highest_glibc_symbol_version": None,
               "interpreter": None,
-              "linkage": "static",
+              "linkage": os.environ["EXPECTED_LINKAGE"],
               "runtime_libc": "musl 1.2.5",
           }
           PY
+          chmod 0644 /output/evidence.json
           test "$(find /output/prepared/tarballs -maxdepth 1 -type f -name '*.tgz' | wc -l | tr -d ' ')" = "2"
           test -z "$(find /output -type f \( -name '*.sig' -o -name '*.pem' -o -name '*.key' \) -print -quit)"
           MUSL

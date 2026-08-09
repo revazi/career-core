@@ -925,6 +925,9 @@ for value in (
     "docker run --rm --interactive",
     "musl libc ($EXPECTED_MACHINE)",
     "Version 1.2.5",
+    "expected_linkage: static-pie",
+    "expected_linkage: static",
+    "chmod 0644 /output/evidence.json",
     "scripts/inspect-npm-native-binary.py",
     'test "$(node --version)" = "v22.19.0"',
     "--evidence-kind exact_native_ci",
@@ -991,8 +994,11 @@ for value in (
     "x86_64-unknown-linux-musl)",
     "aarch64-unknown-linux-musl)",
     'readelf --file-header --wide "$platform_stage/career"',
+    "Type:[[:space:]]+DYN",
     "Type:[[:space:]]+EXEC",
-    "musl candidate is not one static ELF EXEC",
+    "Flags: NOW PIE",
+    "x86-64 musl candidate is not one reviewed static PIE",
+    "AArch64 musl candidate is not one reviewed static executable",
 ):
     if value not in preparation:
         raise SystemExit(f"native publication preparation is missing target policy text: {value}")

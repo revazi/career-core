@@ -279,11 +279,8 @@ def inspect_linux_musl(binary_path: pathlib.Path, target: dict[str, Any]) -> dic
         ["readelf", "--dynamic", "--wide", str(binary_path)],
         "musl ELF import inspection",
     )
-    if (
-        re.findall(r"Shared library: \[([^\]]+)\]", dynamic)
-        or "There is no dynamic section in this file." not in dynamic
-    ):
-        fail("musl ELF is not one reviewed static executable")
+    if re.findall(r"Shared library: \[([^\]]+)\]", dynamic):
+        fail("musl ELF contains an unexpected dynamic import")
     symbols = run_bounded(
         ["readelf", "--dyn-syms", "--wide", str(binary_path)],
         "musl ELF symbol inspection",
@@ -294,8 +291,22 @@ def inspect_linux_musl(binary_path: pathlib.Path, target: dict[str, Any]) -> dic
         ["readelf", "--file-header", "--wide", str(binary_path)],
         "musl ELF type inspection",
     )
-    if re.search(r"^\s*Type:\s+EXEC \(Executable file\)\s*$", header, re.MULTILINE) is None:
-        fail("musl ELF is not one static executable file")
+    if target["binary_architecture"] == "x86_64":
+        valid_type = re.search(
+            r"^\s*Type:\s+DYN \(Position-Independent Executable file\)\s*$",
+            header,
+            re.MULTILINE,
+        )
+        if valid_type is None or "Flags: NOW PIE" not in dynamic:
+            fail("x86-64 musl ELF is not one reviewed static PIE")
+        linkage_kind = "static-pie"
+    else:
+        valid_type = re.search(
+            r"^\s*Type:\s+EXEC \(Executable file\)\s*$", header, re.MULTILINE
+        )
+        if valid_type is None or "There is no dynamic section in this file." not in dynamic:
+            fail("AArch64 musl ELF is not one reviewed static executable")
+        linkage_kind = "static"
     loader_arch = "aarch64" if target["binary_architecture"] == "aarch64" else "x86_64"
     loader = f"/lib/ld-musl-{loader_arch}.so.1"
     _, loader_stderr = run_bounded_outputs(
@@ -309,7 +320,7 @@ def inspect_linux_musl(binary_path: pathlib.Path, target: dict[str, Any]) -> dic
     if match is None:
         fail("musl runtime evidence is malformed or architecture-mismatched")
     return {
-        "linkage": "static",
+        "linkage": linkage_kind,
         "interpreter": None,
         "dynamic_imports": [],
         "highest_glibc_symbol_version": None,

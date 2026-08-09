@@ -272,7 +272,10 @@ if value["target"]["libc_family"] == "musl":
     assert value["linkage"]["dynamic_imports"] == []
     assert value["linkage"]["highest_glibc_symbol_version"] is None
     assert value["linkage"]["interpreter"] is None
-    assert value["linkage"]["linkage"] == "static"
+    expected_linkage = (
+        "static-pie" if value["binary"]["binary_architecture"] == "x86_64" else "static"
+    )
+    assert value["linkage"]["linkage"] == expected_linkage
     assert re.fullmatch(r"musl [0-9]+(?:\.[0-9]+){1,3}", value["linkage"]["runtime_libc"])
 else:
     assert value["linkage"]["dynamic_imports"]
