@@ -51,6 +51,12 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
+      - name: Configure exact container checkout ownership
+        if: matrix.container != ''
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          test "$(git -C "$GITHUB_WORKSPACE" rev-parse --show-toplevel)" = "$GITHUB_WORKSPACE"
+
       - name: Configure exact reviewed release Rust
         run: |
           if ! command -v rustup >/dev/null 2>&1; then
@@ -75,11 +81,7 @@ jobs:
       - name: Run launcher and package tests
         run: |
           node --test npm/tests/launcher.test.js
-          if [ "${{ matrix.target }}" = "aarch64-unknown-linux-gnu" ]; then
-            bash -x scripts/test-npm-cli-packages.sh
-          else
-            scripts/test-npm-cli-packages.sh
-          fi
+          scripts/test-npm-cli-packages.sh
 
       - name: Prepare private packages without publishing or upload
         run: |

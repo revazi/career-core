@@ -918,6 +918,7 @@ for value in (
     "ubuntu-24.04-arm",
     "container: ubuntu:22.04",
     "diffutils",
+    'safe.directory "$GITHUB_WORKSPACE"',
     "scripts/inspect-npm-native-binary.py",
     'test "$(node --version)" = "v22.19.0"',
     "--evidence-kind exact_native_ci",
