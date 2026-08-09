@@ -48,7 +48,14 @@ EXACT_RUNNER_IMAGES = {
 }
 WINDOWS_SYSTEM_IMPORTS = {
     "advapi32.dll",
+    "api-ms-win-core-synch-l1-2-0.dll",
+    "api-ms-win-crt-heap-l1-1-0.dll",
+    "api-ms-win-crt-locale-l1-1-0.dll",
+    "api-ms-win-crt-math-l1-1-0.dll",
+    "api-ms-win-crt-runtime-l1-1-0.dll",
+    "api-ms-win-crt-stdio-l1-1-0.dll",
     "bcrypt.dll",
+    "bcryptprimitives.dll",
     "crypt32.dll",
     "iphlpapi.dll",
     "kernel32.dll",

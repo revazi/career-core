@@ -1072,6 +1072,19 @@ if spec is None or spec.loader is None:
     raise SystemExit("could not load native inspection policy")
 module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(module)
+observed_windows_api_imports = (
+    "api-ms-win-core-synch-l1-2-0.dll",
+    "api-ms-win-crt-heap-l1-1-0.dll",
+    "api-ms-win-crt-locale-l1-1-0.dll",
+    "api-ms-win-crt-math-l1-1-0.dll",
+    "api-ms-win-crt-runtime-l1-1-0.dll",
+    "api-ms-win-crt-stdio-l1-1-0.dll",
+    "bcryptprimitives.dll",
+)
+if not all(module.approved_windows_import(value) for value in observed_windows_api_imports):
+    raise SystemExit("exact observed Windows system imports are not reviewed")
+if module.approved_windows_import("api-ms-win-evil.dll"):
+    raise SystemExit("arbitrary Windows API-set import was accepted")
 binary = bytearray(1024)
 binary[0:2] = b"MZ"
 binary[0x3C:0x40] = (0x80).to_bytes(4, "little")
