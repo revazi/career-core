@@ -80,7 +80,7 @@ def fail(message: str) -> None:
 
 def same_file(left: os.stat_result, right: os.stat_result) -> bool:
     if os.name == "nt":
-        return left.st_ino != 0 and (left.st_dev, left.st_ino, left.st_size) == (
+        return (left.st_dev, left.st_ino, left.st_size) == (
             right.st_dev,
             right.st_ino,
             right.st_size,
@@ -123,6 +123,17 @@ def bounded_regular_bytes(path: pathlib.Path, maximum: int, label: str) -> bytes
     ):
         fail(f"{label} changed or exceeded its byte bound during inspection")
     return data
+
+
+def verify_unchanged_bytes(
+    path: pathlib.Path, expected: bytes, maximum: int, label: str
+) -> None:
+    observed = bounded_regular_bytes(path, maximum, label)
+    if (
+        len(observed) != len(expected)
+        or hashlib.sha256(observed).digest() != hashlib.sha256(expected).digest()
+    ):
+        fail(f"{label} bytes changed during inspection")
 
 
 def load_catalog(repository_root: pathlib.Path) -> tuple[dict[str, Any], bytes]:
@@ -627,17 +638,35 @@ def main() -> int:
         if system == "Windows" and target["executable"] != "career.exe":
             fail("Windows native executable name is not exact")
         verify_header(binary, target)
+        verify_unchanged_bytes(
+            binary_path,
+            binary,
+            target["maximum_binary_size_bytes"],
+            "native executable",
+        )
         observed_version = run_bounded(
             [str(binary_path), "--version"], "native execution"
         ).strip()
         if observed_version != "career 0.1.1":
             fail("native executable version is not exact lockstep 0.1.1")
+        verify_unchanged_bytes(
+            binary_path,
+            binary,
+            target["maximum_binary_size_bytes"],
+            "native executable",
+        )
         if system == "Darwin":
             linkage = inspect_darwin(binary_path, target)
         elif system == "Linux":
             linkage = inspect_linux(binary_path, target)
         else:
             linkage = inspect_windows(binary)
+        verify_unchanged_bytes(
+            binary_path,
+            binary,
+            target["maximum_binary_size_bytes"],
+            "native executable",
+        )
         if args.evidence_kind == "exact_native_ci":
             if args.runner_image != EXACT_RUNNER_IMAGES[args.target]:
                 fail(

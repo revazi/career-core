@@ -992,13 +992,21 @@ for value in (
     '"musl 1.2.5"',
     "MAX_COMMAND_OUTPUT_BYTES",
     "MAX_EVIDENCE_BYTES",
+    "verify_unchanged_bytes",
     "O_NOFOLLOW",
     '"glibc 2.35"',
     '"career.npm_native_inspection.v1"',
 ):
     if value not in inspection:
         raise SystemExit(f"native inspection script is missing fail-closed policy text: {value}")
-for forbidden in ("requests", "urllib", "http.client", "qemu", "--platform"):
+for forbidden in (
+    "requests",
+    "urllib",
+    "http.client",
+    "qemu",
+    "--platform",
+    "st_ino != 0",
+):
     if forbidden in inspection.lower():
         raise SystemExit(f"native inspection script contains forbidden mechanism: {forbidden}")
 expected_dynamic_symbol_line = (
