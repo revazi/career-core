@@ -909,6 +909,8 @@ ordered = [
     "aarch64-unknown-linux-gnu",
     "x86_64-unknown-linux-musl",
     "aarch64-unknown-linux-musl",
+    "x86_64-pc-windows-msvc",
+    "aarch64-pc-windows-msvc",
 ]
 positions = [text.index(value) for value in ordered]
 if positions != sorted(positions):
@@ -928,6 +930,11 @@ for value in (
     "expected_linkage: static-pie",
     "expected_linkage: static",
     "chmod 0644 /output/evidence.json",
+    "windows-2025",
+    "windows-11-arm",
+    "scripts/prepare-npm-cli-packages-windows.py",
+    "scripts/test-npm-cli-packages-windows.py",
+    "career.exe",
     "scripts/inspect-npm-native-binary.py",
     'test "$(node --version)" = "v22.19.0"',
     "--evidence-kind exact_native_ci",
@@ -940,6 +947,7 @@ for forbidden in (
     "schedule:",
     "macos-latest",
     "ubuntu-latest",
+    "windows-latest",
     "continue-on-error:",
     "qemu",
     "--platform",
@@ -971,7 +979,10 @@ for value in (
     '"aarch64-unknown-linux-gnu": "ubuntu-24.04-arm+ubuntu:22.04"',
     '"x86_64-unknown-linux-musl"',
     '"aarch64-unknown-linux-musl"',
+    '"x86_64-pc-windows-msvc": "windows-2025"',
+    '"aarch64-pc-windows-msvc": "windows-11-arm"',
     "inspect_linux_musl",
+    "inspect_windows",
     '"musl 1.2.5"',
     "MAX_COMMAND_OUTPUT_BYTES",
     "MAX_EVIDENCE_BYTES",
@@ -1008,6 +1019,72 @@ for value in (
 ):
     if value not in preparation:
         raise SystemExit(f"native publication preparation is missing target policy text: {value}")
+PY
+
+python3 - \
+  "$repository_root/scripts/inspect-npm-native-binary.py" \
+  "$repository_root/scripts/prepare-npm-cli-packages-windows.py" \
+  "$repository_root/scripts/test-npm-cli-packages-windows.py" <<'PY'
+import importlib.util
+import pathlib
+import sys
+inspection_path, preparation_path, test_path = map(pathlib.Path, sys.argv[1:])
+for path in (preparation_path, test_path):
+    text = path.read_text(encoding="utf-8")
+    for value in (
+        "Windows",
+        "career.exe",
+        "x86_64-pc-windows-msvc",
+        "aarch64-pc-windows-msvc",
+    ):
+        if value not in text:
+            raise SystemExit(f"Windows package script is missing policy text: {path.name}: {value}")
+    for forbidden in ("requests", "urllib", "http.client", "qemu", "--platform"):
+        if forbidden in text.lower():
+            raise SystemExit(f"Windows package script contains forbidden mechanism: {path.name}: {forbidden}")
+preparation = preparation_path.read_text(encoding="utf-8")
+for value in ("windows_regular_non_symlink_exe", "0644"):
+    if value not in preparation:
+        raise SystemExit(f"Windows preparation is missing file policy text: {value}")
+spec = importlib.util.spec_from_file_location("career_native_inspection", inspection_path)
+if spec is None or spec.loader is None:
+    raise SystemExit("could not load native inspection policy")
+module = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(module)
+binary = bytearray(1024)
+binary[0:2] = b"MZ"
+binary[0x3C:0x40] = (0x80).to_bytes(4, "little")
+pe = 0x80
+binary[pe:pe + 4] = b"PE\0\0"
+binary[pe + 4:pe + 6] = (0x8664).to_bytes(2, "little")
+binary[pe + 6:pe + 8] = (1).to_bytes(2, "little")
+binary[pe + 20:pe + 22] = (240).to_bytes(2, "little")
+binary[pe + 22:pe + 24] = (2).to_bytes(2, "little")
+optional = pe + 24
+binary[optional:optional + 2] = (0x020B).to_bytes(2, "little")
+binary[optional + 60:optional + 64] = (0x200).to_bytes(4, "little")
+binary[optional + 108:optional + 112] = (16).to_bytes(4, "little")
+binary[optional + 120:optional + 124] = (0x1000).to_bytes(4, "little")
+binary[optional + 124:optional + 128] = (40).to_bytes(4, "little")
+section = optional + 240
+binary[section + 8:section + 12] = (0x200).to_bytes(4, "little")
+binary[section + 12:section + 16] = (0x1000).to_bytes(4, "little")
+binary[section + 16:section + 20] = (0x200).to_bytes(4, "little")
+binary[section + 20:section + 24] = (0x200).to_bytes(4, "little")
+binary[0x200 + 12:0x200 + 16] = (0x1050).to_bytes(4, "little")
+binary[0x250:0x250 + len(b"kernel32.dll\0")] = b"kernel32.dll\0"
+target = {"binary_format": "pe32+-x86_64", "binary_architecture": "x86_64"}
+module.verify_header(bytes(binary), target)
+linkage = module.inspect_windows(bytes(binary))
+if linkage["dynamic_imports"] != ["kernel32.dll"] or linkage["linkage"] != "dynamic":
+    raise SystemExit("synthetic bounded PE import inspection did not match")
+binary[0x250:0x250 + len(b"evil.dll\0")] = b"evil.dll\0"
+try:
+    module.inspect_windows(bytes(binary))
+except module.InspectionError:
+    pass
+else:
+    raise SystemExit("PE import inspection accepted a non-reviewed DLL")
 PY
 
 for package in \

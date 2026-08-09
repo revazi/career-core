@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Generalize the npm launcher to fail-closed glibc/musl detection, Mach-O/ELF/PE architecture checks, and explicit Unix/Windows file invariants using internal npm metadata/provenance v2.
 - Add preparation-only exact native Darwin ARM64/x64 and GNU Linux x64/ARM64 packaged-binary execution plus bounded linkage/import inspection evidence; this does not yet claim new platform support.
 - Add digest-pinned exact native Alpine 3.22/musl 1.2.5 x64/ARM64 packaged-binary execution and static ELF/no-interpreter/no-import evidence; this remains release-blocked and unpublished.
+- Add preparation-only native Windows x64/ARM64 package execution and bounded PE32+/machine/system-import evidence without a Unix mode claim; this remains release-blocked and unpublished.
 
 ### Changed
 

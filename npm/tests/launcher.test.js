@@ -76,7 +76,7 @@ function cleanupCancellationProcesses(child, pidFile) {
 
 before(() => {
   const buildRoot = makeTemporaryRoot("career-npm-helper-");
-  helperBinary = path.join(buildRoot, "career");
+  helperBinary = path.join(buildRoot, process.platform === "win32" ? "career.exe" : "career");
   const result = spawnSync(
     "rustc",
     ["--edition=2024", "-C", "opt-level=0", HELPER_SOURCE, "-o", helperBinary],
@@ -657,7 +657,7 @@ test("rejects unsafe binary file types and exact mode drift", async (t) => {
     fs.mkdirSync(tree.binaryPath);
     expectCode(() => resolveTree(tree), "CAREER_NPM_BINARY_TYPE_INVALID");
   });
-  await t.test("Unix mode", () => {
+  await t.test("Unix mode", { skip: process.platform === "win32" }, () => {
     const tree = makeInstalledTree();
     fs.chmodSync(tree.binaryPath, 0o700);
     expectCode(() => resolveTree(tree), "CAREER_NPM_BINARY_MODE_MISMATCH");
@@ -764,7 +764,10 @@ test("installs cancellation handlers before spawning the native process", async 
   }
 });
 
-test("propagates cancellation to the child and terminates with the same signal", { timeout: 10_000 }, async (t) => {
+test(
+  "propagates cancellation to the child and terminates with the same signal",
+  { timeout: 10_000, skip: process.platform === "win32" },
+  async (t) => {
   const tree = makeInstalledTree();
   const pidFile = path.join(tree.root, "helper.pid");
   const child = spawn(process.execPath, [tree.launcherBin, "--test-signal"], {
@@ -800,8 +803,9 @@ test("propagates cancellation to the child and terminates with the same signal",
   assert.match(stdout, /^READY\n$/u);
   const nativePid = Number(fs.readFileSync(pidFile, "utf8"));
   await waitForCondition("the native process to exit", () => processIsGone(nativePid));
-  cleanupComplete = true;
-});
+    cleanupComplete = true;
+  },
+);
 
 test("reports launch failures with one stable bounded error code", async () => {
   await assert.rejects(
