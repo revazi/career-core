@@ -249,7 +249,7 @@ jobs:
     name: Publish exact npm candidate
     needs: [source, assemble]
     runs-on: ubuntu-22.04
-    timeout-minutes: 20
+    timeout-minutes: 40
     environment:
       name: npm-production
     permissions:

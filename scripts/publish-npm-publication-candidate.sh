@@ -174,6 +174,8 @@ plan.write_text("\n".join(lines) + "\n", encoding="utf-8")
 PY
 
 registry="https://registry.npmjs.org"
+registry_visibility_attempts=61
+registry_visibility_sleep_seconds=10
 lookup() {
   local spec="$1" field="$2"
   local output="$temporary_root/npm-view.json" errors="$temporary_root/npm-view.stderr"
@@ -229,24 +231,6 @@ matching_or_absent_version() {
   fi
 }
 
-require_registry_integrity() {
-  local name="$1" version="$2" expected="$3" attempt=1 status
-  while ((attempt <= 6)); do
-    if matching_or_absent_version "$name" "$version" "$expected"; then
-      return 0
-    else
-      status=$?
-      [[ "$status" -eq 4 ]] || return "$status"
-      if ((attempt < 6)); then
-        sleep 10
-        attempt=$((attempt + 1))
-        continue
-      fi
-      fail "$name@$version did not expose exact reviewed registry integrity"
-    fi
-  done
-}
-
 registry_provenance_ready() {
   local name="$1" version="$2" raw status
   if raw="$(lookup "$name@$version" dist.attestations)"; then
@@ -268,35 +252,39 @@ registry_provenance_ready() {
   fi
 }
 
-require_registry_provenance() {
-  local name="$1" version="$2" attempt=1 status
-  while ((attempt <= 6)); do
-    if registry_provenance_ready "$name" "$version"; then
-      return 0
+require_registry_package_ready() {
+  local name="$1" version="$2" expected="$3" attempt=1 status missing="integrity"
+  while ((attempt <= registry_visibility_attempts)); do
+    if matching_or_absent_version "$name" "$version" "$expected"; then
+      missing="provenance"
+      if registry_provenance_ready "$name" "$version"; then
+        return 0
+      else
+        status=$?
+        if [[ "$status" -ne 4 && "$status" -ne 5 ]]; then return "$status"; fi
+      fi
     else
       status=$?
-      if [[ "$status" -ne 4 && "$status" -ne 5 ]]; then return "$status"; fi
-      if ((attempt < 6)); then
-        sleep 10
-        attempt=$((attempt + 1))
-        continue
-      fi
-      fail "$name@$version is missing valid npm registry SLSA provenance attestations"
+      [[ "$status" -eq 4 ]] || return "$status"
+      missing="integrity"
     fi
+    if ((attempt < registry_visibility_attempts)); then
+      sleep "$registry_visibility_sleep_seconds"
+      attempt=$((attempt + 1))
+      continue
+    fi
+    if [[ "$missing" == "integrity" ]]; then
+      fail "$name@$version did not expose exact reviewed registry integrity"
+    fi
+    fail "$name@$version is missing valid npm registry SLSA provenance attestations"
   done
 }
 
 preflight_bootstrap_package() {
   local name="$1" version="$2" expected="$3" status
   if name_exists "$name"; then
-    if matching_or_absent_version "$name" "$version" "$expected"; then
-      require_registry_provenance "$name" "$version"
-      return 0
-    else
-      status=$?
-      [[ "$status" -eq 4 ]] && fail "$name exists without exact reviewed $version integrity"
-      return "$status"
-    fi
+    require_registry_package_ready "$name" "$version" "$expected"
+    return 0
   else
     status=$?
     [[ "$status" -eq 4 ]] && return 0
@@ -308,7 +296,7 @@ preflight_oidc_package() {
   local name="$1" version="$2" expected="$3" status
   if name_exists "$name"; then
     if matching_or_absent_version "$name" "$version" "$expected"; then
-      require_registry_provenance "$name" "$version"
+      require_registry_package_ready "$name" "$version" "$expected"
       return 0
     else
       status=$?
@@ -334,7 +322,7 @@ publish_one() {
   local name="$1" version="$2" file="$3" expected="$4"
   local status attempt=1 output
   if matching_or_absent_version "$name" "$version" "$expected"; then
-    require_registry_provenance "$name" "$version"
+    require_registry_package_ready "$name" "$version" "$expected"
     printf '%s@%s already exists with exact reviewed integrity and registry provenance; skipping\n' "$name" "$version"
     return 0
   else
@@ -349,14 +337,13 @@ publish_one() {
       --ignore-scripts \
       --registry="$registry" >"$output" 2>&1; then
       cat "$output"
-      require_registry_integrity "$name" "$version" "$expected"
-      require_registry_provenance "$name" "$version"
+      require_registry_package_ready "$name" "$version" "$expected"
       return 0
     else
       status=$?
       cat "$output"
       if matching_or_absent_version "$name" "$version" "$expected"; then
-        require_registry_provenance "$name" "$version"
+        require_registry_package_ready "$name" "$version" "$expected"
         printf '%s@%s appeared with exact integrity and registry provenance after an interrupted response\n' "$name" "$version"
         return 0
       else
@@ -385,9 +372,8 @@ while IFS=$'\t' read -r order name version file integrity; do
   if [[ "$name" == "@revazi/career" ]]; then
     while IFS=$'\t' read -r native_order native_name native_version _native_file native_integrity; do
       [[ "$native_order" == "30" ]] && continue
-      matching_or_absent_version "$native_name" "$native_version" "$native_integrity" || \
+      require_registry_package_ready "$native_name" "$native_version" "$native_integrity" || \
         fail "launcher publication is blocked until both native packages exactly match"
-      require_registry_provenance "$native_name" "$native_version"
     done <"$plan"
   fi
   publish_one "$name" "$version" "$file" "$integrity"
