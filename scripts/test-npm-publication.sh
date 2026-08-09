@@ -898,6 +898,11 @@ if driver.index("10-revazi-career-darwin-arm64-0.1.1.tgz") > driver.index("90-re
     raise SystemExit("publication driver does not encode native-before-launcher ordering")
 PY
 
+[[ "$(cat "$repository_root/.gitattributes")" == "* text=auto eol=lf" ]] || {
+  printf 'repository checkout text normalization policy is not exact\n' >&2
+  exit 1
+}
+
 python3 - "$repository_root/.github/workflows/npm-cli-packages.yml" <<'PY'
 import pathlib
 import sys
@@ -909,6 +914,8 @@ ordered = [
     "aarch64-unknown-linux-gnu",
     "x86_64-unknown-linux-musl",
     "aarch64-unknown-linux-musl",
+    "x86_64-pc-windows-msvc",
+    "aarch64-pc-windows-msvc",
 ]
 positions = [text.index(value) for value in ordered]
 if positions != sorted(positions):
@@ -928,6 +935,12 @@ for value in (
     "expected_linkage: static-pie",
     "expected_linkage: static",
     "chmod 0644 /output/evidence.json",
+    "windows-2025",
+    "windows-11-arm",
+    "RuntimeInformation]::ProcessArchitecture",
+    "scripts/prepare-npm-cli-packages-windows.py",
+    "scripts/test-npm-cli-packages-windows.py",
+    "career.exe",
     "scripts/inspect-npm-native-binary.py",
     'test "$(node --version)" = "v22.19.0"',
     "--evidence-kind exact_native_ci",
@@ -940,6 +953,7 @@ for forbidden in (
     "schedule:",
     "macos-latest",
     "ubuntu-latest",
+    "windows-latest",
     "continue-on-error:",
     "qemu",
     "--platform",
@@ -971,17 +985,29 @@ for value in (
     '"aarch64-unknown-linux-gnu": "ubuntu-24.04-arm+ubuntu:22.04"',
     '"x86_64-unknown-linux-musl"',
     '"aarch64-unknown-linux-musl"',
+    '"x86_64-pc-windows-msvc": "windows-2025"',
+    '"aarch64-pc-windows-msvc": "windows-11-arm"',
     "inspect_linux_musl",
+    "inspect_windows",
     '"musl 1.2.5"',
     "MAX_COMMAND_OUTPUT_BYTES",
     "MAX_EVIDENCE_BYTES",
+    "verify_unchanged_bytes",
     "O_NOFOLLOW",
+    "O_BINARY",
     '"glibc 2.35"',
     '"career.npm_native_inspection.v1"',
 ):
     if value not in inspection:
         raise SystemExit(f"native inspection script is missing fail-closed policy text: {value}")
-for forbidden in ("requests", "urllib", "http.client", "qemu", "--platform"):
+for forbidden in (
+    "requests",
+    "urllib",
+    "http.client",
+    "qemu",
+    "--platform",
+    "st_ino != 0",
+):
     if forbidden in inspection.lower():
         raise SystemExit(f"native inspection script contains forbidden mechanism: {forbidden}")
 expected_dynamic_symbol_line = (
@@ -1008,6 +1034,128 @@ for value in (
 ):
     if value not in preparation:
         raise SystemExit(f"native publication preparation is missing target policy text: {value}")
+PY
+
+python3 - \
+  "$repository_root/scripts/inspect-npm-native-binary.py" \
+  "$repository_root/scripts/prepare-npm-cli-packages-windows.py" \
+  "$repository_root/scripts/test-npm-cli-packages-windows.py" \
+  "$repository_root/scripts/npm_windows_process.py" <<'PY'
+import importlib.util
+import pathlib
+import sys
+sys.dont_write_bytecode = True
+inspection_path, preparation_path, test_path, process_path = map(pathlib.Path, sys.argv[1:])
+for path in (preparation_path, test_path):
+    text = path.read_text(encoding="utf-8")
+    for value in (
+        "Windows",
+        "career.exe",
+        "x86_64-pc-windows-msvc",
+        "aarch64-pc-windows-msvc",
+    ):
+        if value not in text:
+            raise SystemExit(f"Windows package script is missing policy text: {path.name}: {value}")
+    for forbidden in ("requests", "urllib", "http.client", "qemu", "--platform"):
+        if forbidden in text.lower():
+            raise SystemExit(f"Windows package script contains forbidden mechanism: {path.name}: {forbidden}")
+test_source = test_path.read_text(encoding="utf-8")
+if r"node_modules\.bin\career.cmd --version" not in test_source:
+    raise SystemExit("Windows package test does not use the fixed relative npm shim path")
+preparation = preparation_path.read_text(encoding="utf-8")
+for value in ("windows_regular_non_symlink_exe", "0644"):
+    if value not in preparation:
+        raise SystemExit(f"Windows preparation is missing file policy text: {value}")
+process_source = process_path.read_text(encoding="utf-8")
+for value in ("TemporaryFile", "Popen", "maximum_output_bytes", "process.kill()"):
+    if value not in process_source:
+        raise SystemExit(f"Windows bounded process helper is missing policy text: {value}")
+spec = importlib.util.spec_from_file_location("career_native_inspection", inspection_path)
+if spec is None or spec.loader is None:
+    raise SystemExit("could not load native inspection policy")
+module = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(module)
+observed_windows_api_imports = (
+    "api-ms-win-core-synch-l1-2-0.dll",
+    "api-ms-win-crt-heap-l1-1-0.dll",
+    "api-ms-win-crt-locale-l1-1-0.dll",
+    "api-ms-win-crt-math-l1-1-0.dll",
+    "api-ms-win-crt-runtime-l1-1-0.dll",
+    "api-ms-win-crt-stdio-l1-1-0.dll",
+    "bcryptprimitives.dll",
+)
+if not all(module.approved_windows_import(value) for value in observed_windows_api_imports):
+    raise SystemExit("exact observed Windows system imports are not reviewed")
+if module.approved_windows_import("api-ms-win-evil.dll"):
+    raise SystemExit("arbitrary Windows API-set import was accepted")
+binary = bytearray(1024)
+binary[0:2] = b"MZ"
+binary[0x3C:0x40] = (0x80).to_bytes(4, "little")
+pe = 0x80
+binary[pe:pe + 4] = b"PE\0\0"
+binary[pe + 4:pe + 6] = (0x8664).to_bytes(2, "little")
+binary[pe + 6:pe + 8] = (1).to_bytes(2, "little")
+binary[pe + 20:pe + 22] = (240).to_bytes(2, "little")
+binary[pe + 22:pe + 24] = (2).to_bytes(2, "little")
+optional = pe + 24
+binary[optional:optional + 2] = (0x020B).to_bytes(2, "little")
+binary[optional + 60:optional + 64] = (0x200).to_bytes(4, "little")
+binary[optional + 108:optional + 112] = (16).to_bytes(4, "little")
+binary[optional + 120:optional + 124] = (0x1000).to_bytes(4, "little")
+binary[optional + 124:optional + 128] = (40).to_bytes(4, "little")
+section = optional + 240
+binary[section + 8:section + 12] = (0x200).to_bytes(4, "little")
+binary[section + 12:section + 16] = (0x1000).to_bytes(4, "little")
+binary[section + 16:section + 20] = (0x200).to_bytes(4, "little")
+binary[section + 20:section + 24] = (0x200).to_bytes(4, "little")
+binary[0x200 + 12:0x200 + 16] = (0x1050).to_bytes(4, "little")
+binary[0x250:0x250 + len(b"kernel32.dll\0")] = b"kernel32.dll\0"
+target = {"binary_format": "pe32+-x86_64", "binary_architecture": "x86_64"}
+module.verify_header(bytes(binary), target)
+linkage = module.inspect_windows(bytes(binary))
+if linkage["dynamic_imports"] != ["kernel32.dll"] or linkage["linkage"] != "dynamic":
+    raise SystemExit("synthetic bounded PE import inspection did not match")
+reviewed_binary = bytes(binary)
+def expect_pe_rejection(candidate, label):
+    try:
+        module.inspect_windows(bytes(candidate))
+    except module.InspectionError:
+        return
+    raise SystemExit(f"PE import inspection accepted {label}")
+non_system = bytearray(reviewed_binary)
+non_system[0x250:0x250 + len(b"api-ms-win-evil.dll\0")] = b"api-ms-win-evil.dll\0"
+expect_pe_rejection(non_system, "a non-reviewed API-set DLL")
+truncated_descriptor = bytearray(reviewed_binary)
+truncated_descriptor[section + 16:section + 20] = (4).to_bytes(4, "little")
+expect_pe_rejection(truncated_descriptor, "a cross-section import descriptor")
+unterminated = bytearray(reviewed_binary)
+unterminated[optional + 124:optional + 128] = (20).to_bytes(4, "little")
+expect_pe_rejection(unterminated, "an unterminated import table")
+crossing_name = bytearray(reviewed_binary)
+crossing_name[0x200 + 12:0x200 + 16] = (0x11FC).to_bytes(4, "little")
+crossing_name[0x3FC:0x400] = b"abcd"
+expect_pe_rejection(crossing_name, "a cross-section import name")
+overlapping = bytearray(reviewed_binary)
+overlapping[pe + 6:pe + 8] = (2).to_bytes(2, "little")
+second = section + 40
+overlapping[second + 8:second + 12] = (0x200).to_bytes(4, "little")
+overlapping[second + 12:second + 16] = (0x1100).to_bytes(4, "little")
+expect_pe_rejection(overlapping, "overlapping PE sections")
+process_spec = importlib.util.spec_from_file_location("career_windows_process", process_path)
+if process_spec is None or process_spec.loader is None:
+    raise SystemExit("could not load Windows bounded process helper")
+process_module = importlib.util.module_from_spec(process_spec)
+process_spec.loader.exec_module(process_module)
+try:
+    process_module.run_bounded(
+        [sys.executable, "-c", "import sys; sys.stdout.write('x' * 4096)"],
+        "synthetic over-bound child",
+        maximum_output_bytes=1024,
+    )
+except process_module.BoundedProcessError:
+    pass
+else:
+    raise SystemExit("Windows process helper accepted over-bound child output")
 PY
 
 for package in \

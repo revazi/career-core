@@ -76,7 +76,7 @@ function cleanupCancellationProcesses(child, pidFile) {
 
 before(() => {
   const buildRoot = makeTemporaryRoot("career-npm-helper-");
-  helperBinary = path.join(buildRoot, "career");
+  helperBinary = path.join(buildRoot, process.platform === "win32" ? "career.exe" : "career");
   const result = spawnSync(
     "rustc",
     ["--edition=2024", "-C", "opt-level=0", HELPER_SOURCE, "-o", helperBinary],
@@ -101,6 +101,16 @@ function libcRuntimeFor(target) {
 function currentTarget() {
   const libcRuntime = process.platform === "linux" ? launcher.detectLinuxLibc() : null;
   return launcher.selectTarget(process.platform, process.arch, libcRuntime, CATALOG);
+}
+
+function differentRustTarget(target) {
+  const different = CATALOG.targets.find((value) => value.rust_target !== target.rust_target);
+  assert.ok(different);
+  return different.rust_target;
+}
+
+function hostCanRepresentFileInvariant(target) {
+  return process.platform !== "win32" || target.file_invariant === "windows_regular_non_symlink_exe";
 }
 
 function readJson(filePath) {
@@ -358,7 +368,7 @@ test("Linux libc detection requires positive bounded architecture-matched eviden
 });
 
 test("resolves and verifies every exact synthetic target package", () => {
-  for (const target of CATALOG.targets) {
+  for (const target of CATALOG.targets.filter(hostCanRepresentFileInvariant)) {
     const tree = makeInstalledTree(target, true);
     const result = resolveTree(tree);
     assert.equal(result.binaryPath, tree.binaryPath);
@@ -521,7 +531,7 @@ test("rejects malformed and mismatched platform manifests", async (t) => {
   await t.test("target metadata", () => {
     const tree = makeInstalledTree();
     mutateJson(tree.platformManifestPath, (manifest) => {
-      manifest.career_native.rust_target = "x86_64-pc-windows-msvc";
+      manifest.career_native.rust_target = differentRustTarget(tree.target);
     });
     expectCode(() => resolveTree(tree), "CAREER_NPM_TARGET_MISMATCH");
   });
@@ -569,7 +579,7 @@ test("rejects missing, malformed, and mismatched provenance", async (t) => {
   await t.test("target", () => {
     const tree = makeInstalledTree();
     mutateJson(tree.provenancePath, (value) => {
-      value.package.rust_target = "x86_64-pc-windows-msvc";
+      value.package.rust_target = differentRustTarget(tree.target);
     });
     expectCode(() => resolveTree(tree), "CAREER_NPM_PROVENANCE_TARGET_MISMATCH");
   });
@@ -657,7 +667,7 @@ test("rejects unsafe binary file types and exact mode drift", async (t) => {
     fs.mkdirSync(tree.binaryPath);
     expectCode(() => resolveTree(tree), "CAREER_NPM_BINARY_TYPE_INVALID");
   });
-  await t.test("Unix mode", () => {
+  await t.test("Unix mode", { skip: process.platform === "win32" }, () => {
     const tree = makeInstalledTree();
     fs.chmodSync(tree.binaryPath, 0o700);
     expectCode(() => resolveTree(tree), "CAREER_NPM_BINARY_MODE_MISMATCH");
@@ -764,7 +774,10 @@ test("installs cancellation handlers before spawning the native process", async 
   }
 });
 
-test("propagates cancellation to the child and terminates with the same signal", { timeout: 10_000 }, async (t) => {
+test(
+  "propagates cancellation to the child and terminates with the same signal",
+  { timeout: 10_000, skip: process.platform === "win32" },
+  async (t) => {
   const tree = makeInstalledTree();
   const pidFile = path.join(tree.root, "helper.pid");
   const child = spawn(process.execPath, [tree.launcherBin, "--test-signal"], {
@@ -800,8 +813,9 @@ test("propagates cancellation to the child and terminates with the same signal",
   assert.match(stdout, /^READY\n$/u);
   const nativePid = Number(fs.readFileSync(pidFile, "utf8"));
   await waitForCondition("the native process to exit", () => processIsGone(nativePid));
-  cleanupComplete = true;
-});
+    cleanupComplete = true;
+  },
+);
 
 test("reports launch failures with one stable bounded error code", async () => {
   await assert.rejects(

@@ -251,3 +251,125 @@ jobs:
           for forbidden in "$publish_command" "$upload_action" "$release_command"; do
             test -z "$(grep -F "$forbidden" .github/workflows/npm-cli-packages.yml || true)"
           done
+
+  prepare-windows:
+    name: Private native package (${{ matrix.platform_key }})
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: windows-2025
+            runner_arch: X64
+            dotnet_arch: X64
+            python_machine: AMD64
+            node_arch: x64
+            platform_key: win32-x64-msvc
+            target: x86_64-pc-windows-msvc
+            runner_image: windows-2025
+          - runner: windows-11-arm
+            runner_arch: ARM64
+            dotnet_arch: Arm64
+            python_machine: ARM64
+            node_arch: arm64
+            platform_key: win32-arm64-msvc
+            target: aarch64-pc-windows-msvc
+            runner_image: windows-11-arm
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Verify exact native Windows host
+        shell: pwsh
+        env:
+          EXPECTED_DOTNET_ARCH: ${{ matrix.dotnet_arch }}
+          EXPECTED_PYTHON_MACHINE: ${{ matrix.python_machine }}
+          EXPECTED_RUNNER_ARCH: ${{ matrix.runner_arch }}
+        run: |
+          if ($env:RUNNER_OS -ne 'Windows') { throw 'runner OS is not exact Windows' }
+          if ($env:RUNNER_ARCH -ne $env:EXPECTED_RUNNER_ARCH) { throw 'runner architecture is not exact' }
+          $osArchitecture = [System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture.ToString()
+          if ($osArchitecture -ne $env:EXPECTED_DOTNET_ARCH) { throw 'runner OS architecture is not exact' }
+          $processArchitecture = [System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture.ToString()
+          if ($processArchitecture -ne $env:EXPECTED_DOTNET_ARCH) { throw 'PowerShell process architecture is not exact' }
+          $pythonMachine = python -c "import platform; print(platform.machine())"
+          if ($pythonMachine -ne $env:EXPECTED_PYTHON_MACHINE) { throw 'Python is not native to the runner architecture' }
+
+      - name: Configure exact reviewed native Windows Rust
+        shell: pwsh
+        env:
+          EXPECTED_TARGET: ${{ matrix.target }}
+        run: |
+          $toolchain = "1.97.1-$env:EXPECTED_TARGET"
+          rustup toolchain install $toolchain --profile minimal --no-self-update
+          rustup default $toolchain
+          if (-not ((rustc --version) -match '^rustc 1\.97\.1 ')) { throw 'rustc version mismatch' }
+          if (-not ((cargo --version) -match '^cargo 1\.97\.1 ')) { throw 'Cargo version mismatch' }
+          $rustHost = rustc -vV | Select-String '^host: ' | ForEach-Object { $_.Line.Substring(6) }
+          if ($rustHost -ne $env:EXPECTED_TARGET) { throw 'rustc host is not exact native Windows target' }
+
+      - name: Configure exact native Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22.19.0'
+          architecture: ${{ matrix.node_arch }}
+
+      - name: Verify exact native Node.js
+        shell: pwsh
+        env:
+          EXPECTED_NODE_ARCH: ${{ matrix.node_arch }}
+        run: |
+          if ((node --version) -ne 'v22.19.0') { throw 'Node version mismatch' }
+          if ((node -p 'process.platform') -ne 'win32') { throw 'Node platform mismatch' }
+          if ((node -p 'process.arch') -ne $env:EXPECTED_NODE_ARCH) { throw 'Node architecture mismatch' }
+
+      - name: Run launcher and exact Windows package tests
+        shell: pwsh
+        run: |
+          node --test npm/tests/launcher.test.js
+          python scripts/test-npm-cli-packages-windows.py --expected-target '${{ matrix.target }}'
+
+      - name: Prepare private Windows packages without upload
+        shell: pwsh
+        run: |
+          $output = Join-Path $env:RUNNER_TEMP 'career-npm-windows-packages'
+          python scripts/prepare-npm-cli-packages-windows.py `
+            --output-dir $output `
+            --expected-target '${{ matrix.target }}'
+          $tarballs = @(Get-ChildItem (Join-Path $output 'tarballs') -Filter '*.tgz' -File)
+          if ($tarballs.Count -ne 2) { throw 'expected exactly two private Windows tarballs' }
+          $provenance = Join-Path $output 'stage/${{ matrix.platform_key }}/provenance.json'
+          if (-not (Test-Path -LiteralPath $provenance -PathType Leaf)) { throw 'native provenance is missing' }
+
+      - name: Inspect exact native Windows PE and import evidence
+        shell: pwsh
+        run: |
+          $output = Join-Path $env:RUNNER_TEMP 'career-npm-windows-packages'
+          $binary = Join-Path $output 'stage/${{ matrix.platform_key }}/career.exe'
+          $evidence = Join-Path $env:RUNNER_TEMP 'career-npm-native-inspection-${{ matrix.platform_key }}.json'
+          python scripts/inspect-npm-native-binary.py `
+            --repository-root $env:GITHUB_WORKSPACE `
+            --binary $binary `
+            --target '${{ matrix.target }}' `
+            --source-sha '${{ github.sha }}' `
+            --runner-image '${{ matrix.runner_image }}' `
+            --evidence-kind exact_native_ci `
+            --output $evidence
+          $value = Get-Content -LiteralPath $evidence -Raw | ConvertFrom-Json
+          if ($value.evidence_kind -ne 'exact_native_ci') { throw 'evidence kind mismatch' }
+          if ($value.binary.file_name -ne 'career.exe') { throw 'Windows executable evidence mismatch' }
+          if ($value.binary.mode -ne $null) { throw 'Windows evidence must not claim a Unix mode' }
+          if ($value.linkage.linkage -ne 'dynamic') { throw 'Windows linkage evidence mismatch' }
+          if (@($value.linkage.dynamic_imports).Count -lt 1) { throw 'Windows import evidence is empty' }
+          if ((Get-Item -LiteralPath $evidence).Length -gt 65536) { throw 'Windows evidence exceeds its bound' }
+
+      - name: Confirm Windows workflow remains preparation-only
+        shell: pwsh
+        run: |
+          $workflow = Get-Content -LiteralPath '.github/workflows/npm-cli-packages.yml' -Raw
+          $forbidden = @('npm ' + 'publish', 'actions/upload' + '-artifact', 'gh ' + 'release')
+          foreach ($value in $forbidden) {
+            if ($workflow.Contains($value)) { throw "forbidden preparation workflow text: $value" }
+          }
