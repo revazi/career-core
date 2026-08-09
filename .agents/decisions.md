@@ -107,3 +107,9 @@ The extension proceeds through separately approved target groups and ends with a
 The Darwin/GNU sub-gate uses exact `macos-14` ARM64, `macos-15-intel` x64, `ubuntu-22.04` x64/glibc 2.35, and `ubuntu-24.04-arm` with a native Ubuntu 22.04 ARM64/glibc 2.35 container. Each job builds with rustc/Cargo 1.97.1, executes the offline extracted npm package, and emits bounded `career.npm_native_inspection.v1` source/catalog/host/version/format/architecture/linkage/import/interpreter/GLIBC-symbol/mode/size/SHA-256 evidence outside the checkout.
 
 This manual workflow remains preparation-only: no artifact upload, publication, tag, release, registry query, credential, cross-compilation, or emulation. Intermediate green evidence proves the runners and package path, not final public support; every target must execute again from the final release source.
+
+## D-025 — Musl evidence uses pinned native Alpine and proves static linkage
+
+The musl sub-gate uses the immutable multi-architecture `node:22.19.0-alpine3.22` image digest on exact native `ubuntu-22.04` x64 and `ubuntu-24.04-arm` ARM64 hosted runners. Outer Docker architecture, inner kernel architecture, Rust host triple, architecture-bound musl loader, and exact musl 1.2.5 runtime must all agree; no `--platform`, QEMU, cross-compilation, or unknown-libc fallback is accepted.
+
+Each package executes every reviewed operation through both the extracted native executable and launcher. Bounded inspection requires an ELF `EXEC` static binary with no interpreter, dynamic section, dynamic import, or GLIBC symbol claim, plus exact source/catalog/version/mode/size/SHA-256 binding. The digest-pinned container is build evidence, not a distributed runtime requirement. Evidence remains external log data and is neither uploaded nor published; final release source must reprove both musl targets.

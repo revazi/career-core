@@ -907,6 +907,8 @@ ordered = [
     "x86_64-apple-darwin",
     "x86_64-unknown-linux-gnu",
     "aarch64-unknown-linux-gnu",
+    "x86_64-unknown-linux-musl",
+    "aarch64-unknown-linux-musl",
 ]
 positions = [text.index(value) for value in ordered]
 if positions != sorted(positions):
@@ -919,6 +921,10 @@ for value in (
     "container: ubuntu:22.04",
     "diffutils",
     'safe.directory "$GITHUB_WORKSPACE"',
+    "node:22.19.0-alpine3.22@sha256:d2166de198f26e17e5a442f537754dd616ab069c47cc57b889310a717e0abbf9",
+    "docker run --rm --interactive",
+    "musl libc ($EXPECTED_MACHINE)",
+    "Version 1.2.5",
     "scripts/inspect-npm-native-binary.py",
     'test "$(node --version)" = "v22.19.0"',
     "--evidence-kind exact_native_ci",
@@ -932,6 +938,8 @@ for forbidden in (
     "macos-latest",
     "ubuntu-latest",
     "continue-on-error:",
+    "qemu",
+    "--platform",
     "actions/upload-artifact",
     "npm publish",
     "cargo publish",
@@ -958,6 +966,10 @@ for value in (
     '"x86_64-apple-darwin": "macos-15-intel"',
     '"x86_64-unknown-linux-gnu": "ubuntu-22.04"',
     '"aarch64-unknown-linux-gnu": "ubuntu-24.04-arm+ubuntu:22.04"',
+    '"x86_64-unknown-linux-musl"',
+    '"aarch64-unknown-linux-musl"',
+    "inspect_linux_musl",
+    '"musl 1.2.5"',
     "MAX_COMMAND_OUTPUT_BYTES",
     "MAX_EVIDENCE_BYTES",
     "O_NOFOLLOW",
@@ -972,8 +984,12 @@ for forbidden in ("requests", "urllib", "http.client", "qemu", "--platform"):
 for value in (
     "20-revazi-career-darwin-x64-0.1.1.tgz",
     "40-revazi-career-linux-arm64-gnu-0.1.1.tgz",
+    "50-revazi-career-linux-x64-musl-0.1.1.tgz",
+    "60-revazi-career-linux-arm64-musl-0.1.1.tgz",
     "x86_64-apple-darwin)",
     "aarch64-unknown-linux-gnu)",
+    "x86_64-unknown-linux-musl)",
+    "aarch64-unknown-linux-musl)",
 ):
     if value not in preparation:
         raise SystemExit(f"native publication preparation is missing target policy text: {value}")

@@ -6,30 +6,74 @@ repository_root="$(cd "$script_dir/.." && pwd -P)"
 prepare_script="$script_dir/prepare-npm-cli-packages.sh"
 inspection_script="$script_dir/inspect-npm-native-binary.py"
 
-case "$(uname -s):$(uname -m)" in
-  Darwin:arm64|Darwin:aarch64)
+kernel="$(uname -s)"
+machine="$(uname -m)"
+linux_libc=""
+if [[ "$kernel" == "Linux" ]]; then
+  glibc_runtime=""
+  if command -v getconf >/dev/null 2>&1; then
+    glibc_runtime="$(getconf GNU_LIBC_VERSION 2>/dev/null || true)"
+  fi
+  case "$machine" in
+    x86_64|amd64) musl_arch="x86_64" ;;
+    aarch64|arm64) musl_arch="aarch64" ;;
+    *) printf 'npm CLI package test requires an approved native host\n' >&2; exit 1 ;;
+  esac
+  musl_loader="/lib/ld-musl-$musl_arch.so.1"
+  musl_detected=false
+  if [[ -e "$musl_loader" ]]; then
+    musl_output="$("$musl_loader" 2>&1 || true)"
+    if grep -Fxq "musl libc ($musl_arch)" <<<"$musl_output" &&
+      grep -Eq '^Version [0-9]+(\.[0-9]+){1,3}$' <<<"$musl_output"; then
+      musl_detected=true
+    fi
+  fi
+  if [[ "$glibc_runtime" =~ ^glibc\ [0-9]+\.[0-9]+(\.[0-9]+){0,2}$ && "$musl_detected" == false ]]; then
+    linux_libc="glibc"
+  elif [[ -z "$glibc_runtime" && "$musl_detected" == true ]]; then
+    linux_libc="musl"
+  else
+    printf 'npm CLI package test requires one positively identified Linux libc\n' >&2
+    exit 1
+  fi
+fi
+
+case "$kernel:$machine:$linux_libc" in
+  Darwin:arm64:|Darwin:aarch64:)
     platform_key="darwin-arm64"
     package_name="@revazi/career-darwin-arm64"
     expected_target="aarch64-apple-darwin"
     wrong_target="x86_64-unknown-linux-gnu"
     ;;
-  Darwin:x86_64|Darwin:amd64)
+  Darwin:x86_64:|Darwin:amd64:)
     platform_key="darwin-x64"
     package_name="@revazi/career-darwin-x64"
     expected_target="x86_64-apple-darwin"
     wrong_target="aarch64-unknown-linux-gnu"
     ;;
-  Linux:x86_64|Linux:amd64)
+  Linux:x86_64:glibc|Linux:amd64:glibc)
     platform_key="linux-x64-gnu"
     package_name="@revazi/career-linux-x64-gnu"
     expected_target="x86_64-unknown-linux-gnu"
-    wrong_target="aarch64-apple-darwin"
+    wrong_target="x86_64-unknown-linux-musl"
     ;;
-  Linux:aarch64|Linux:arm64)
+  Linux:aarch64:glibc|Linux:arm64:glibc)
     platform_key="linux-arm64-gnu"
     package_name="@revazi/career-linux-arm64-gnu"
     expected_target="aarch64-unknown-linux-gnu"
-    wrong_target="x86_64-apple-darwin"
+    wrong_target="aarch64-unknown-linux-musl"
+    ;;
+  Linux:x86_64:musl|Linux:amd64:musl)
+    platform_key="linux-x64-musl"
+    package_name="@revazi/career-linux-x64-musl"
+    expected_target="x86_64-unknown-linux-musl"
+    wrong_target="x86_64-unknown-linux-gnu"
+    ;;
+  Linux:aarch64:musl|Linux:arm64:musl)
+    platform_key="linux-arm64-musl"
+    package_name="@revazi/career-linux-arm64-musl"
+    expected_target="aarch64-unknown-linux-musl"
+    wrong_target="aarch64-unknown-linux-gnu"
     ;;
   *)
     printf 'npm CLI package test requires an approved native host\n' >&2
@@ -213,6 +257,7 @@ inspection="$temporary_root/native-inspection.json"
 python3 - "$inspection" "$platform_key" "$expected_target" <<'PY'
 import json
 import pathlib
+import re
 import sys
 path = pathlib.Path(sys.argv[1])
 platform_key = sys.argv[2]
@@ -223,7 +268,14 @@ assert value["evidence_kind"] == "local_policy"
 assert value["target"]["platform_key"] == platform_key
 assert value["target"]["rust_target"] == target
 assert value["binary"]["observed_version"] == "career 0.1.1"
-assert value["linkage"]["dynamic_imports"]
+if value["target"]["libc_family"] == "musl":
+    assert value["linkage"]["dynamic_imports"] == []
+    assert value["linkage"]["highest_glibc_symbol_version"] is None
+    assert value["linkage"]["interpreter"] is None
+    assert value["linkage"]["linkage"] == "static"
+    assert re.fullmatch(r"musl [0-9]+(?:\.[0-9]+){1,3}", value["linkage"]["runtime_libc"])
+else:
+    assert value["linkage"]["dynamic_imports"]
 assert path.stat().st_size <= 64 * 1024
 PY
 

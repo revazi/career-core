@@ -58,8 +58,44 @@ cd "$repository_root"
 
 kernel="$(uname -s)"
 machine="$(uname -m)"
-case "$kernel:$machine" in
-  Darwin:arm64|Darwin:aarch64)
+linux_libc_family=""
+linux_glibc_runtime=""
+linux_musl_detected=false
+if [[ "$kernel" == "Linux" ]]; then
+  if command -v getconf >/dev/null 2>&1; then
+    linux_glibc_runtime="$(getconf GNU_LIBC_VERSION 2>/dev/null || true)"
+    if [[ -n "$linux_glibc_runtime" && ! "$linux_glibc_runtime" =~ ^glibc\ [0-9]+\.[0-9]+(\.[0-9]+){0,2}$ ]]; then
+      fail "GNU libc evidence is malformed"
+    fi
+  fi
+  case "$machine" in
+    x86_64|amd64) musl_arch="x86_64" ;;
+    aarch64|arm64) musl_arch="aarch64" ;;
+    *) fail "unsupported native host: $kernel/$machine" ;;
+  esac
+  musl_loader="/lib/ld-musl-$musl_arch.so.1"
+  if [[ -e "$musl_loader" ]]; then
+    musl_output="$("$musl_loader" 2>&1 || true)"
+    if grep -Fxq "musl libc ($musl_arch)" <<<"$musl_output" &&
+      grep -Eq '^Version [0-9]+(\.[0-9]+){1,3}$' <<<"$musl_output"; then
+      linux_musl_detected=true
+    else
+      fail "musl libc evidence is malformed or architecture-mismatched"
+    fi
+  fi
+  if [[ -n "$linux_glibc_runtime" && "$linux_musl_detected" == true ]]; then
+    fail "native Linux package host has conflicting glibc and musl evidence"
+  elif [[ -n "$linux_glibc_runtime" ]]; then
+    linux_libc_family="glibc"
+  elif [[ "$linux_musl_detected" == true ]]; then
+    linux_libc_family="musl"
+  else
+    fail "native Linux package requires positive glibc or musl evidence"
+  fi
+fi
+
+case "$kernel:$machine:$linux_libc_family" in
+  Darwin:arm64:|Darwin:aarch64:)
     platform_key="darwin-arm64"
     package_name="@revazi/career-darwin-arm64"
     target_triple="aarch64-apple-darwin"
@@ -68,7 +104,7 @@ case "$kernel:$machine" in
     runner_arch="ARM64"
     runner_libc=""
     ;;
-  Darwin:x86_64|Darwin:amd64)
+  Darwin:x86_64:|Darwin:amd64:)
     platform_key="darwin-x64"
     package_name="@revazi/career-darwin-x64"
     target_triple="x86_64-apple-darwin"
@@ -77,27 +113,41 @@ case "$kernel:$machine" in
     runner_arch="X64"
     runner_libc=""
     ;;
-  Linux:x86_64|Linux:amd64)
+  Linux:x86_64:glibc|Linux:amd64:glibc)
     platform_key="linux-x64-gnu"
     package_name="@revazi/career-linux-x64-gnu"
     target_triple="x86_64-unknown-linux-gnu"
     binary_format="elf-64-x86_64"
     runner_os="Linux"
     runner_arch="X64"
-    command -v getconf >/dev/null 2>&1 || fail "required command is unavailable: getconf"
-    runner_libc="$(getconf GNU_LIBC_VERSION 2>/dev/null)" || fail "GNU libc version could not be determined"
-    [[ "$runner_libc" =~ ^glibc\ [0-9]+\.[0-9]+ ]] || fail "native Linux package requires a confirmed glibc build host"
+    runner_libc="$linux_glibc_runtime"
     ;;
-  Linux:aarch64|Linux:arm64)
+  Linux:aarch64:glibc|Linux:arm64:glibc)
     platform_key="linux-arm64-gnu"
     package_name="@revazi/career-linux-arm64-gnu"
     target_triple="aarch64-unknown-linux-gnu"
     binary_format="elf-64-aarch64"
     runner_os="Linux"
     runner_arch="ARM64"
-    command -v getconf >/dev/null 2>&1 || fail "required command is unavailable: getconf"
-    runner_libc="$(getconf GNU_LIBC_VERSION 2>/dev/null)" || fail "GNU libc version could not be determined"
-    [[ "$runner_libc" =~ ^glibc\ [0-9]+\.[0-9]+ ]] || fail "native Linux package requires a confirmed glibc build host"
+    runner_libc="$linux_glibc_runtime"
+    ;;
+  Linux:x86_64:musl|Linux:amd64:musl)
+    platform_key="linux-x64-musl"
+    package_name="@revazi/career-linux-x64-musl"
+    target_triple="x86_64-unknown-linux-musl"
+    binary_format="elf-64-x86_64"
+    runner_os="Linux"
+    runner_arch="X64"
+    runner_libc="musl"
+    ;;
+  Linux:aarch64:musl|Linux:arm64:musl)
+    platform_key="linux-arm64-musl"
+    package_name="@revazi/career-linux-arm64-musl"
+    target_triple="aarch64-unknown-linux-musl"
+    binary_format="elf-64-aarch64"
+    runner_os="Linux"
+    runner_arch="ARM64"
+    runner_libc="musl"
     ;;
   *)
     fail "unsupported native host: $kernel/$machine"
