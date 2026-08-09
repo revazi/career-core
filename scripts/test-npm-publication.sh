@@ -614,7 +614,7 @@ if args and args[0] == "view":
         record = packages.get(name, {}).get(version)
         if isinstance(record, dict):
             selected = json.loads(os.environ.get("FAKE_NPM_BEHAVIOR", "{}")).get(name)
-            if field == "dist.integrity" and selected in {"integrity_delayed_six", "integrity_never"}:
+            if field == "dist.integrity" and version == "0.1.1" and selected in {"integrity_delayed_six", "integrity_never"}:
                 attempts = json.loads(attempt_path.read_text()) if attempt_path.exists() else {}
                 key = f"integrity:{name}"
                 attempts[key] = attempts.get(key, 0) + 1
@@ -623,7 +623,7 @@ if args and args[0] == "view":
                     print("npm ERR! code E404", file=sys.stderr)
                     raise SystemExit(1)
             attestation_delays = {"attestation_delayed_once": 1, "attestation_delayed_six": 6}
-            if field == "dist.attestations" and selected in {*attestation_delays, "attestation_never"}:
+            if field == "dist.attestations" and version == "0.1.1" and selected in {*attestation_delays, "attestation_never"}:
                 attempts = json.loads(attempt_path.read_text()) if attempt_path.exists() else {}
                 key = f"attestation:{name}"
                 attempts[key] = attempts.get(key, 0) + 1
@@ -700,11 +700,46 @@ exact = {
     }
     for row in manifest["packages"]
 }
+historical_integrities = {
+    "@revazi/career-darwin-arm64": "sha512-2h+TLqrZx+UfSb7pYxhZjZLxImAaUjERgHvlGZ/OJDe2rxFrOvBbvwFHA4iiyeU6Qkd+XeOhqKcBUYPvLC9lWQ==",
+    "@revazi/career-linux-x64-gnu": "sha512-e/EwBLqAWJyOy9/q1+BK/5dCuC6c554sWBfDKMvevWhQM+ymD9qniTWKhExEpFXrCHlpAUpdHw9z5uWx2FvMuA==",
+    "@revazi/career": "sha512-pyH821D9QsWTxbMXYit35+Yl8EdIiaaqpjUh8+CyJc2urE48de6Gh4POLUL4EnP0zJZe4efxtHVfDMyD5kJivg==",
+}
+historical = {
+    name: {
+        "0.1.0": {
+            "integrity": integrity,
+            "attestations": {
+                "url": f"https://registry.npmjs.org/-/npm/v1/attestations/{name}@0.1.0",
+                "provenance": {"predicateType": "https://slsa.dev/provenance/v1"},
+            },
+        }
+    }
+    for name, integrity in historical_integrities.items()
+}
 if scenario == "absent": packages = {}
 elif scenario == "exact": packages = exact
-elif scenario == "partial-first": packages = {manifest["packages"][0]["name"]: exact[manifest["packages"][0]["name"]]}
-elif scenario == "partial-second": packages = {row["name"]: exact[row["name"]] for row in manifest["packages"][:2]}
+elif scenario == "partial-first":
+    packages = historical
+    first_name = manifest["packages"][0]["name"]
+    packages[first_name] = {**packages[first_name], **exact[first_name]}
+elif scenario == "partial-second":
+    packages = historical
+    for row in manifest["packages"][:2]:
+        packages[row["name"]] = {**packages.get(row["name"], {}), **exact[row["name"]]}
+elif scenario == "mixed-v010": packages = historical
+elif scenario == "mixed-v010-partial-v011":
+    packages = historical
+    first_name = manifest["packages"][0]["name"]
+    packages[first_name] = {**packages[first_name], **exact[first_name]}
+elif scenario == "historical-conflict":
+    packages = historical
+    packages["@revazi/career-darwin-arm64"]["0.1.0"]["integrity"] = "sha512-conflict"
+elif scenario == "historical-missing-attestation":
+    packages = historical
+    packages["@revazi/career-darwin-arm64"]["0.1.0"]["attestations"] = None
 elif scenario == "name-without-version": packages = {manifest["packages"][0]["name"]: {}}
+elif scenario == "new-name-without-version": packages = {manifest["packages"][1]["name"]: {}}
 elif scenario == "conflict":
     packages = {manifest["packages"][0]["name"]: {"0.1.1": {"integrity": "sha512-conflict", "attestations": {}}}}
 elif scenario == "oidc-ready": packages = {row["name"]: {} for row in manifest["packages"]}
@@ -741,8 +776,8 @@ run_driver() {
   fi
 }
 
-run_driver bootstrap-all bootstrap absent '{}' token
-python3 - "$driver_root/bootstrap-all/npm.log" <<'PY'
+run_driver bootstrap-mixed-v010 bootstrap mixed-v010 '{}' token
+python3 - "$driver_root/bootstrap-mixed-v010/npm.log" <<'PY'
 import pathlib, sys
 published = [line.split("\t", 1)[1] for line in pathlib.Path(sys.argv[1]).read_text().splitlines() if line.startswith("publish\t")]
 assert published == [
@@ -757,6 +792,12 @@ assert published == [
     "@revazi/career",
 ]
 PY
+if run_driver bootstrap-missing-history bootstrap absent '{}' token \
+  >"$driver_root/bootstrap-missing-history.stdout" \
+  2>"$driver_root/bootstrap-missing-history.stderr"; then
+  fail "bootstrap accepted missing historical v0.1.0 package names"
+fi
+! grep -q '^publish' "$driver_root/bootstrap-missing-history/npm.log"
 run_driver bootstrap-idempotent bootstrap exact '{}' token
 ! grep -q '^publish' "$driver_root/bootstrap-idempotent/npm.log"
 run_driver attestation-eventual bootstrap exact \
@@ -766,14 +807,14 @@ import json, pathlib, sys
 attempts = json.loads(pathlib.Path(sys.argv[1]).read_text())
 assert attempts["attestation:@revazi/career-darwin-arm64"] >= 2
 PY
-run_driver integrity-eventual bootstrap absent \
+run_driver integrity-eventual bootstrap mixed-v010 \
   '{"@revazi/career-darwin-arm64":"integrity_delayed_six"}' token
 python3 - "$driver_root/integrity-eventual/attempts.json" <<'PY'
 import json, pathlib, sys
 attempts = json.loads(pathlib.Path(sys.argv[1]).read_text())
 assert attempts["integrity:@revazi/career-darwin-arm64"] >= 7
 PY
-if run_driver integrity-never bootstrap absent \
+if run_driver integrity-never bootstrap mixed-v010 \
   '{"@revazi/career-darwin-arm64":"integrity_never"}' token \
   >"$driver_root/integrity-never.stdout" 2>"$driver_root/integrity-never.stderr"; then
   fail "publication driver accepted registry integrity that never became visible"
@@ -810,7 +851,7 @@ for scenario in missing-attestation malformed-attestation; do
   fi
   ! grep -q '^publish' "$driver_root/$scenario/npm.log"
 done
-run_driver bootstrap-partial-first bootstrap partial-first '{}' token
+run_driver bootstrap-partial-first bootstrap mixed-v010-partial-v011 '{}' token
 python3 - "$driver_root/bootstrap-partial-first/npm.log" <<'PY'
 import pathlib, sys
 published = [line.split("\t", 1)[1] for line in pathlib.Path(sys.argv[1]).read_text().splitlines() if line.startswith("publish\t")]
@@ -829,7 +870,13 @@ run_driver bootstrap-partial-second bootstrap partial-second '{}' token
 grep -Fxq $'publish\t@revazi/career' "$driver_root/bootstrap-partial-second/npm.log"
 ! grep -Fq '@revazi/career-darwin-arm64' <(grep '^publish' "$driver_root/bootstrap-partial-second/npm.log" || true)
 
-for scenario in name-without-version conflict; do
+for scenario in \
+  name-without-version \
+  new-name-without-version \
+  historical-conflict \
+  historical-missing-attestation \
+  conflict
+do
   if run_driver "bootstrap-$scenario" bootstrap "$scenario" '{}' token \
     >"$driver_root/$scenario.stdout" 2>"$driver_root/$scenario.stderr"; then
     fail "bootstrap accepted conflicting preflight state: $scenario"
@@ -851,7 +898,7 @@ if run_driver oidc-absent oidc absent '{}' no-token \
 fi
 run_driver oidc-ready oidc oidc-ready '{}' no-token
 
-run_driver transient bootstrap absent '{"@revazi/career-darwin-arm64":"transient_once"}' token
+run_driver transient bootstrap mixed-v010 '{"@revazi/career-darwin-arm64":"transient_once"}' token
 python3 - "$driver_root/transient/attempts.json" <<'PY'
 import json, pathlib, sys
 attempts = json.loads(pathlib.Path(sys.argv[1]).read_text())
@@ -868,12 +915,12 @@ for name in [
 ]:
     assert attempts[name] == 1
 PY
-if run_driver native-failure bootstrap absent '{"@revazi/career-linux-x64-gnu":"permanent"}' token \
+if run_driver native-failure bootstrap mixed-v010 '{"@revazi/career-linux-x64-gnu":"permanent"}' token \
   >"$driver_root/native-failure.stdout" 2>"$driver_root/native-failure.stderr"; then
   fail "publication driver accepted a failed native package"
 fi
 ! grep -Fxq $'publish\t@revazi/career' "$driver_root/native-failure/npm.log"
-if run_driver auth-failure bootstrap absent '{"@revazi/career-darwin-arm64":"auth"}' token \
+if run_driver auth-failure bootstrap mixed-v010 '{"@revazi/career-darwin-arm64":"auth"}' token \
   >"$driver_root/auth-failure.stdout" 2>"$driver_root/auth-failure.stderr"; then
   fail "publication driver silently fell back after authentication failure"
 fi

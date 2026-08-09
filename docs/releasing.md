@@ -119,7 +119,15 @@ Package-level trusted publishers cannot be configured before each package exists
 3. Create protected GitHub environment `npm-production` and add the temporary environment secret `NPM_TOKEN`; add no repository-level token fallback.
 4. Dispatch exact `v0.1.1`/reviewed SHA with `bootstrap=true`.
 
-Bootstrap accepts only an absent package name or exact already-published `name@0.1.1` with matching candidate integrity and valid npm SLSA provenance. This permits safe rerun after interruption. A name with no exact reviewed version, conflicting integrity, or missing/malformed registry provenance blocks publication. Native packages always finish before the launcher.
+Bootstrap models the real mixed registry state. The six new native package names must be absent or already contain exact candidate `0.1.1` with matching integrity and valid SLSA provenance. The three historical names must contain exact reviewed `0.1.0` with the following integrity and valid SLSA provenance when `0.1.1` is absent, or exact candidate `0.1.1` on an interrupted rerun:
+
+```text
+@revazi/career-darwin-arm64@0.1.0  sha512-2h+TLqrZx+UfSb7pYxhZjZLxImAaUjERgHvlGZ/OJDe2rxFrOvBbvwFHA4iiyeU6Qkd+XeOhqKcBUYPvLC9lWQ==
+@revazi/career-linux-x64-gnu@0.1.0 sha512-e/EwBLqAWJyOy9/q1+BK/5dCuC6c554sWBfDKMvevWhQM+ymD9qniTWKhExEpFXrCHlpAUpdHw9z5uWx2FvMuA==
+@revazi/career@0.1.0                sha512-pyH821D9QsWTxbMXYit35+Yl8EdIiaaqpjUh8+CyJc2urE48de6Gh4POLUL4EnP0zJZe4efxtHVfDMyD5kJivg==
+```
+
+These values come from the exact reviewed `v0.1.0` publication candidate. An absent historical name, an unexpectedly claimed new name, conflicting integrity, or missing/malformed provenance blocks all publication. This permits safe mixed-state first publication and exact interrupted recovery. Native packages always finish before the launcher.
 
 A successful `npm publish` response is not treated as complete until exact public integrity and valid SLSA provenance become visible. Each package gets one combined bounded readiness loop of 61 attempts at ten-second intervals (at most ten minutes of sleeps shared by integrity and provenance); the protected publish job allows 110 minutes for nine sequential packages plus setup and bounded transient retries. This bound reflects the 3–5 minute propagation observed during the `v0.1.0` bootstrap while still failing closed on absence, conflict, malformed provenance, or timeout.
 
