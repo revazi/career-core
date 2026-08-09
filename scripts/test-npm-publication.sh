@@ -990,6 +990,9 @@ for value in (
     "aarch64-unknown-linux-gnu)",
     "x86_64-unknown-linux-musl)",
     "aarch64-unknown-linux-musl)",
+    'readelf --file-header --wide "$platform_stage/career"',
+    "Type:[[:space:]]+EXEC",
+    "musl candidate is not one static ELF EXEC",
 ):
     if value not in preparation:
         raise SystemExit(f"native publication preparation is missing target policy text: {value}")

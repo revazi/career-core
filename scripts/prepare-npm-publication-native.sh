@@ -153,6 +153,9 @@ if [[ "$platform_key" == "linux-x64-musl" || "$platform_key" == "linux-arm64-mus
   musl_output="$("$musl_loader" 2>&1 || true)"
   grep -Fxq "musl libc ($musl_arch)" <<<"$musl_output" || fail "musl candidate runtime architecture is invalid"
   grep -Fxq "Version 1.2.5" <<<"$musl_output" || fail "musl publication candidate must build on exact musl 1.2.5"
+  elf_header="$(LC_ALL=C readelf --file-header --wide "$platform_stage/career")"
+  grep -Eq '^[[:space:]]*Type:[[:space:]]+EXEC \(Executable file\)[[:space:]]*$' <<<"$elf_header" || \
+    fail "musl candidate is not one static ELF EXEC"
   program_headers="$(readelf --program-headers --wide "$platform_stage/career")"
   [[ "$program_headers" != *"Requesting program interpreter:"* ]] || fail "musl candidate is not statically linked"
   dynamic_section="$(readelf --dynamic --wide "$platform_stage/career")"

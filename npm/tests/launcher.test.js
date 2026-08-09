@@ -99,12 +99,8 @@ function libcRuntimeFor(target) {
 }
 
 function currentTarget() {
-  return launcher.selectTarget(
-    process.platform,
-    process.arch,
-    process.platform === "linux" ? { family: "glibc", version: "2.35" } : null,
-    CATALOG,
-  );
+  const libcRuntime = process.platform === "linux" ? launcher.detectLinuxLibc() : null;
+  return launcher.selectTarget(process.platform, process.arch, libcRuntime, CATALOG);
 }
 
 function readJson(filePath) {
