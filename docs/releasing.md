@@ -1,6 +1,6 @@
 # Release preparation checklist
 
-This checklist defines the reviewed release process. The Phase 9 change authorizes the parent maintainer to merge, create annotated `v0.1.0`, and run the protected npm workflow after approval; implementation agents still must not commit, push, merge, tag, dispatch, authenticate, release, or publish.
+This checklist defines the reviewed release process. Public `v0.1.0` is complete and immutable. Proposed `v0.1.1` is an active multi-PR preparation only: implementation agents may perform explicitly approved branch/PR work but must not merge, tag, dispatch a protected publication workflow, authenticate to npm, release, or publish. The final `v0.1.1` release checklist and protected workflow remain deferred until every exact native target has execution evidence.
 
 The current release maintenance owner is [Revaz Zakalashvili](https://github.com/revazi). Ownership and governance are documented in [`../MAINTAINERS.md`](../MAINTAINERS.md).
 
@@ -87,6 +87,8 @@ Record the runner image, Rust version, target triple, source commit, and exact c
 
 ### npm publication candidate and protected workflow
 
+For proposed `0.1.1`, registry-free tests may assemble an exact nine-package synthetic policy candidate: eight ordered native tarballs followed by the launcher. Only the current host tarball executes in that local test; every synthetic non-host tarball is marked as policy-only evidence and cannot satisfy release acceptance. A real candidate remains blocked until native jobs produce and execute all eight exact packages. The protected workflow remains the completed `v0.1.0` workflow until the separately approved final publication PR prepares exact `v0.1.1` source/tag/SHA, runner, assembly, trusted-publisher/bootstrap, and public-acceptance gates.
+
 Keep private local verification available:
 
 ```bash
@@ -98,9 +100,9 @@ scripts/test-npm-cli-packages.sh
 scripts/test-npm-publication.sh
 ```
 
-Source templates must remain `private: true`. Never hand-edit a tarball. The candidate path requires exact clean fetched `origin/main`, reviewed SHA, annotated unmoved `v0.1.0`, Node 22.19.0/npm 11.6.2, and exact rustc/Cargo 1.97.1. Linux builds only on `ubuntu-22.04` and must record/require glibc 2.35; Darwin builds on `macos-14` ARM64. Rust 1.85 remains a separate MSRV check, not the release build toolchain.
+Source templates must remain `private: true`. Never hand-edit a tarball. The completed `v0.1.0` candidate path required exact clean fetched `origin/main`, reviewed SHA, annotated unmoved tag, Node 22.19.0/npm 11.6.2, exact rustc/Cargo 1.97.1, and its two approved native runners. Proposed `v0.1.1` retains those source/toolchain principles but cannot finalize runner labels, GNU symbol records, musl linkage, Windows rules, or nine-package workflow inputs until the preceding native sub-gates pass. Rust 1.85 remains a separate MSRV check.
 
-The protected `.github/workflows/npm-publish.yml` dispatch inputs are:
+The following protected `.github/workflows/npm-publish.yml` dispatch inputs describe the completed `v0.1.0` path and are not authorization to dispatch proposed `v0.1.1`:
 
 - `reviewed_sha`: exact 40-character tagged `origin/main` commit;
 - `bootstrap=false`: default OIDC-only steady state;

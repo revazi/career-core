@@ -12,8 +12,11 @@ const { after, before, test } = require("node:test");
 const ROOT = path.resolve(__dirname, "..");
 const LAUNCHER_SOURCE = path.join(ROOT, "career", "bin", "career.js");
 const LAUNCHER_MANIFEST_SOURCE = path.join(ROOT, "career", "package.json");
+const TARGET_CATALOG_SOURCE = path.join(ROOT, "career", "targets.json");
 const HELPER_SOURCE = path.join(__dirname, "fixtures", "native-helper.rs");
 const launcher = require(LAUNCHER_SOURCE);
+const CATALOG = launcher.loadTargetCatalog(TARGET_CATALOG_SOURCE);
+const PLATFORM_LICENSE_FILES = ["LICENSE-MIT", "LICENSE-APACHE", "THIRD_PARTY_NOTICES.md"];
 const temporaryRoots = [];
 let helperBinary;
 
@@ -89,22 +92,19 @@ after(() => {
   }
 });
 
-function currentTarget() {
-  const key = `${process.platform}-${process.arch}`;
-  const target = {
-    "darwin-arm64": launcher.TARGETS["darwin-arm64"],
-    "linux-x64": launcher.TARGETS["linux-x64-gnu"],
-  }[key];
-  assert.ok(target, "npm launcher tests require an approved native host");
-  return target;
+function libcRuntimeFor(target) {
+  if (target.libc_family === "glibc") return { family: "glibc", version: "2.35" };
+  if (target.libc_family === "musl") return { family: "musl", version: null };
+  return null;
 }
 
-function hostOptions() {
-  return {
-    platform: process.platform,
-    arch: process.arch,
-    glibcVersionRuntime: process.platform === "linux" ? "2.35" : null,
-  };
+function currentTarget() {
+  return launcher.selectTarget(
+    process.platform,
+    process.arch,
+    process.platform === "linux" ? { family: "glibc", version: "2.35" } : null,
+    CATALOG,
+  );
 }
 
 function readJson(filePath) {
@@ -119,22 +119,40 @@ function sha256(filePath) {
   return crypto.createHash("sha256").update(fs.readFileSync(filePath)).digest("hex");
 }
 
-function binaryFormat(target) {
-  return target.platformKey === "darwin-arm64" ? "mach-o-64-aarch64" : "elf-64-x86_64";
+function syntheticBinary(target) {
+  const binary = Buffer.alloc(512);
+  if (target.binary_format.startsWith("mach-o-64-")) {
+    binary.writeUInt32LE(0xfeedfacf, 0);
+    binary.writeUInt32LE(target.binary_architecture === "aarch64" ? 0x0100000c : 0x01000007, 4);
+  } else if (target.binary_format.startsWith("elf-64-")) {
+    Buffer.from([0x7f, 0x45, 0x4c, 0x46, 2, 1]).copy(binary);
+    binary.writeUInt16LE(target.binary_architecture === "aarch64" ? 0xb7 : 0x3e, 18);
+  } else {
+    binary.writeUInt16LE(0x5a4d, 0);
+    binary.writeUInt32LE(0x80, 0x3c);
+    binary.writeUInt32LE(0x00004550, 0x80);
+    binary.writeUInt16LE(target.binary_architecture === "aarch64" ? 0xaa64 : 0x8664, 0x84);
+    binary.writeUInt16LE(0x020b, 0x98);
+  }
+  binary[binary.length - 1] = 1;
+  return binary;
 }
 
-function provenanceFor(platformDirectory, target, version = "0.1.0") {
-  const binaryPath = path.join(platformDirectory, "career");
+function provenanceFor(platformDirectory, target, version = "0.1.1") {
+  const binaryPath = path.join(platformDirectory, target.executable);
+  const runnerLibc =
+    target.libc_family === "glibc" ? "glibc 2.35" : target.libc_family === "musl" ? "musl" : null;
   return {
-    schema_version: "career.npm_native_provenance.v1",
+    schema_version: "career.npm_native_provenance.v2",
     package: {
-      name: target.packageName,
+      name: target.native_package,
       version,
-      platform_key: target.platformKey,
-      node_platform: target.nodePlatform,
-      node_arch: target.nodeArch,
-      rust_target: target.rustTarget,
-      minimum_glibc_version: target.minimumGlibcVersion,
+      platform_key: target.platform_key,
+      node_platform: target.node_platform,
+      node_arch: target.node_arch,
+      libc_family: target.libc_family,
+      rust_target: target.rust_target,
+      minimum_glibc_version: target.minimum_glibc_version,
     },
     source: {
       repository: "https://github.com/revazi/career-core",
@@ -153,23 +171,26 @@ function provenanceFor(platformDirectory, target, version = "0.1.0") {
         "-p",
         "career-cli",
         "--target",
-        target.rustTarget,
+        target.rust_target,
       ],
       profile: "release",
       locked: true,
       rustc_version: "rustc 1.85.0 (synthetic test)",
       cargo_version: "cargo 1.85.0 (synthetic test)",
       runner: {
-        os: target.nodePlatform === "linux" ? "Linux" : "macOS",
-        arch: target.nodePlatform === "linux" ? "X64" : "ARM64",
+        os: target.runner_os,
+        arch: target.runner_arch,
         image: "synthetic-test",
-        libc: target.nodePlatform === "linux" ? "glibc 2.35" : null,
+        libc: runnerLibc,
       },
     },
     executable: {
-      file_name: "career",
-      binary_format: binaryFormat(target),
-      mode: "0755",
+      file_name: target.executable,
+      binary_format: target.binary_format,
+      binary_architecture: target.binary_architecture,
+      file_invariant: target.file_invariant,
+      archive_mode: target.archive_mode,
+      mode: target.executable_mode,
       size_bytes: fs.statSync(binaryPath).size,
       sha256: sha256(binaryPath),
     },
@@ -181,27 +202,32 @@ function provenanceFor(platformDirectory, target, version = "0.1.0") {
   };
 }
 
-function makeInstalledTree() {
-  const root = makeTemporaryRoot("career-npm-tree-");
-  const target = currentTarget();
+function makeInstalledTree(target = currentTarget(), useSyntheticBinary = false) {
+  const root = makeTemporaryRoot("career npm tree Unicode 東京 ");
   const launcherDirectory = path.join(root, "node_modules", "@revazi", "career");
   const platformDirectory = path.join(
     root,
     "node_modules",
     "@revazi",
-    target.packageName.slice("@revazi/".length),
+    target.native_package.slice("@revazi/".length),
   );
   fs.mkdirSync(path.join(launcherDirectory, "bin"), { recursive: true });
   fs.mkdirSync(platformDirectory, { recursive: true });
   fs.copyFileSync(LAUNCHER_MANIFEST_SOURCE, path.join(launcherDirectory, "package.json"));
+  fs.copyFileSync(TARGET_CATALOG_SOURCE, path.join(launcherDirectory, "targets.json"));
   fs.copyFileSync(LAUNCHER_SOURCE, path.join(launcherDirectory, "bin", "career.js"));
   fs.copyFileSync(path.join(ROOT, "career", "README.md"), path.join(launcherDirectory, "README.md"));
   fs.copyFileSync(
-    path.join(ROOT, "platforms", target.platformKey, "package.json"),
+    path.join(ROOT, "platforms", target.platform_key, "package.json"),
     path.join(platformDirectory, "package.json"),
   );
-  fs.copyFileSync(helperBinary, path.join(platformDirectory, "career"));
-  fs.chmodSync(path.join(platformDirectory, "career"), 0o755);
+  const binaryPath = path.join(platformDirectory, target.executable);
+  if (useSyntheticBinary) {
+    fs.writeFileSync(binaryPath, syntheticBinary(target));
+  } else {
+    fs.copyFileSync(helperBinary, binaryPath);
+  }
+  fs.chmodSync(binaryPath, target.executable_mode === "0755" ? 0o755 : 0o644);
   writeJson(
     path.join(platformDirectory, "provenance.json"),
     provenanceFor(platformDirectory, target),
@@ -211,18 +237,22 @@ function makeInstalledTree() {
     target,
     launcherDirectory,
     launcherManifestPath: path.join(launcherDirectory, "package.json"),
+    targetCatalogPath: path.join(launcherDirectory, "targets.json"),
     launcherBin: path.join(launcherDirectory, "bin", "career.js"),
     platformDirectory,
     platformManifestPath: path.join(platformDirectory, "package.json"),
     provenancePath: path.join(platformDirectory, "provenance.json"),
-    binaryPath: path.join(platformDirectory, "career"),
+    binaryPath,
   };
 }
 
 function resolveTree(tree, overrides = {}) {
   return launcher.resolveVerifiedBinary({
-    ...hostOptions(),
+    platform: tree.target.node_platform,
+    arch: tree.target.node_arch,
+    libcRuntime: libcRuntimeFor(tree.target),
     launcherManifestPath: tree.launcherManifestPath,
+    targetCatalogPath: tree.targetCatalogPath,
     packageResolver: () => tree.platformManifestPath,
     ...overrides,
   });
@@ -257,69 +287,115 @@ function runInstalledLauncher(tree, args, options = {}) {
   });
 }
 
-test("selects only the two approved native targets and fails closed on libc", () => {
-  assert.equal(
-    launcher.selectTarget("darwin", "arm64", null).packageName,
-    "@revazi/career-darwin-arm64",
-  );
-  assert.equal(
-    launcher.selectTarget("linux", "x64", "2.35").packageName,
-    "@revazi/career-linux-x64-gnu",
-  );
+test("selects all eight exact catalog targets and rejects unknown hosts and libc", () => {
+  const cases = [
+    ["darwin", "arm64", null, "darwin-arm64"],
+    ["darwin", "x64", null, "darwin-x64"],
+    ["linux", "x64", { family: "glibc", version: "2.35" }, "linux-x64-gnu"],
+    ["linux", "arm64", { family: "glibc", version: "2.35" }, "linux-arm64-gnu"],
+    ["linux", "x64", { family: "musl", version: null }, "linux-x64-musl"],
+    ["linux", "arm64", { family: "musl", version: null }, "linux-arm64-musl"],
+    ["win32", "x64", null, "win32-x64-msvc"],
+    ["win32", "arm64", null, "win32-arm64-msvc"],
+  ];
+  for (const [platform, arch, libcRuntime, key] of cases) {
+    assert.equal(launcher.selectTarget(platform, arch, libcRuntime, CATALOG).platform_key, key);
+  }
+  for (const libcRuntime of [
+    { family: "glibc", version: "2.34" },
+    { family: "glibc", version: "2.35-malformed" },
+    { family: "unknown", version: null },
+    { family: "musl", version: "1.2" },
+    null,
+  ]) {
+    expectCode(
+      () => launcher.selectTarget("linux", "x64", libcRuntime, CATALOG),
+      "CAREER_NPM_UNSUPPORTED_LIBC",
+    );
+  }
   expectCode(
-    () => launcher.selectTarget("linux", "x64", "2.34"),
-    "CAREER_NPM_UNSUPPORTED_LIBC",
-  );
-  expectCode(
-    () => launcher.selectTarget("linux", "x64", "2.35-malformed"),
-    "CAREER_NPM_UNSUPPORTED_LIBC",
-  );
-  expectCode(
-    () => launcher.selectTarget("linux", "x64", "musl"),
-    "CAREER_NPM_UNSUPPORTED_LIBC",
-  );
-  expectCode(
-    () => launcher.selectTarget("linux", "x64", null),
-    "CAREER_NPM_UNSUPPORTED_LIBC",
-  );
-  expectCode(
-    () => launcher.selectTarget("linux", "arm64", "2.35"),
+    () => launcher.selectTarget("linux", "ppc64", { family: "glibc", version: "2.35" }, CATALOG),
     "CAREER_NPM_UNSUPPORTED_PLATFORM",
   );
   expectCode(
-    () => launcher.selectTarget("darwin", "x64", null),
-    "CAREER_NPM_UNSUPPORTED_PLATFORM",
-  );
-  expectCode(
-    () => launcher.selectTarget("win32", "x64", null),
+    () => launcher.selectTarget("freebsd", "x64", null, CATALOG),
     "CAREER_NPM_UNSUPPORTED_PLATFORM",
   );
 });
 
-test("glibc detection accepts only a bounded runtime report value", () => {
-  assert.equal(
-    launcher.detectGlibcRuntimeVersion(() => ({ header: { glibcVersionRuntime: "2.36" } })),
-    "2.36",
+test("Linux libc detection requires positive bounded architecture-matched evidence", () => {
+  assert.deepEqual(
+    launcher.detectLinuxLibc(
+      () => ({ header: { glibcVersionRuntime: "2.36" }, sharedObjects: [] }),
+      "x64",
+    ),
+    { family: "glibc", version: "2.36" },
   );
-  assert.equal(
-    launcher.detectGlibcRuntimeVersion(() => ({ header: { glibcVersionRuntime: "musl" } })),
-    null,
+  assert.deepEqual(
+    launcher.detectLinuxLibc(
+      () => ({ header: {}, sharedObjects: ["/lib/ld-musl-x86_64.so.1"] }),
+      "x64",
+    ),
+    { family: "musl", version: null },
   );
-  assert.equal(launcher.detectGlibcRuntimeVersion(() => ({ header: {} })), null);
-  assert.equal(
-    launcher.detectGlibcRuntimeVersion(() => {
-      throw new Error("synthetic report failure");
+  for (const reportProvider of [
+    () => ({ header: {}, sharedObjects: [] }),
+    () => ({ header: { glibcVersionRuntime: "musl" }, sharedObjects: [] }),
+    () => ({ header: { glibcVersionRuntime: "2.36" } }),
+    () => ({ header: { glibcVersionRuntime: "2.36" }, sharedObjects: "invalid" }),
+    () => ({ header: { glibcVersionRuntime: "2.36" }, sharedObjects: [42] }),
+    () => ({ header: {}, sharedObjects: ["/lib/ld-musl-aarch64.so.1"] }),
+    () => ({
+      header: { glibcVersionRuntime: "2.36" },
+      sharedObjects: ["/lib/ld-musl-x86_64.so.1"],
     }),
-    null,
-  );
+    () => ({ header: {}, sharedObjects: Array(1025).fill("/lib/libc.so") }),
+    () => {
+      throw new Error("synthetic report failure");
+    },
+  ]) {
+    assert.deepEqual(launcher.detectLinuxLibc(reportProvider, "x64"), {
+      family: "unknown",
+      version: null,
+    });
+  }
+});
+
+test("resolves and verifies every exact synthetic target package", () => {
+  for (const target of CATALOG.targets) {
+    const tree = makeInstalledTree(target, true);
+    const result = resolveTree(tree);
+    assert.equal(result.binaryPath, tree.binaryPath);
+    assert.equal(result.target.platform_key, target.platform_key);
+    assert.equal(result.launcherVersion, "0.1.1");
+  }
 });
 
 test("resolves and verifies a complete package-local native install", () => {
   const tree = makeInstalledTree();
   const result = resolveTree(tree);
   assert.equal(result.binaryPath, tree.binaryPath);
-  assert.equal(result.target.platformKey, tree.target.platformKey);
-  assert.equal(result.launcherVersion, "0.1.0");
+  assert.equal(result.target.platform_key, tree.target.platform_key);
+  assert.equal(result.launcherVersion, "0.1.1");
+});
+
+test("reverifies immediately before spawn and rejects a replaced pathname", async () => {
+  const tree = makeInstalledTree();
+  const resolved = resolveTree(tree);
+  const replacement = fs.readFileSync(tree.binaryPath);
+  replacement[replacement.length - 1] ^= 0xff;
+  fs.renameSync(tree.binaryPath, `${tree.binaryPath}.verified`);
+  fs.writeFileSync(tree.binaryPath, replacement, { mode: 0o755 });
+  let spawned = false;
+  await assert.rejects(
+    async () =>
+      launcher.launchResolvedBinary(resolved, [], () => {
+        spawned = true;
+        throw new Error("unverified replacement reached spawn");
+      }),
+    (error) => error.code === "CAREER_NPM_BINARY_HASH_MISMATCH",
+  );
+  assert.equal(spawned, false);
 });
 
 test("rejects a missing optional package with a bounded path-free error", () => {
@@ -352,11 +428,68 @@ test("the production package-local resolver fails when the optional package is a
   assert.doesNotMatch(result.stderr, new RegExp(tree.root.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "u"));
 });
 
-test("rejects launcher optional-dependency drift and lifecycle scripts", async (t) => {
+test("rejects missing, malformed, and byte-drifted target catalogs", async (t) => {
+  await t.test("missing", () => {
+    const tree = makeInstalledTree();
+    fs.rmSync(tree.targetCatalogPath);
+    expectCode(() => resolveTree(tree), "CAREER_NPM_LAUNCHER_MANIFEST_INVALID");
+  });
+  await t.test("malformed", () => {
+    const tree = makeInstalledTree();
+    fs.writeFileSync(tree.targetCatalogPath, "[]\n");
+    expectCode(() => resolveTree(tree), "CAREER_NPM_LAUNCHER_MANIFEST_INVALID");
+  });
+  await t.test("reviewed byte drift", () => {
+    const tree = makeInstalledTree();
+    mutateJson(tree.targetCatalogPath, (catalog) => {
+      catalog.targets[0].native_package = "@revazi/career-unreviewed";
+    });
+    expectCode(() => resolveTree(tree), "CAREER_NPM_LAUNCHER_MANIFEST_INVALID");
+  });
+});
+
+test("rejects launcher package-set, order, version, and lifecycle drift", async (t) => {
   await t.test("optional dependency version", () => {
     const tree = makeInstalledTree();
     mutateJson(tree.launcherManifestPath, (manifest) => {
-      manifest.optionalDependencies["@revazi/career-linux-x64-gnu"] = "0.1.1";
+      manifest.optionalDependencies["@revazi/career-linux-x64-gnu"] = "0.1.2";
+    });
+    expectCode(() => resolveTree(tree), "CAREER_NPM_LAUNCHER_MANIFEST_INVALID");
+  });
+  await t.test("missing optional dependency", () => {
+    const tree = makeInstalledTree();
+    mutateJson(tree.launcherManifestPath, (manifest) => {
+      delete manifest.optionalDependencies["@revazi/career-win32-arm64-msvc"];
+    });
+    expectCode(() => resolveTree(tree), "CAREER_NPM_LAUNCHER_MANIFEST_INVALID");
+  });
+  await t.test("extra optional dependency", () => {
+    const tree = makeInstalledTree();
+    mutateJson(tree.launcherManifestPath, (manifest) => {
+      manifest.optionalDependencies["@revazi/career-unreviewed"] = manifest.version;
+    });
+    expectCode(() => resolveTree(tree), "CAREER_NPM_LAUNCHER_MANIFEST_INVALID");
+  });
+  await t.test("reordered optional dependency", () => {
+    const tree = makeInstalledTree();
+    mutateJson(tree.launcherManifestPath, (manifest) => {
+      const value = manifest.optionalDependencies["@revazi/career-darwin-arm64"];
+      delete manifest.optionalDependencies["@revazi/career-darwin-arm64"];
+      manifest.optionalDependencies["@revazi/career-darwin-arm64"] = value;
+    });
+    expectCode(() => resolveTree(tree), "CAREER_NPM_LAUNCHER_MANIFEST_INVALID");
+  });
+  await t.test("reordered platform package list", () => {
+    const tree = makeInstalledTree();
+    mutateJson(tree.launcherManifestPath, (manifest) => {
+      manifest.career_launcher.platform_packages.reverse();
+    });
+    expectCode(() => resolveTree(tree), "CAREER_NPM_LAUNCHER_MANIFEST_INVALID");
+  });
+  await t.test("duplicated platform package list", () => {
+    const tree = makeInstalledTree();
+    mutateJson(tree.launcherManifestPath, (manifest) => {
+      manifest.career_launcher.platform_packages[7] = manifest.career_launcher.platform_packages[0];
     });
     expectCode(() => resolveTree(tree), "CAREER_NPM_LAUNCHER_MANIFEST_INVALID");
   });
@@ -385,7 +518,7 @@ test("rejects malformed and mismatched platform manifests", async (t) => {
   await t.test("version", () => {
     const tree = makeInstalledTree();
     mutateJson(tree.platformManifestPath, (manifest) => {
-      manifest.version = "0.1.1";
+      manifest.version = "0.1.2";
     });
     expectCode(() => resolveTree(tree), "CAREER_NPM_VERSION_MISMATCH");
   });
@@ -419,7 +552,7 @@ test("rejects missing, malformed, and mismatched provenance", async (t) => {
   await t.test("schema", () => {
     const tree = makeInstalledTree();
     mutateJson(tree.provenancePath, (value) => {
-      value.schema_version = "career.npm_native_provenance.v2";
+      value.schema_version = "career.npm_native_provenance.v3";
     });
     expectCode(() => resolveTree(tree), "CAREER_NPM_PROVENANCE_INVALID");
   });
@@ -433,7 +566,7 @@ test("rejects missing, malformed, and mismatched provenance", async (t) => {
   await t.test("version", () => {
     const tree = makeInstalledTree();
     mutateJson(tree.provenancePath, (value) => {
-      value.package.version = "0.1.1";
+      value.package.version = "0.1.2";
     });
     expectCode(() => resolveTree(tree), "CAREER_NPM_VERSION_MISMATCH");
   });
@@ -447,8 +580,8 @@ test("rejects missing, malformed, and mismatched provenance", async (t) => {
   await t.test("dirty publication candidate", () => {
     const tree = makeInstalledTree();
     mutateJson(tree.provenancePath, (value) => {
-      value.source.git_ref = "refs/tags/v0.1.0";
-      value.source.git_tag = "v0.1.0";
+      value.source.git_ref = "refs/tags/v0.1.1";
+      value.source.git_tag = "v0.1.1";
       value.source.git_dirty = true;
       value.source.publication_candidate = true;
     });
@@ -474,8 +607,8 @@ test("rejects missing, malformed, and mismatched provenance", async (t) => {
       delete manifest.private;
     });
     mutateJson(tree.provenancePath, (value) => {
-      value.source.git_ref = "refs/tags/v0.1.0";
-      value.source.git_tag = "v0.1.0";
+      value.source.git_ref = "refs/tags/v0.1.1";
+      value.source.git_tag = "v0.1.1";
       value.source.publication_candidate = true;
       value.build.rustc_version = "rustc 1.97.1 (synthetic test)";
       value.build.cargo_version = "cargo 1.97.1 (synthetic test)";
@@ -488,8 +621,8 @@ test("rejects missing, malformed, and mismatched provenance", async (t) => {
       delete manifest.private;
     });
     mutateJson(tree.provenancePath, (value) => {
-      value.source.git_ref = "refs/tags/v0.1.1";
-      value.source.git_tag = "v0.1.1";
+      value.source.git_ref = "refs/tags/v0.1.2";
+      value.source.git_tag = "v0.1.2";
       value.source.publication_candidate = true;
     });
     expectCode(() => resolveTree(tree), "CAREER_NPM_PROVENANCE_INVALID");
@@ -497,7 +630,7 @@ test("rejects missing, malformed, and mismatched provenance", async (t) => {
   await t.test("runner target mismatch", () => {
     const tree = makeInstalledTree();
     mutateJson(tree.provenancePath, (value) => {
-      value.build.runner.os = tree.target.nodePlatform === "linux" ? "macOS" : "Linux";
+      value.build.runner.os = tree.target.runner_os === "Linux" ? "macOS" : "Linux";
     });
     expectCode(() => resolveTree(tree), "CAREER_NPM_PROVENANCE_INVALID");
   });
@@ -528,10 +661,20 @@ test("rejects unsafe binary file types and exact mode drift", async (t) => {
     fs.mkdirSync(tree.binaryPath);
     expectCode(() => resolveTree(tree), "CAREER_NPM_BINARY_TYPE_INVALID");
   });
-  await t.test("mode", () => {
+  await t.test("Unix mode", () => {
     const tree = makeInstalledTree();
     fs.chmodSync(tree.binaryPath, 0o700);
     expectCode(() => resolveTree(tree), "CAREER_NPM_BINARY_MODE_MISMATCH");
+  });
+  await t.test("Windows file invariant metadata", () => {
+    const tree = makeInstalledTree(
+      CATALOG.targets.find((target) => target.platform_key === "win32-x64-msvc"),
+      true,
+    );
+    mutateJson(tree.platformManifestPath, (manifest) => {
+      manifest.career_native.file_invariant = "unix_regular_non_symlink_mode_0755";
+    });
+    expectCode(() => resolveTree(tree), "CAREER_NPM_TARGET_MISMATCH");
   });
 });
 
@@ -561,6 +704,15 @@ test("rejects binary size, SHA-256, and native format mismatches", async (t) => 
     const tree = makeInstalledTree();
     fs.writeFileSync(tree.binaryPath, Buffer.alloc(64));
     fs.chmodSync(tree.binaryPath, 0o755);
+    refreshProvenanceExecutable(tree);
+    expectCode(() => resolveTree(tree), "CAREER_NPM_BINARY_TYPE_MISMATCH");
+  });
+  await t.test("native architecture", () => {
+    const target = CATALOG.targets.find((value) => value.platform_key === "win32-x64-msvc");
+    const tree = makeInstalledTree(target, true);
+    const binary = fs.readFileSync(tree.binaryPath);
+    binary.writeUInt16LE(0xaa64, 0x84);
+    fs.writeFileSync(tree.binaryPath, binary);
     refreshProvenanceExecutable(tree);
     expectCode(() => resolveTree(tree), "CAREER_NPM_BINARY_TYPE_MISMATCH");
   });
@@ -662,22 +814,29 @@ test("reports launch failures with one stable bounded error code", async () => {
   );
 });
 
-test("package templates are private, dependency-free, lifecycle-free, and exactly lockstep", () => {
+test("all eight package templates are private, exact, lifecycle-free, and lockstep", () => {
   const launcherManifest = readJson(LAUNCHER_MANIFEST_SOURCE);
-  const darwin = readJson(path.join(ROOT, "platforms", "darwin-arm64", "package.json"));
-  const linux = readJson(path.join(ROOT, "platforms", "linux-x64-gnu", "package.json"));
+  const platformManifests = CATALOG.targets.map((target) =>
+    readJson(path.join(ROOT, "platforms", target.platform_key, "package.json")),
+  );
+  assert.equal(launcherManifest.version, "0.1.1");
   assert.equal(launcherManifest.private, true);
-  assert.deepEqual(launcherManifest.optionalDependencies, {
-    "@revazi/career-darwin-arm64": launcherManifest.version,
-    "@revazi/career-linux-x64-gnu": launcherManifest.version,
-  });
+  assert.deepEqual(
+    Object.keys(launcherManifest.optionalDependencies),
+    CATALOG.platformPackages,
+  );
+  assert.deepEqual(
+    launcherManifest.optionalDependencies,
+    Object.fromEntries(CATALOG.platformPackages.map((name) => [name, launcherManifest.version])),
+  );
+  assert.deepEqual(launcherManifest.career_launcher.platform_packages, CATALOG.platformPackages);
   assert.deepEqual(launcherManifest.bin, { career: "bin/career.js" });
   assert.deepEqual(launcherManifest.engines, { node: ">=22" });
   assert.equal(launcherManifest.author, "Revaz Zakalashvili");
   assert.equal(launcherManifest.homepage, "https://github.com/revazi/career-core#readme");
   assert.deepEqual(launcherManifest.bugs, { url: "https://github.com/revazi/career-core/issues" });
   assert.deepEqual(launcherManifest.keywords, ["career", "resume", "job-search", "matching", "cli"]);
-  assert.ok(launcherManifest.files.includes("README.md"));
+  assert.deepEqual(launcherManifest.files.slice(0, 2), ["bin/career.js", "targets.json"]);
   const lifecycleNames = [
     "preinstall",
     "install",
@@ -688,26 +847,47 @@ test("package templates are private, dependency-free, lifecycle-free, and exactl
     "publish",
     "postpublish",
   ];
-  for (const manifest of [launcherManifest, darwin, linux]) {
+  for (const manifest of [launcherManifest, ...platformManifests]) {
     assert.equal(manifest.private, true);
     assert.equal(manifest.scripts, undefined);
     assert.equal(manifest.dependencies, undefined);
     assert.equal(manifest.devDependencies, undefined);
+    assert.equal(manifest.peerDependencies, undefined);
     for (const lifecycle of lifecycleNames) {
       assert.equal(Object.hasOwn(manifest, lifecycle), false);
     }
   }
-  assert.equal(darwin.name, "@revazi/career-darwin-arm64");
-  assert.equal(linux.name, "@revazi/career-linux-x64-gnu");
-  assert.match(darwin.description, /^Internal /u);
-  assert.match(linux.description, /^Internal /u);
-  assert.deepEqual(linux.libc, ["glibc"]);
-  assert.equal(darwin.career_native.minimum_glibc_version, null);
-  assert.equal(linux.career_native.minimum_glibc_version, "2.35");
+  for (const [index, target] of CATALOG.targets.entries()) {
+    const manifest = platformManifests[index];
+    assert.equal(manifest.name, target.native_package);
+    assert.equal(manifest.version, launcherManifest.version);
+    assert.match(manifest.description, /^Internal /u);
+    assert.deepEqual(manifest.os, [target.node_platform]);
+    assert.deepEqual(manifest.cpu, [target.node_arch]);
+    assert.deepEqual(manifest.libc, target.libc_family === null ? undefined : [target.libc_family]);
+    assert.deepEqual(manifest.files, [target.executable, "provenance.json", ...PLATFORM_LICENSE_FILES]);
+    assert.deepEqual(manifest.career_native, {
+      schema_version: "career.npm_native_package.v2",
+      platform_key: target.platform_key,
+      node_platform: target.node_platform,
+      node_arch: target.node_arch,
+      libc_family: target.libc_family,
+      rust_target: target.rust_target,
+      binary_file: target.executable,
+      provenance_file: "provenance.json",
+      binary_format: target.binary_format,
+      binary_architecture: target.binary_architecture,
+      file_invariant: target.file_invariant,
+      archive_mode: target.archive_mode,
+      executable_mode: target.executable_mode,
+      maximum_binary_size_bytes: target.maximum_binary_size_bytes,
+      minimum_glibc_version: target.minimum_glibc_version,
+    });
+  }
   const readme = fs.readFileSync(path.join(ROOT, "career", "README.md"), "utf8");
   assert.ok(Buffer.byteLength(readme) <= 16 * 1024);
-  assert.doesNotMatch(readme, /@revazi\/career-(?:darwin|linux)/u);
-  assert.doesNotMatch(JSON.stringify([launcherManifest, darwin, linux]), /Provisional/u);
+  assert.doesNotMatch(readme, /@revazi\/career-(?:darwin|linux|win32)/u);
+  assert.doesNotMatch(JSON.stringify([launcherManifest, ...platformManifests]), /Provisional/u);
 });
 
 test("pi-career handoff pins the exact public package and version", () => {

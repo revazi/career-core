@@ -24,11 +24,14 @@ real_cargo="$(command -v cargo)"
 
 make_minimal_fixture() {
   local root="$1"
-  mkdir -p "$root/npm/career" "$root/npm/platforms/darwin-arm64" "$root/npm/platforms/linux-x64-gnu"
+  mkdir -p "$root/npm/career" "$root/npm/platforms"
   cp "$repository_root/Cargo.toml" "$root/Cargo.toml"
   cp "$repository_root/npm/career/package.json" "$root/npm/career/package.json"
-  cp "$repository_root/npm/platforms/darwin-arm64/package.json" "$root/npm/platforms/darwin-arm64/package.json"
-  cp "$repository_root/npm/platforms/linux-x64-gnu/package.json" "$root/npm/platforms/linux-x64-gnu/package.json"
+  cp "$repository_root/npm/career/targets.json" "$root/npm/career/targets.json"
+  for platform_dir in "$repository_root"/npm/platforms/*; do
+    mkdir -p "$root/npm/platforms/$(basename "$platform_dir")"
+    cp "$platform_dir/package.json" "$root/npm/platforms/$(basename "$platform_dir")/package.json"
+  done
   git -C "$root" init -q
   git -C "$root" config user.name "Publication Fixture"
   git -C "$root" config user.email "publication-fixture@example.invalid"
@@ -36,14 +39,14 @@ make_minimal_fixture() {
   git -C "$root" commit -q -m "fixture source"
   git -C "$root" remote add origin https://github.com/revazi/career-core.git
   git -C "$root" update-ref refs/remotes/origin/main "$(git -C "$root" rev-parse HEAD)"
-  git -C "$root" tag -a v0.1.0 -m "fixture v0.1.0"
+  git -C "$root" tag -a v0.1.1 -m "fixture v0.1.1"
 }
 
 verify_fixture() {
   local root="$1"
   "$source_gate" \
     --repository-root "$root" \
-    --expected-ref refs/tags/v0.1.0 \
+    --expected-ref refs/tags/v0.1.1 \
     --reviewed-sha "$(git -C "$root" rev-parse HEAD)"
 }
 
@@ -54,7 +57,7 @@ expect_source_failure() {
   shift 3
   if "$source_gate" \
     --repository-root "$root" \
-    --expected-ref refs/tags/v0.1.0 \
+    --expected-ref refs/tags/v0.1.1 \
     --reviewed-sha "$(git -C "$root" rev-parse HEAD)" \
     >"$temporary_root/$label.stdout" 2>"$temporary_root/$label.stderr"; then
     fail "source gate accepted $label"
@@ -83,13 +86,13 @@ expect_source_failure dirty "source worktree is dirty" "$fixture"
 
 fixture="$temporary_root/source-missing-tag"
 make_minimal_fixture "$fixture"
-git -C "$fixture" tag -d v0.1.0 >/dev/null
-expect_source_failure missing-tag "exact v0.1.0 tag is missing" "$fixture"
+git -C "$fixture" tag -d v0.1.1 >/dev/null
+expect_source_failure missing-tag "exact v0.1.1 tag is missing" "$fixture"
 
 fixture="$temporary_root/source-lightweight-tag"
 make_minimal_fixture "$fixture"
-git -C "$fixture" tag -d v0.1.0 >/dev/null
-git -C "$fixture" tag v0.1.0
+git -C "$fixture" tag -d v0.1.1 >/dev/null
+git -C "$fixture" tag v0.1.1
 expect_source_failure lightweight-tag "must be an annotated tag" "$fixture"
 
 fixture="$temporary_root/source-moved-tag"
@@ -102,7 +105,7 @@ fixture="$temporary_root/source-non-main"
 make_minimal_fixture "$fixture"
 old_main="$(git -C "$fixture" rev-parse refs/remotes/origin/main)"
 git -C "$fixture" commit -q --allow-empty -m "non-main tag"
-git -C "$fixture" tag -f -a v0.1.0 -m "non-main v0.1.0" >/dev/null
+git -C "$fixture" tag -f -a v0.1.1 -m "non-main v0.1.1" >/dev/null
 [[ "$(git -C "$fixture" rev-parse refs/remotes/origin/main)" == "$old_main" ]]
 expect_source_failure non-main "not the exact fetched origin/main" "$fixture"
 
@@ -114,27 +117,27 @@ import pathlib
 import sys
 path = pathlib.Path(sys.argv[1])
 value = json.loads(path.read_text())
-value["version"] = "0.1.1"
+value["version"] = "0.1.2"
 path.write_text(json.dumps(value, indent=2) + "\n")
 PY
 git -C "$fixture" add .
 git -C "$fixture" commit -q -m "wrong version"
 git -C "$fixture" update-ref refs/remotes/origin/main "$(git -C "$fixture" rev-parse HEAD)"
-git -C "$fixture" tag -f -a v0.1.0 -m "wrong version tag" >/dev/null
-expect_source_failure version "launcher name/version is not the approved initial release" "$fixture"
+git -C "$fixture" tag -f -a v0.1.1 -m "wrong version tag" >/dev/null
+expect_source_failure version "launcher name/version is not the approved patch release" "$fixture"
 
 if "$source_gate" \
   --repository-root "$baseline" \
-  --expected-ref refs/tags/v0.1.1 \
+  --expected-ref refs/tags/v0.1.2 \
   --reviewed-sha "$(git -C "$baseline" rev-parse HEAD)" \
   >"$temporary_root/wrong-ref.stdout" 2>"$temporary_root/wrong-ref.stderr"; then
   fail "source gate accepted the wrong tag/ref"
 fi
-grep -Fq 'expected ref must be exactly refs/tags/v0.1.0' "$temporary_root/wrong-ref.stderr"
+grep -Fq 'expected ref must be exactly refs/tags/v0.1.1' "$temporary_root/wrong-ref.stderr"
 
 if "$source_gate" \
   --repository-root "$baseline" \
-  --expected-ref refs/tags/v0.1.0 \
+  --expected-ref refs/tags/v0.1.1 \
   --reviewed-sha "0000000000000000000000000000000000000000" \
   >"$temporary_root/wrong-sha.stdout" 2>"$temporary_root/wrong-sha.stderr"; then
   fail "source gate accepted an unreviewed SHA"
@@ -160,7 +163,7 @@ git -C "$fixture_repository" commit -q -m "reviewed publication candidate"
 git -C "$fixture_repository" remote add origin https://github.com/revazi/career-core.git
 fixture_sha="$(git -C "$fixture_repository" rev-parse HEAD)"
 git -C "$fixture_repository" update-ref refs/remotes/origin/main "$fixture_sha"
-git -C "$fixture_repository" tag -a v0.1.0 -m "Career Core v0.1.0 fixture"
+git -C "$fixture_repository" tag -a v0.1.1 -m "Career Core v0.1.1 fixture"
 
 # Production scripts require npm 11.6.2. The local deterministic fixture keeps
 # npm 10.9.3 compatibility by presenting the reviewed version gate while
@@ -211,9 +214,7 @@ case "$(uname -s):$(uname -m)" in
     runner_os="macOS"
     runner_arch="ARM64"
     runner_image="macos-14-fixture"
-    current_file="10-revazi-career-darwin-arm64-0.1.0.tgz"
-    opposite_key="linux-x64-gnu"
-    opposite_file="20-revazi-career-linux-x64-gnu-0.1.0.tgz"
+    current_file="10-revazi-career-darwin-arm64-0.1.1.tgz"
     ;;
   Linux:x86_64|Linux:amd64)
     current_key="linux-x64-gnu"
@@ -221,9 +222,7 @@ case "$(uname -s):$(uname -m)" in
     runner_os="Linux"
     runner_arch="X64"
     runner_image="ubuntu-fixture"
-    current_file="20-revazi-career-linux-x64-gnu-0.1.0.tgz"
-    opposite_key="darwin-arm64"
-    opposite_file="10-revazi-career-darwin-arm64-0.1.0.tgz"
+    current_file="30-revazi-career-linux-x64-gnu-0.1.1.tgz"
     ;;
   *) fail "candidate test requires an approved native host" ;;
 esac
@@ -233,7 +232,7 @@ CARGO_TARGET_DIR="$repository_root/target" \
   "$fixture_repository/scripts/prepare-npm-publication-native.sh" \
   --output-dir "$native_output" \
   --expected-target "$current_target" \
-  --expected-ref refs/tags/v0.1.0 \
+  --expected-ref refs/tags/v0.1.1 \
   --reviewed-sha "$fixture_sha" \
   --runner-os "$runner_os" \
   --runner-arch "$runner_arch" \
@@ -241,100 +240,112 @@ CARGO_TARGET_DIR="$repository_root/target" \
 current_tarball="$native_output/tarballs/$current_file"
 [[ -f "$current_tarball" ]]
 
-# The opposite-host tarball is a format-correct non-executed fixture. Real
-# publication builds and executes that package on its approved native runner.
-opposite_stage="$temporary_root/opposite-stage"
-mkdir -p "$opposite_stage"
-python3 - \
-  "$fixture_repository" "$opposite_stage" "$opposite_key" "$fixture_sha" <<'PY'
+# Non-host tarballs are format-correct synthetic policy fixtures only. They are
+# never native execution evidence; each release target remains blocked until its
+# final package executes on the exact native OS and architecture.
+native_dir="$temporary_root/native-candidates"
+mkdir -p "$native_dir"
+cp "$current_tarball" "$native_dir/$current_file"
+python3 - "$fixture_repository" "$native_dir" "$current_key" "$fixture_sha" <<'PY'
 import hashlib
+import io
 import json
-import os
 import pathlib
 import sys
+import tarfile
 root = pathlib.Path(sys.argv[1])
-stage = pathlib.Path(sys.argv[2])
-key = sys.argv[3]
+native_dir = pathlib.Path(sys.argv[2])
+current_key = sys.argv[3]
 sha = sys.argv[4]
-targets = {
-    "darwin-arm64": {
-        "name": "@revazi/career-darwin-arm64", "platform": "darwin", "arch": "arm64",
-        "rust": "aarch64-apple-darwin", "format": "mach-o-64-aarch64",
-        "runner_os": "macOS", "runner_arch": "ARM64", "image": "macos-14-opposite-fixture",
-        "libc": None, "header": bytes.fromhex("cffaedfe0c000001") + bytes(56),
-    },
-    "linux-x64-gnu": {
-        "name": "@revazi/career-linux-x64-gnu", "platform": "linux", "arch": "x64",
-        "rust": "x86_64-unknown-linux-gnu", "format": "elf-64-x86_64",
-        "runner_os": "Linux", "runner_arch": "X64", "image": "ubuntu-opposite-fixture",
-        "libc": "glibc 2.35", "header": bytes([0x7f, 0x45, 0x4c, 0x46, 2, 1]) + bytes(12) + bytes([0x3e, 0]) + bytes(44),
-    },
-}
-target = targets[key]
-source_manifest = json.loads((root / "npm/platforms" / key / "package.json").read_text())
-del source_manifest["private"]
-source_manifest["publishConfig"] = {"access": "public", "provenance": True}
-(stage / "package.json").write_text(json.dumps(source_manifest, indent=2, sort_keys=True) + "\n")
-binary = target["header"]
-(stage / "career").write_bytes(binary)
-os.chmod(stage / "career", 0o755)
-for name in ("LICENSE-MIT", "LICENSE-APACHE", "THIRD_PARTY_NOTICES.md"):
-    (stage / name).write_bytes((root / name).read_bytes())
-provenance = {
-    "schema_version": "career.npm_native_provenance.v1",
-    "package": {
-        "name": target["name"], "version": "0.1.0", "platform_key": key,
-        "node_platform": target["platform"], "node_arch": target["arch"], "rust_target": target["rust"],
-        "minimum_glibc_version": "2.35" if key == "linux-x64-gnu" else None,
-    },
-    "source": {
-        "repository": "https://github.com/revazi/career-core", "git_sha": sha,
-        "git_ref": "refs/tags/v0.1.0", "git_tag": "v0.1.0",
-        "git_dirty": False, "publication_candidate": True,
-    },
-    "build": {
-        "command": ["cargo", "build", "--release", "--locked", "-p", "career-cli", "--target", target["rust"]],
-        "profile": "release", "locked": True, "rustc_version": "rustc 1.97.1 (synthetic fixture)",
-        "cargo_version": "cargo 1.97.1 (synthetic fixture)",
-        "runner": {"os": target["runner_os"], "arch": target["runner_arch"], "image": target["image"], "libc": target["libc"]},
-    },
-    "executable": {
-        "file_name": "career", "binary_format": target["format"], "mode": "0755",
-        "size_bytes": len(binary), "sha256": hashlib.sha256(binary).hexdigest(),
-    },
-    "integrity": {
-        "npm_registry_integrity": "external_to_launcher_runtime",
-        "package_contained_sha256": "consistency_only", "independent_signature": "absent",
-    },
-}
-(stage / "provenance.json").write_text(json.dumps(provenance, indent=2, sort_keys=True) + "\n")
-PY
-opposite_pack="$temporary_root/opposite-pack"
-mkdir -p "$opposite_pack"
-npm pack --offline --ignore-scripts --json --pack-destination "$opposite_pack" "$opposite_stage" \
-  >"$temporary_root/opposite-pack.json"
-opposite_packed="$(python3 - "$temporary_root/opposite-pack.json" <<'PY'
-import json, pathlib, sys
-print(json.loads(pathlib.Path(sys.argv[1]).read_text())[0]["filename"])
-PY
-)"
-mv "$opposite_pack/$opposite_packed" "$opposite_pack/$opposite_file"
-opposite_tarball="$opposite_pack/$opposite_file"
+catalog = json.loads((root / "npm/career/targets.json").read_text())
 
-if [[ "$current_key" == "darwin-arm64" ]]; then
-  darwin_tarball="$current_tarball"
-  linux_tarball="$opposite_tarball"
-else
-  darwin_tarball="$opposite_tarball"
-  linux_tarball="$current_tarball"
-fi
+def synthetic_binary(target):
+    binary = bytearray(512)
+    architecture = target["binary_architecture"]
+    if target["binary_format"].startswith("mach-o-64-"):
+        binary[0:4] = (0xFEEDFACF).to_bytes(4, "little")
+        binary[4:8] = (0x0100000C if architecture == "aarch64" else 0x01000007).to_bytes(4, "little")
+    elif target["binary_format"].startswith("elf-64-"):
+        binary[0:6] = bytes([0x7F, 0x45, 0x4C, 0x46, 2, 1])
+        binary[18:20] = (0xB7 if architecture == "aarch64" else 0x3E).to_bytes(2, "little")
+    else:
+        binary[0:2] = b"MZ"
+        binary[0x3C:0x40] = (0x80).to_bytes(4, "little")
+        binary[0x80:0x84] = b"PE\0\0"
+        binary[0x84:0x86] = (0xAA64 if architecture == "aarch64" else 0x8664).to_bytes(2, "little")
+        binary[0x98:0x9A] = (0x020B).to_bytes(2, "little")
+    binary[-1] = 1
+    return bytes(binary)
+
+def add_file(archive, name, data, mode):
+    member = tarfile.TarInfo(name)
+    member.size = len(data)
+    member.mode = mode
+    archive.addfile(member, io.BytesIO(data))
+
+for index, target in enumerate(catalog["targets"], start=1):
+    key = target["platform_key"]
+    if key == current_key:
+        continue
+    manifest = json.loads((root / "npm/platforms" / key / "package.json").read_text())
+    del manifest["private"]
+    manifest["publishConfig"] = {"access": "public", "provenance": True}
+    binary = synthetic_binary(target)
+    runner_libc = (
+        f"glibc {target['minimum_glibc_version']}"
+        if target["libc_family"] == "glibc"
+        else "musl" if target["libc_family"] == "musl" else None
+    )
+    provenance = {
+        "schema_version": "career.npm_native_provenance.v2",
+        "package": {
+            "name": target["native_package"], "version": "0.1.1", "platform_key": key,
+            "node_platform": target["node_platform"], "node_arch": target["node_arch"],
+            "libc_family": target["libc_family"], "rust_target": target["rust_target"],
+            "minimum_glibc_version": target["minimum_glibc_version"],
+        },
+        "source": {
+            "repository": "https://github.com/revazi/career-core", "git_sha": sha,
+            "git_ref": "refs/tags/v0.1.1", "git_tag": "v0.1.1",
+            "git_dirty": False, "publication_candidate": True,
+        },
+        "build": {
+            "command": ["cargo", "build", "--release", "--locked", "-p", "career-cli", "--target", target["rust_target"]],
+            "profile": "release", "locked": True,
+            "rustc_version": "rustc 1.97.1 (synthetic fixture)",
+            "cargo_version": "cargo 1.97.1 (synthetic fixture)",
+            "runner": {
+                "os": target["runner_os"], "arch": target["runner_arch"],
+                "image": "synthetic-non-execution-fixture", "libc": runner_libc,
+            },
+        },
+        "executable": {
+            "file_name": target["executable"], "binary_format": target["binary_format"],
+            "binary_architecture": target["binary_architecture"],
+            "file_invariant": target["file_invariant"], "archive_mode": target["archive_mode"],
+            "mode": target["executable_mode"], "size_bytes": len(binary),
+            "sha256": hashlib.sha256(binary).hexdigest(),
+        },
+        "integrity": {
+            "npm_registry_integrity": "external_to_launcher_runtime",
+            "package_contained_sha256": "consistency_only", "independent_signature": "absent",
+        },
+    }
+    filename = f"{index * 10:02d}-revazi-career-{key}-0.1.1.tgz"
+    with tarfile.open(native_dir / filename, "w:gz") as archive:
+        add_file(archive, "package/package.json", (json.dumps(manifest, indent=2, sort_keys=True) + "\n").encode(), 0o644)
+        add_file(archive, f"package/{target['executable']}", binary, int(target["archive_mode"], 8))
+        add_file(archive, "package/provenance.json", (json.dumps(provenance, indent=2, sort_keys=True) + "\n").encode(), 0o644)
+        for name in ("LICENSE-MIT", "LICENSE-APACHE", "THIRD_PARTY_NOTICES.md"):
+            add_file(archive, f"package/{name}", (root / name).read_bytes(), 0o644)
+PY
+
 candidate_dir="$temporary_root/candidate"
 CARGO_TARGET_DIR="$repository_root/target" \
   "$fixture_repository/scripts/assemble-npm-publication-candidate.sh" \
   --output-dir "$candidate_dir" \
-  --darwin-tarball "$darwin_tarball" \
-  --linux-tarball "$linux_tarball" \
-  --expected-ref refs/tags/v0.1.0 \
+  --native-dir "$native_dir" \
+  --expected-ref refs/tags/v0.1.1 \
   --reviewed-sha "$fixture_sha"
 "$fixture_repository/scripts/verify-npm-publication-candidate.sh" \
   --candidate-dir "$candidate_dir" \
@@ -356,12 +367,24 @@ root = pathlib.Path(sys.argv[1])
 kind = sys.argv[2]
 current_file = sys.argv[3]
 
-def rewrite(tarball, member_mutator=None, add_extra=False, unsafe_mode_member=None):
+def rewrite(
+    tarball,
+    member_mutator=None,
+    add_extra=False,
+    unsafe_mode_member=None,
+    oversized_pax_header=False,
+):
     source = tarball.with_suffix(".source")
     tarball.rename(source)
     with tarfile.open(source, "r:gz") as archive:
         entries = [(copy.copy(member), archive.extractfile(member).read()) for member in archive.getmembers()]
-    with tarfile.open(tarball, "w:gz") as archive:
+    options = {}
+    if oversized_pax_header:
+        options = {
+            "format": tarfile.PAX_FORMAT,
+            "pax_headers": {"comment": "x" * (20 * 1024 * 1024)},
+        }
+    with tarfile.open(tarball, "w:gz", **options) as archive:
         for member, data in entries:
             if member_mutator is not None:
                 data = member_mutator(member.name, data)
@@ -386,6 +409,14 @@ def mutate_json_member(member_name, expected, mutate):
         return data
     return apply
 
+def reorder_launcher_packages(name, data):
+    if name != "package/package.json":
+        return data
+    value = json.loads(data)
+    optional = value["optionalDependencies"]
+    value["optionalDependencies"] = {key: optional[key] for key in reversed(optional)}
+    return (json.dumps(value, indent=2) + "\n").encode()
+
 if kind == "wrong-sha":
     rewrite(root / current_file, mutate_json_member("package/provenance.json", None, lambda v: v["source"].update(git_sha="f" * 40)))
 elif kind == "wrong-target":
@@ -395,29 +426,50 @@ elif kind == "provenance-mismatch":
 elif kind == "wrong-toolchain":
     rewrite(root / current_file, mutate_json_member("package/provenance.json", None, lambda v: v["build"].update(rustc_version="rustc 1.96.0 (wrong)")))
 elif kind == "glibc-floor":
-    linux = root / "20-revazi-career-linux-x64-gnu-0.1.0.tgz"
+    linux = root / "30-revazi-career-linux-x64-gnu-0.1.1.tgz"
     rewrite(linux, mutate_json_member("package/package.json", None, lambda v: v["career_native"].update(minimum_glibc_version="2.34")))
 elif kind == "wrong-version":
-    rewrite(root / "30-revazi-career-0.1.0.tgz", mutate_json_member("package/package.json", None, lambda v: v.update(version="0.1.1")))
+    rewrite(root / "90-revazi-career-0.1.1.tgz", mutate_json_member("package/package.json", None, lambda v: v.update(version="0.1.2")))
 elif kind == "lifecycle":
-    rewrite(root / "30-revazi-career-0.1.0.tgz", mutate_json_member("package/package.json", None, lambda v: v.update(scripts={"postinstall": "node download.js"})))
+    rewrite(root / "90-revazi-career-0.1.1.tgz", mutate_json_member("package/package.json", None, lambda v: v.update(scripts={"postinstall": "node download.js"})))
 elif kind == "dependency":
     rewrite(root / current_file, mutate_json_member("package/package.json", None, lambda v: v.update(dependencies={"download": "1.0.0"})))
 elif kind == "allowlist":
     rewrite(root / current_file, add_extra=True)
+elif kind == "oversized-member":
+    rewrite(
+        root / "10-revazi-career-darwin-arm64-0.1.1.tgz",
+        lambda name, data: b"x" * (16 * 1024 * 1024 + 1)
+        if name == "package/career"
+        else data,
+    )
+elif kind == "oversized-json":
+    rewrite(
+        root / "90-revazi-career-0.1.1.tgz",
+        mutate_json_member(
+            "package/package.json", None, lambda value: value.update(description="x" * (40 * 1024))
+        ),
+    )
+elif kind == "compressed-bomb":
+    rewrite(root / current_file, oversized_pax_header=True)
 elif kind == "extra-property":
-    rewrite(root / "30-revazi-career-0.1.0.tgz", mutate_json_member("package/package.json", None, lambda v: v.update(unreviewed=True)))
+    rewrite(root / "90-revazi-career-0.1.1.tgz", mutate_json_member("package/package.json", None, lambda v: v.update(unreviewed=True)))
 elif kind == "unsafe-mode":
-    rewrite(root / "30-revazi-career-0.1.0.tgz", unsafe_mode_member="package/LICENSE-MIT")
+    rewrite(root / "90-revazi-career-0.1.1.tgz", unsafe_mode_member="package/LICENSE-MIT")
 elif kind == "launcher-bytes":
-    rewrite(root / "30-revazi-career-0.1.0.tgz", lambda name, data: b"tampered\n" if name == "package/bin/career.js" else data)
+    rewrite(root / "90-revazi-career-0.1.1.tgz", lambda name, data: b"tampered\n" if name == "package/bin/career.js" else data)
 elif kind == "readme-bytes":
-    rewrite(root / "30-revazi-career-0.1.0.tgz", lambda name, data: b"tampered\n" if name == "package/README.md" else data)
+    rewrite(root / "90-revazi-career-0.1.1.tgz", lambda name, data: b"tampered\n" if name == "package/README.md" else data)
+elif kind == "launcher-package-order":
+    rewrite(root / "90-revazi-career-0.1.1.tgz", reorder_launcher_packages)
 elif kind == "launcher-order":
     path = root / "publication-manifest.json"
     value = json.loads(path.read_text())
     value["packages"] = [value["packages"][2], value["packages"][0], value["packages"][1]]
     path.write_text(json.dumps(value, indent=2, sort_keys=True) + "\n")
+elif kind == "oversized-publication-manifest":
+    path = root / "publication-manifest.json"
+    path.write_text(json.dumps({"oversized": "x" * (70 * 1024)}) + "\n")
 elif kind == "extra-directory":
     (root / "nested").mkdir()
 elif kind == "extra-fifo":
@@ -430,7 +482,8 @@ PY
 
 for mutation in \
   wrong-sha wrong-target provenance-mismatch wrong-toolchain glibc-floor wrong-version lifecycle dependency allowlist \
-  extra-property unsafe-mode launcher-bytes readme-bytes launcher-order extra-directory extra-fifo
+  oversized-member oversized-json compressed-bomb extra-property unsafe-mode launcher-bytes readme-bytes \
+  launcher-package-order launcher-order oversized-publication-manifest extra-directory extra-fifo
 do
   mutated="$temporary_root/mutated-$mutation"
   mutate_candidate "$mutation" "$mutated"
@@ -439,6 +492,37 @@ do
     >"$temporary_root/$mutation.stdout" 2>"$temporary_root/$mutation.stderr"; then
     fail "candidate verification accepted mutation: $mutation"
   fi
+done
+
+# The independently checked publication driver must reject bounded-archive
+# attacks before invoking any npm registry command.
+driver_guard_bin="$temporary_root/driver-guard-bin"
+driver_guard_marker="$temporary_root/driver-guard-contacted"
+mkdir -p "$driver_guard_bin"
+cat >"$driver_guard_bin/npm" <<'SH'
+#!/usr/bin/env bash
+if [[ "${1:-}" == "--version" ]]; then
+  printf '11.6.2\n'
+  exit 0
+fi
+: >"$CAREER_TEST_NPM_GUARD_MARKER"
+exit 97
+SH
+chmod 0755 "$driver_guard_bin/npm"
+for mutation in allowlist oversized-member oversized-json compressed-bomb oversized-publication-manifest; do
+  rm -f "$driver_guard_marker"
+  if PATH="$driver_guard_bin:$PATH" \
+    NODE_AUTH_TOKEN=synthetic-test-only \
+    CAREER_TEST_NPM_GUARD_MARKER="$driver_guard_marker" \
+    "$fixture_repository/scripts/publish-npm-publication-candidate.sh" \
+      --mode bootstrap \
+      --candidate-dir "$temporary_root/mutated-$mutation" \
+      --reviewed-sha "$fixture_sha" \
+      >"$temporary_root/driver-$mutation.stdout" \
+      2>"$temporary_root/driver-$mutation.stderr"; then
+    fail "publication driver accepted bounded-archive mutation: $mutation"
+  fi
+  [[ ! -e "$driver_guard_marker" ]] || fail "publication driver contacted npm before rejecting $mutation"
 done
 
 cat >"$shim_dir/npm" <<'PY'
@@ -578,14 +662,14 @@ elif scenario == "partial-first": packages = {manifest["packages"][0]["name"]: e
 elif scenario == "partial-second": packages = {row["name"]: exact[row["name"]] for row in manifest["packages"][:2]}
 elif scenario == "name-without-version": packages = {manifest["packages"][0]["name"]: {}}
 elif scenario == "conflict":
-    packages = {manifest["packages"][0]["name"]: {"0.1.0": {"integrity": "sha512-conflict", "attestations": {}}}}
+    packages = {manifest["packages"][0]["name"]: {"0.1.1": {"integrity": "sha512-conflict", "attestations": {}}}}
 elif scenario == "oidc-ready": packages = {row["name"]: {} for row in manifest["packages"]}
 elif scenario == "missing-attestation":
     packages = exact
-    packages[manifest["packages"][0]["name"]]["0.1.0"]["attestations"] = None
+    packages[manifest["packages"][0]["name"]]["0.1.1"]["attestations"] = None
 elif scenario == "malformed-attestation":
     packages = exact
-    packages[manifest["packages"][0]["name"]]["0.1.0"]["attestations"] = {
+    packages[manifest["packages"][0]["name"]]["0.1.1"]["attestations"] = {
         "url": "http://registry.npmjs.org/untrusted",
         "provenance": {"predicateType": "https://example.invalid/not-slsa"},
     }
@@ -617,7 +701,17 @@ run_driver bootstrap-all bootstrap absent '{}' token
 python3 - "$driver_root/bootstrap-all/npm.log" <<'PY'
 import pathlib, sys
 published = [line.split("\t", 1)[1] for line in pathlib.Path(sys.argv[1]).read_text().splitlines() if line.startswith("publish\t")]
-assert published == ["@revazi/career-darwin-arm64", "@revazi/career-linux-x64-gnu", "@revazi/career"]
+assert published == [
+    "@revazi/career-darwin-arm64",
+    "@revazi/career-darwin-x64",
+    "@revazi/career-linux-x64-gnu",
+    "@revazi/career-linux-arm64-gnu",
+    "@revazi/career-linux-x64-musl",
+    "@revazi/career-linux-arm64-musl",
+    "@revazi/career-win32-x64-msvc",
+    "@revazi/career-win32-arm64-msvc",
+    "@revazi/career",
+]
 PY
 run_driver bootstrap-idempotent bootstrap exact '{}' token
 ! grep -q '^publish' "$driver_root/bootstrap-idempotent/npm.log"
@@ -676,7 +770,16 @@ run_driver bootstrap-partial-first bootstrap partial-first '{}' token
 python3 - "$driver_root/bootstrap-partial-first/npm.log" <<'PY'
 import pathlib, sys
 published = [line.split("\t", 1)[1] for line in pathlib.Path(sys.argv[1]).read_text().splitlines() if line.startswith("publish\t")]
-assert published == ["@revazi/career-linux-x64-gnu", "@revazi/career"]
+assert published == [
+    "@revazi/career-darwin-x64",
+    "@revazi/career-linux-x64-gnu",
+    "@revazi/career-linux-arm64-gnu",
+    "@revazi/career-linux-x64-musl",
+    "@revazi/career-linux-arm64-musl",
+    "@revazi/career-win32-x64-msvc",
+    "@revazi/career-win32-arm64-msvc",
+    "@revazi/career",
+]
 PY
 run_driver bootstrap-partial-second bootstrap partial-second '{}' token
 grep -Fxq $'publish\t@revazi/career' "$driver_root/bootstrap-partial-second/npm.log"
@@ -709,8 +812,17 @@ python3 - "$driver_root/transient/attempts.json" <<'PY'
 import json, pathlib, sys
 attempts = json.loads(pathlib.Path(sys.argv[1]).read_text())
 assert attempts["@revazi/career-darwin-arm64"] == 2
-assert attempts["@revazi/career-linux-x64-gnu"] == 1
-assert attempts["@revazi/career"] == 1
+for name in [
+    "@revazi/career-darwin-x64",
+    "@revazi/career-linux-x64-gnu",
+    "@revazi/career-linux-arm64-gnu",
+    "@revazi/career-linux-x64-musl",
+    "@revazi/career-linux-arm64-musl",
+    "@revazi/career-win32-x64-msvc",
+    "@revazi/career-win32-arm64-msvc",
+    "@revazi/career",
+]:
+    assert attempts[name] == 1
 PY
 if run_driver native-failure bootstrap absent '{"@revazi/career-linux-x64-gnu":"permanent"}' token \
   >"$driver_root/native-failure.stdout" 2>"$driver_root/native-failure.stderr"; then
@@ -735,18 +847,26 @@ required = [
     "node-version: '22.19.0'", "npm@11.6.2", "id-token: write",
     "ubuntu-22.04", "macos-14", "1.97.1", "1.85.0",
     "scripts/publish-npm-publication-candidate.sh", "public-acceptance:",
-    "npx --yes --package=@revazi/career@0.1.0 career --version", "dist.attestations",
+    "dist.attestations",
     "actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f",
     "actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3",
     "timeout-minutes: 40", "registry_visibility_attempts=61",
     "require_registry_package_ready",
-    "10-revazi-career-darwin-arm64-0.1.0.tgz",
-    "20-revazi-career-linux-x64-gnu-0.1.0.tgz",
-    "30-revazi-career-0.1.0.tgz",
+    "10-revazi-career-darwin-arm64-0.1.1.tgz",
+    "20-revazi-career-darwin-x64-0.1.1.tgz",
+    "30-revazi-career-linux-x64-gnu-0.1.1.tgz",
+    "40-revazi-career-linux-arm64-gnu-0.1.1.tgz",
+    "50-revazi-career-linux-x64-musl-0.1.1.tgz",
+    "60-revazi-career-linux-arm64-musl-0.1.1.tgz",
+    "70-revazi-career-win32-x64-msvc-0.1.1.tgz",
+    "80-revazi-career-win32-arm64-msvc-0.1.1.tgz",
+    "90-revazi-career-0.1.1.tgz",
 ]
 for value in required:
     if value not in text and value not in driver:
         raise SystemExit(f"publication workflow/driver is missing required policy text: {value}")
+if "name: Publish npm CLI v0.1.0" not in text or "Publish npm CLI v0.1.1" in text:
+    raise SystemExit("protected v0.1.1 publication workflow must remain deferred until the final publication PR")
 for value in (
     "--access public", "--provenance", "--ignore-scripts", "_authToken=${NODE_AUTH_TOKEN}",
     "dist.attestations", "https://slsa.dev/provenance/v1",
@@ -774,7 +894,7 @@ for line in text.splitlines():
         ref = stripped.rsplit("@", 1)[-1].split()[0]
         if len(ref) != 40 or any(character not in "0123456789abcdef" for character in ref):
             raise SystemExit(f"GitHub-owned action is not pinned by immutable SHA: {stripped}")
-if driver.index("10-revazi-career-darwin-arm64-0.1.0.tgz") > driver.index("30-revazi-career-0.1.0.tgz"):
+if driver.index("10-revazi-career-darwin-arm64-0.1.1.tgz") > driver.index("90-revazi-career-0.1.1.tgz"):
     raise SystemExit("publication driver does not encode native-before-launcher ordering")
 PY
 
@@ -794,6 +914,6 @@ grep -Fq 'publication and public acceptance remain pinned to npm 11.6.2' "$repos
 grep -Fq 'sha512-+k0tk7lRnpMUPnC7kTuU/yrV/mnFoPhJQ75VfLtZ6fwbzOVXaPsTE/Il9Pn1DHi482byMyqkHv/XsQ76mNjXLw==' "$repository_root/docs/releasing.md"
 ! grep -Fq '11.15.0 or newer' "$repository_root/docs/releasing.md"
 grep -Fq 'No-token OIDC steady-state/public acceptance run `31287506624`' "$repository_root/.agents/current-phase.md"
-! grep -Eq '@revazi/career-(darwin|linux)' "$repository_root/npm/career/README.md"
+! grep -Eq '@revazi/career-(darwin|linux|win32)' "$repository_root/npm/career/README.md"
 
 printf 'npm publication source, candidate, adversarial, parity, npx-equivalent, fake-registry, and workflow dry-run tests passed.\n'

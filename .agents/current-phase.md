@@ -2,11 +2,23 @@
 
 ## Active phase
 
-**Phase 9 — npm CLI distribution and `v0.1.0` publication are complete. Phases 0–8 remain complete. The only remaining distribution code change is the separately reviewed `pi-career` consumer migration.**
+**Phase 9 extension — prepare proposed lockstep `v0.1.1` for an exact eight-target npm native matrix. Phases 0–8 and the public `v0.1.0` release remain complete and immutable. No new `0.1.1` platform is supported until its final packaged binary executes on the exact native OS and architecture in CI.**
 
-## Phase 9 authorized scope
+## Phase 9 extension authorized scope
 
-Career Core owns one user-facing npm surface: exact `@revazi/career@0.1.0`, bin `career`, at annotated tag `v0.1.0`. Exactly two lockstep optional native packages implement Apple Silicon macOS and x86-64 GNU/Linux internally; users and `pi-career` never address them directly. The launcher is Node 22+, resolves only its package-local implementation, requires glibc 2.35+ on Linux, validates exact package/provenance/version/target/type/mode/size/SHA-256 consistency, and uses argv-only inherited-stdio execution without network, PATH fallback, install hooks, providers, telemetry, or bypass.
+The extension retains one user-facing npm surface, `@revazi/career`, and exact internal optional packages. Proposed patch `0.1.1` catalogs Darwin ARM64/x64, GNU Linux x64/ARM64, musl Linux x64/ARM64, and MSVC Windows x64/ARM64 in one reviewed ordered target catalog. Catalog entries and cross-compilation are policy data, not release evidence. Every target requires exact native package execution; skipped, emulated, metadata-only, and cross-compiled-only results remain release blockers.
+
+The first reviewed sub-gate adds the catalog, eight private lockstep templates, positive glibc/musl classification, exact Mach-O/ELF/PE architecture checks, target-specific Unix/Windows file invariants, package/provenance v2, synthetic adversarial coverage, and generalized offline candidate policy. It does not add native runner evidence or authorize publication. The protected `v0.1.1` workflow remains deferred until the final publication-candidate sub-gate; the existing `v0.1.0` workflow and public bytes remain historical and immutable.
+
+Next sub-gates are strictly ordered: Darwin x64 plus GNU Linux ARM64 native evidence; musl native evidence; Windows native evidence; then the exact nine-package protected candidate and final documentation. Do not begin a later sub-gate without explicit maintainer approval.
+
+The deterministic Core algorithms, public v1 operation/schema descriptors, limits, ordering, warnings, evidence, uncertainty, and assisted authority remain unchanged. The Cargo/npm/CLI version metadata advances to `0.1.1`, so `career operations` and all successful result documents report exact `core_version: "0.1.1"`; descriptor and schema semantics do not change.
+
+Local first-sub-gate verification on Apple Silicon macOS passed the 59-entry Node launcher/adversarial suite, including architecture-bound libc evidence and pathname-replacement rejection; exact private current-host package staging and operation parity; nine-package registry-free candidate/fake-registry policy tests with bounded manifest/member/decompression and no-npm attack regressions; the complete Rust workspace and required CLI/schema/managed-adapter ladder; Rust 1.85 MSRV; Swift verification; the transitional `pi-career` runtime-artifact check; and Fallow changed/all/security checks with no correctness or security findings and no high/critical health finding. Non-host target artifacts in these tests are synthetic policy fixtures only. They are not native execution evidence, do not satisfy any later sub-gate, and add no public platform support.
+
+## Completed `v0.1.0` Phase 9 baseline
+
+Career Core owns one user-facing public npm surface: exact `@revazi/career@0.1.0`, bin `career`, at annotated tag `v0.1.0`. Exactly two lockstep optional native packages implement Apple Silicon macOS and x86-64 GNU/Linux internally; users and `pi-career` never address them directly. The launcher is Node 22+, resolves only its package-local implementation, requires glibc 2.35+ on Linux, validates exact package/provenance/version/target/type/mode/size/SHA-256 consistency, and uses argv-only inherited-stdio execution without network, PATH fallback, install hooks, providers, telemetry, or bypass.
 
 Checked-in templates remain `private: true`; generated public manifests, binaries, provenance, and tarballs remain outside the checkout. The explicit candidate path requires clean exact fetched `origin/main`, reviewed SHA, annotated unmoved `v0.1.0`, exact Node 22.19.0/npm 11.6.2 and rustc/Cargo 1.97.1, `macos-14` ARM64 or `ubuntu-22.04` x64/glibc 2.35, strict property/file/mode/source-byte allowlists, and native-before-launcher assembly. Rust 1.85 remains a separate MSRV gate.
 

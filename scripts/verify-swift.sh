@@ -70,7 +70,7 @@ if slices != expected:
 metadata = json.loads(Path(sys.argv[2]).read_text())
 if metadata != {
     "schema_version": "career.swift_artifact_metadata.v1",
-    "package_version": "0.1.0",
+    "package_version": "0.1.1",
     "uniffi_version": "0.30.0",
     "deployment_targets": {"macos": "13.0", "ios": "16.0"},
     "rust_targets": [

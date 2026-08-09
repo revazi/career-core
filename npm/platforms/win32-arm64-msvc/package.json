@@ -1,21 +1,21 @@
 {
-  "name": "@revazi/career-darwin-arm64",
+  "name": "@revazi/career-win32-arm64-msvc",
   "version": "0.1.1",
   "private": true,
-  "description": "Internal Career Core CLI implementation for Apple Silicon macOS",
+  "description": "Internal Career Core CLI implementation for ARM64 Windows (MSVC)",
   "license": "MIT OR Apache-2.0",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/revazi/career-core.git"
   },
   "os": [
-    "darwin"
+    "win32"
   ],
   "cpu": [
     "arm64"
   ],
   "files": [
-    "career",
+    "career.exe",
     "provenance.json",
     "LICENSE-MIT",
     "LICENSE-APACHE",
@@ -26,18 +26,18 @@
   },
   "career_native": {
     "schema_version": "career.npm_native_package.v2",
-    "platform_key": "darwin-arm64",
-    "node_platform": "darwin",
+    "platform_key": "win32-arm64-msvc",
+    "node_platform": "win32",
     "node_arch": "arm64",
     "libc_family": null,
-    "rust_target": "aarch64-apple-darwin",
-    "binary_file": "career",
+    "rust_target": "aarch64-pc-windows-msvc",
+    "binary_file": "career.exe",
     "provenance_file": "provenance.json",
-    "binary_format": "mach-o-64-aarch64",
+    "binary_format": "pe32+-aarch64",
     "binary_architecture": "aarch64",
-    "file_invariant": "unix_regular_non_symlink_mode_0755",
-    "archive_mode": "0755",
-    "executable_mode": "0755",
+    "file_invariant": "windows_regular_non_symlink_exe",
+    "archive_mode": "0644",
+    "executable_mode": null,
     "maximum_binary_size_bytes": 16777216,
     "minimum_glibc_version": null
   }

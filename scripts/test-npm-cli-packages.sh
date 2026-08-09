@@ -111,29 +111,42 @@ tarballs = pathlib.Path(tarballs_arg)
 launcher_manifest = json.loads((launcher / "package.json").read_text())
 platform_manifest = json.loads((platform / "package.json").read_text())
 provenance = json.loads((platform / "provenance.json").read_text())
+catalog = json.loads((root / "npm/career/targets.json").read_text())
+targets = [value for value in catalog["targets"] if value["rust_target"] == expected_target]
+assert len(targets) == 1
+target = targets[0]
+platform_packages = [value["native_package"] for value in catalog["targets"]]
 assert launcher_manifest["name"] == "@revazi/career"
+assert launcher_manifest["version"] == "0.1.1"
 assert launcher_manifest["private"] is True
 assert launcher_manifest["bin"] == {"career": "bin/career.js"}
+assert list(launcher_manifest["optionalDependencies"]) == platform_packages
 assert launcher_manifest["optionalDependencies"] == {
-    "@revazi/career-darwin-arm64": launcher_manifest["version"],
-    "@revazi/career-linux-x64-gnu": launcher_manifest["version"],
+    name: launcher_manifest["version"] for name in platform_packages
 }
-assert platform_manifest["name"] == expected_package
+assert launcher_manifest["career_launcher"]["platform_packages"] == platform_packages
+assert platform_manifest["name"] == expected_package == target["native_package"]
 assert platform_manifest["version"] == launcher_manifest["version"]
 assert platform_manifest["private"] is True
-assert provenance["schema_version"] == "career.npm_native_provenance.v1"
-assert provenance["package"]["name"] == expected_package
-assert provenance["package"]["version"] == launcher_manifest["version"]
-assert provenance["package"]["rust_target"] == expected_target
-assert provenance["package"]["minimum_glibc_version"] == (
-    "2.35" if expected_target == "x86_64-unknown-linux-gnu" else None
-)
+assert provenance["schema_version"] == "career.npm_native_provenance.v2"
+assert provenance["package"] == {
+    "name": expected_package,
+    "version": launcher_manifest["version"],
+    "platform_key": target["platform_key"],
+    "node_platform": target["node_platform"],
+    "node_arch": target["node_arch"],
+    "libc_family": target["libc_family"],
+    "rust_target": expected_target,
+    "minimum_glibc_version": target["minimum_glibc_version"],
+}
 assert provenance["source"]["git_ref"] is None
 assert provenance["source"]["git_tag"] is None
 assert provenance["source"]["publication_candidate"] is False
 assert provenance["build"]["runner"]["image"] == "local"
-if expected_target == "x86_64-unknown-linux-gnu":
+if target["libc_family"] == "glibc":
     assert provenance["build"]["runner"]["libc"].startswith("glibc ")
+elif target["libc_family"] == "musl":
+    assert provenance["build"]["runner"]["libc"] == "musl"
 else:
     assert provenance["build"]["runner"]["libc"] is None
 assert provenance["integrity"] == {
@@ -141,10 +154,20 @@ assert provenance["integrity"] == {
     "npm_registry_integrity": "external_to_launcher_runtime",
     "package_contained_sha256": "consistency_only",
 }
-binary = (platform / "career").read_bytes()
-assert provenance["executable"]["size_bytes"] == len(binary)
-assert provenance["executable"]["sha256"] == hashlib.sha256(binary).hexdigest()
-assert stat.S_IMODE((platform / "career").stat().st_mode) == 0o755
+binary_path = platform / target["executable"]
+binary = binary_path.read_bytes()
+assert provenance["executable"] == {
+    "file_name": target["executable"],
+    "binary_format": target["binary_format"],
+    "binary_architecture": target["binary_architecture"],
+    "file_invariant": target["file_invariant"],
+    "archive_mode": target["archive_mode"],
+    "mode": target["executable_mode"],
+    "size_bytes": len(binary),
+    "sha256": hashlib.sha256(binary).hexdigest(),
+}
+assert stat.S_IMODE(binary_path.stat().st_mode) == 0o755
+assert (launcher / "targets.json").read_bytes() == (root / "npm/career/targets.json").read_bytes()
 assert (launcher / "README.md").read_bytes() == (root / "npm/career/README.md").read_bytes()
 for package_dir in (launcher, platform):
     for license_name in ("LICENSE-MIT", "LICENSE-APACHE", "THIRD_PARTY_NOTICES.md"):
@@ -218,6 +241,7 @@ platform = root.joinpath(*package_name.split("/"))
 expected_launcher = {
     "package.json",
     "bin/career.js",
+    "targets.json",
     "README.md",
     "LICENSE-MIT",
     "LICENSE-APACHE",
@@ -306,7 +330,7 @@ import sys
 root = pathlib.Path(sys.argv[1])
 for path in root.glob("*.launcher.stdout"):
     if path.name == "version.launcher.stdout":
-        assert path.read_text() == "career 0.1.0\n"
+        assert path.read_text() == "career 0.1.1\n"
         continue
     json.loads(path.read_bytes())
 PY

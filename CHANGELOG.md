@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- Prepare an explicit reviewed eight-target npm catalog and private lockstep `0.1.1` launcher/native templates without claiming support before exact native package execution.
+- Generalize the npm launcher to fail-closed glibc/musl detection, Mach-O/ELF/PE architecture checks, and explicit Unix/Windows file invariants using internal npm metadata/provenance v2.
+
+### Changed
+
+- Advance Cargo, npm source templates, `career --version`, and version-bearing synthetic contract fixtures to proposed patch version `0.1.1`; v1 operation and schema semantics remain unchanged.
+
 ### Fixed
 
 - Allow one combined bounded npm registry integrity/provenance readiness window of up to ten minutes per sequential package, preventing successful publication from failing after the former 50-second visibility window.

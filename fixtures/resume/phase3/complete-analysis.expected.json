@@ -3,7 +3,7 @@
   "policy_version": "resume_analysis_v1",
   "reference_policy_version": "deterministic_v2",
   "normalization_policy_version": "resume_normalization_v1",
-  "core_version": "0.1.0",
+  "core_version": "0.1.1",
   "document_id": "synthetic-phase3-complete-v1",
   "scoring_weights": {
     "format_ats": 20,

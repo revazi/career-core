@@ -55,26 +55,123 @@ export NPM_CONFIG_USERCONFIG="$userconfig"
 
 python3 - "$candidate_dir" "$reviewed_sha" "$plan" <<'PY'
 import base64
+import gzip
 import hashlib
+import io
 import json
+import os
 import pathlib
+import stat
 import sys
 import tarfile
+
+MAX_TARBALL_BYTES = 32 * 1024 * 1024
+MAX_UNCOMPRESSED_TARBALL_BYTES = 20 * 1024 * 1024
+MAX_BINARY_BYTES = 16 * 1024 * 1024
+MAX_MANIFEST_BYTES = 32 * 1024
+MAX_METADATA_BYTES = 64 * 1024
+MAX_SOURCE_BYTES = 256 * 1024
+MAX_README_BYTES = 16 * 1024
+
+
+def same_file(left, right):
+    return (left.st_dev, left.st_ino, left.st_size, left.st_mode, left.st_mtime_ns) == (
+        right.st_dev, right.st_ino, right.st_size, right.st_mode, right.st_mtime_ns
+    )
+
+
+def bounded_file_bytes(path, maximum, label):
+    before = path.lstat()
+    if not stat.S_ISREG(before.st_mode) or not 1 <= before.st_size <= maximum:
+        raise SystemExit(f"{label} is not a bounded regular file")
+    with path.open("rb") as handle:
+        opened = os.fstat(handle.fileno())
+        if not stat.S_ISREG(opened.st_mode) or not same_file(before, opened):
+            raise SystemExit(f"{label} changed before reading")
+        data = handle.read(maximum + 1)
+    after = path.lstat()
+    if len(data) != opened.st_size or len(data) > maximum or not same_file(opened, after):
+        raise SystemExit(f"{label} changed or exceeded its bound while reading")
+    return data
+
+
+class BoundedDecompressedReader:
+    def __init__(self, source, maximum):
+        self.source = source
+        self.maximum = maximum
+        self.total = 0
+
+    def read(self, size=-1):
+        remaining = self.maximum - self.total
+        wanted = remaining + 1 if size < 0 else min(size, remaining + 1)
+        data = self.source.read(wanted)
+        self.total += len(data)
+        if self.total > self.maximum:
+            raise SystemExit("packed package exceeds its uncompressed bound")
+        return data
+
+
+def read_tarball(data, limits):
+    files = {}
+    modes = {}
+    try:
+        with gzip.GzipFile(fileobj=io.BytesIO(data), mode="rb") as decompressed:
+            bounded = BoundedDecompressedReader(decompressed, MAX_UNCOMPRESSED_TARBALL_BYTES)
+            with tarfile.open(fileobj=bounded, mode="r|") as archive:
+                for member in archive:
+                    if not member.isfile() or member.name not in limits:
+                        raise SystemExit("packed package member allowlist mismatch")
+                    if member.name in files:
+                        raise SystemExit("packed package contains duplicate entries")
+                    maximum = limits[member.name]
+                    if not 1 <= member.size <= maximum:
+                        raise SystemExit("packed package member exceeds its reviewed bound")
+                    extracted = archive.extractfile(member)
+                    if extracted is None:
+                        raise SystemExit("packed package member is unreadable")
+                    value = extracted.read(maximum + 1)
+                    if len(value) != member.size or len(value) > maximum:
+                        raise SystemExit("packed package member is truncated or oversized")
+                    files[member.name] = value
+                    modes[member.name] = member.mode & 0o777
+    except (OSError, tarfile.TarError) as error:
+        raise SystemExit("packed package is malformed") from error
+    if set(files) != set(limits):
+        raise SystemExit("packed package member count or allowlist mismatch")
+    return files, modes
+
+
 root = pathlib.Path(sys.argv[1])
 sha = sys.argv[2]
 plan = pathlib.Path(sys.argv[3])
 expected = [
-    (10, "internal_native", "@revazi/career-darwin-arm64", "10-revazi-career-darwin-arm64-0.1.0.tgz"),
-    (20, "internal_native", "@revazi/career-linux-x64-gnu", "20-revazi-career-linux-x64-gnu-0.1.0.tgz"),
-    (30, "user_facing_launcher", "@revazi/career", "30-revazi-career-0.1.0.tgz"),
+    (10, "internal_native", "@revazi/career-darwin-arm64", "10-revazi-career-darwin-arm64-0.1.1.tgz"),
+    (20, "internal_native", "@revazi/career-darwin-x64", "20-revazi-career-darwin-x64-0.1.1.tgz"),
+    (30, "internal_native", "@revazi/career-linux-x64-gnu", "30-revazi-career-linux-x64-gnu-0.1.1.tgz"),
+    (40, "internal_native", "@revazi/career-linux-arm64-gnu", "40-revazi-career-linux-arm64-gnu-0.1.1.tgz"),
+    (50, "internal_native", "@revazi/career-linux-x64-musl", "50-revazi-career-linux-x64-musl-0.1.1.tgz"),
+    (60, "internal_native", "@revazi/career-linux-arm64-musl", "60-revazi-career-linux-arm64-musl-0.1.1.tgz"),
+    (70, "internal_native", "@revazi/career-win32-x64-msvc", "70-revazi-career-win32-x64-msvc-0.1.1.tgz"),
+    (80, "internal_native", "@revazi/career-win32-arm64-msvc", "80-revazi-career-win32-arm64-msvc-0.1.1.tgz"),
+    (90, "user_facing_launcher", "@revazi/career", "90-revazi-career-0.1.1.tgz"),
 ]
 expected_entries = {item[3] for item in expected} | {"publication-manifest.json"}
-entries = list(root.iterdir())
+entries = []
+for path in root.iterdir():
+    if len(entries) >= len(expected_entries):
+        raise SystemExit("publication candidate directory exceeds its entry bound")
+    entries.append(path)
 if {path.name for path in entries} != expected_entries:
     raise SystemExit("publication candidate directory allowlist mismatch")
 if any(path.is_symlink() or not path.is_file() for path in entries):
     raise SystemExit("publication candidate contains a non-regular or nested entry")
-manifest = json.loads((root / "publication-manifest.json").read_text(encoding="utf-8"))
+manifest = json.loads(
+    bounded_file_bytes(
+        root / "publication-manifest.json", MAX_METADATA_BYTES, "publication manifest"
+    ).decode("utf-8")
+)
+if not isinstance(manifest, dict):
+    raise SystemExit("publication manifest must be one JSON object")
 if set(manifest) != {"schema_version", "source", "release", "packages"}:
     raise SystemExit("publication manifest property set mismatch")
 if manifest["schema_version"] != "career.npm_publication_candidate.v1":
@@ -82,14 +179,14 @@ if manifest["schema_version"] != "career.npm_publication_candidate.v1":
 if manifest["source"] != {
     "repository": "https://github.com/revazi/career-core",
     "git_sha": sha,
-    "git_ref": "refs/tags/v0.1.0",
-    "git_tag": "v0.1.0",
+    "git_ref": "refs/tags/v0.1.1",
+    "git_tag": "v0.1.1",
     "git_dirty": False,
     "publication_candidate": True,
 }:
     raise SystemExit("publication manifest source binding mismatch")
 if manifest["release"] != {
-    "version": "0.1.0",
+    "version": "0.1.1",
     "node_version": "v22.19.0",
     "npm_version": "11.6.2",
     "access": "public",
@@ -99,77 +196,96 @@ if manifest["release"] != {
 }:
     raise SystemExit("publication manifest release policy mismatch")
 rows = manifest["packages"]
-if not isinstance(rows, list) or len(rows) != 3:
+if not isinstance(rows, list) or len(rows) != len(expected):
     raise SystemExit("publication manifest package count mismatch")
+platform_names = [name for _, role, name, _ in expected if role == "internal_native"]
 lines = []
 for row, (order, role, name, filename) in zip(rows, expected):
     path = root / filename
-    data = path.read_bytes()
+    data = bounded_file_bytes(path, MAX_TARBALL_BYTES, "candidate tarball")
     integrity = "sha512-" + base64.b64encode(hashlib.sha512(data).digest()).decode("ascii")
     if row != {
         "order": order,
         "role": role,
         "name": name,
-        "version": "0.1.0",
+        "version": "0.1.1",
         "file": filename,
         "sha256": hashlib.sha256(data).hexdigest(),
         "integrity": integrity,
     }:
         raise SystemExit("publication manifest order/integrity mismatch")
-    with tarfile.open(path, "r:gz") as archive:
-        members = archive.getmembers()
-        if any(not member.isfile() for member in members):
-            raise SystemExit("packed package contains a non-regular entry")
-        if len({member.name for member in members}) != len(members):
-            raise SystemExit("packed package contains duplicate entries")
-        names = {member.name for member in members}
-        modes = {member.name: member.mode & 0o777 for member in members}
-        package = json.load(archive.extractfile("package/package.json"))
-        common = {"name", "version", "description", "license", "repository", "files", "publishConfig"}
-        if role == "internal_native":
-            keys = common | {"os", "cpu", "exports", "career_native"}
-            if name == "@revazi/career-linux-x64-gnu":
-                keys.add("libc")
-            expected_names = {
-                "package/package.json", "package/career", "package/provenance.json",
-                "package/LICENSE-MIT", "package/LICENSE-APACHE", "package/THIRD_PARTY_NOTICES.md",
-            }
-            expected_modes = {entry: 0o644 for entry in expected_names}
-            expected_modes["package/career"] = 0o755
-            provenance = json.load(archive.extractfile("package/provenance.json"))
-            if provenance.get("source") != manifest["source"]:
-                raise SystemExit("packed native source provenance mismatch")
-            if provenance.get("integrity") != {
-                "npm_registry_integrity": "external_to_launcher_runtime",
-                "package_contained_sha256": "consistency_only",
-                "independent_signature": "absent",
-            }:
-                raise SystemExit("packed native integrity/signature policy mismatch")
-        else:
-            keys = common | {
-                "author", "homepage", "bugs", "keywords", "engines", "bin",
-                "optionalDependencies", "career_launcher",
-            }
-            expected_names = {
-                "package/package.json", "package/bin/career.js", "package/README.md",
-                "package/LICENSE-MIT", "package/LICENSE-APACHE", "package/THIRD_PARTY_NOTICES.md",
-            }
-            expected_modes = {entry: 0o644 for entry in expected_names}
-            expected_modes["package/bin/career.js"] = 0o755
-            if package.get("optionalDependencies") != {
-                "@revazi/career-darwin-arm64": "0.1.0",
-                "@revazi/career-linux-x64-gnu": "0.1.0",
-            }:
-                raise SystemExit("packed launcher optional dependency mismatch")
-        if set(package) != keys:
-            raise SystemExit("packed package property set mismatch")
-        if names != expected_names or modes != expected_modes:
-            raise SystemExit("packed package file/mode allowlist mismatch")
-    if package.get("name") != name or package.get("version") != "0.1.0":
+    common = {"name", "version", "description", "license", "repository", "files", "publishConfig"}
+    if role == "internal_native":
+        keys = common | {"os", "cpu", "exports", "career_native"}
+        if "-linux-" in name:
+            keys.add("libc")
+        executable = "career.exe" if "-win32-" in name else "career"
+        executable_mode = 0o644 if executable.endswith(".exe") else 0o755
+        expected_names = {
+            "package/package.json", f"package/{executable}", "package/provenance.json",
+            "package/LICENSE-MIT", "package/LICENSE-APACHE", "package/THIRD_PARTY_NOTICES.md",
+        }
+        limits = {entry: MAX_SOURCE_BYTES for entry in expected_names}
+        limits["package/package.json"] = MAX_MANIFEST_BYTES
+        limits["package/provenance.json"] = MAX_METADATA_BYTES
+        limits[f"package/{executable}"] = MAX_BINARY_BYTES
+    else:
+        keys = common | {
+            "author", "homepage", "bugs", "keywords", "engines", "bin",
+            "optionalDependencies", "career_launcher",
+        }
+        expected_names = {
+            "package/package.json", "package/bin/career.js", "package/targets.json", "package/README.md",
+            "package/LICENSE-MIT", "package/LICENSE-APACHE", "package/THIRD_PARTY_NOTICES.md",
+        }
+        limits = {entry: MAX_SOURCE_BYTES for entry in expected_names}
+        limits["package/package.json"] = MAX_MANIFEST_BYTES
+        limits["package/targets.json"] = MAX_METADATA_BYTES
+        limits["package/README.md"] = MAX_README_BYTES
+    files, modes = read_tarball(data, limits)
+    try:
+        package = json.loads(files["package/package.json"].decode("utf-8"))
+    except (UnicodeError, json.JSONDecodeError) as error:
+        raise SystemExit("packed package manifest is invalid") from error
+    if not isinstance(package, dict):
+        raise SystemExit("packed package manifest must be one JSON object")
+    if role == "internal_native":
+        expected_modes = {entry: 0o644 for entry in expected_names}
+        expected_modes[f"package/{executable}"] = executable_mode
+        try:
+            provenance = json.loads(files["package/provenance.json"].decode("utf-8"))
+        except (UnicodeError, json.JSONDecodeError) as error:
+            raise SystemExit("packed native provenance is invalid") from error
+        if not isinstance(provenance, dict):
+            raise SystemExit("packed native provenance must be one JSON object")
+        if provenance.get("schema_version") != "career.npm_native_provenance.v2":
+            raise SystemExit("packed native provenance schema mismatch")
+        if provenance.get("source") != manifest["source"]:
+            raise SystemExit("packed native source provenance mismatch")
+        if provenance.get("integrity") != {
+            "npm_registry_integrity": "external_to_launcher_runtime",
+            "package_contained_sha256": "consistency_only",
+            "independent_signature": "absent",
+        }:
+            raise SystemExit("packed native integrity/signature policy mismatch")
+    else:
+        expected_modes = {entry: 0o644 for entry in expected_names}
+        expected_modes["package/bin/career.js"] = 0o755
+        expected_optional = {package_name: "0.1.1" for package_name in platform_names}
+        optional = package.get("optionalDependencies")
+        if optional != expected_optional or list(optional) != list(expected_optional):
+            raise SystemExit("packed launcher optional dependency order mismatch")
+        if package.get("career_launcher", {}).get("platform_packages") != platform_names:
+            raise SystemExit("packed launcher platform package order mismatch")
+    if set(package) != keys:
+        raise SystemExit("packed package property set mismatch")
+    if modes != expected_modes:
+        raise SystemExit("packed package file/mode allowlist mismatch")
+    if package.get("name") != name or package.get("version") != "0.1.1":
         raise SystemExit("packed package identity/version mismatch")
     if package.get("publishConfig") != {"access": "public", "provenance": True}:
         raise SystemExit("packed package publishability mismatch")
-    lines.append(f"{order}\t{name}\t0.1.0\t{path}\t{integrity}")
+    lines.append(f"{order}\t{name}\t0.1.1\t{path}\t{integrity}")
 plan.write_text("\n".join(lines) + "\n", encoding="utf-8")
 PY
 
@@ -365,20 +481,30 @@ publish_one() {
 
 index=0
 while IFS=$'\t' read -r order name version file integrity; do
-  expected_names=("@revazi/career-darwin-arm64" "@revazi/career-linux-x64-gnu" "@revazi/career")
-  expected_orders=(10 20 30)
+  expected_names=(
+    "@revazi/career-darwin-arm64"
+    "@revazi/career-darwin-x64"
+    "@revazi/career-linux-x64-gnu"
+    "@revazi/career-linux-arm64-gnu"
+    "@revazi/career-linux-x64-musl"
+    "@revazi/career-linux-arm64-musl"
+    "@revazi/career-win32-x64-msvc"
+    "@revazi/career-win32-arm64-msvc"
+    "@revazi/career"
+  )
+  expected_orders=(10 20 30 40 50 60 70 80 90)
   [[ "$name" == "${expected_names[$index]}" && "$order" == "${expected_orders[$index]}" ]] || \
     fail "publish plan order mismatch"
   if [[ "$name" == "@revazi/career" ]]; then
     while IFS=$'\t' read -r native_order native_name native_version _native_file native_integrity; do
-      [[ "$native_order" == "30" ]] && continue
+      [[ "$native_order" == "90" ]] && continue
       require_registry_package_ready "$native_name" "$native_version" "$native_integrity" || \
-        fail "launcher publication is blocked until both native packages exactly match"
+        fail "launcher publication is blocked until all eight native packages exactly match"
     done <"$plan"
   fi
   publish_one "$name" "$version" "$file" "$integrity"
   index=$((index + 1))
 done <"$plan"
-[[ "$index" -eq 3 ]] || fail "publish plan must contain exactly three rows"
+[[ "$index" -eq 9 ]] || fail "publish plan must contain exactly nine rows"
 
 printf 'npm publication mode %s completed in native-before-launcher order.\n' "$mode"

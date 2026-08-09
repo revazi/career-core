@@ -115,33 +115,46 @@ output_dir="$(cd "$resolved_output_dir" && pwd -P)"
 
 launcher_source="$repository_root/npm/career"
 platform_source="$repository_root/npm/platforms/$platform_key"
-[[ -f "$launcher_source/package.json" && -f "$launcher_source/bin/career.js" && -f "$launcher_source/README.md" ]] || fail "launcher template is incomplete"
+[[ -f "$launcher_source/package.json" && -f "$launcher_source/targets.json" && -f "$launcher_source/bin/career.js" && -f "$launcher_source/README.md" ]] || fail "launcher template is incomplete"
 [[ -f "$platform_source/package.json" ]] || fail "native package template is missing"
 
 package_version="$(node -e 'const p=require(process.argv[1]); process.stdout.write(p.version)' "$launcher_source/package.json")"
-node - "$launcher_source/package.json" "$platform_source/package.json" "$package_name" "$package_version" <<'NODE'
+node - "$repository_root" "$launcher_source/package.json" "$launcher_source/targets.json" "$platform_source/package.json" "$package_name" "$package_version" <<'NODE'
 const fs = require("node:fs");
-const [launcherPath, platformPath, expectedPlatformName, version] = process.argv.slice(2);
+const path = require("node:path");
+const [root, launcherPath, catalogPath, platformPath, expectedPlatformName, version] = process.argv.slice(2);
 const launcher = JSON.parse(fs.readFileSync(launcherPath, "utf8"));
+const catalog = JSON.parse(fs.readFileSync(catalogPath, "utf8"));
 const platform = JSON.parse(fs.readFileSync(platformPath, "utf8"));
-const expectedOptional = {
-  "@revazi/career-darwin-arm64": version,
-  "@revazi/career-linux-x64-gnu": version,
-};
+if (catalog.schema_version !== "career.npm_target_catalog.v1" || !Array.isArray(catalog.targets) || catalog.targets.length !== 8) {
+  throw new Error("reviewed target catalog is invalid");
+}
+const names = catalog.targets.map((target) => target.native_package);
+const expectedOptional = Object.fromEntries(names.map((name) => [name, version]));
 if (launcher.name !== "@revazi/career" || launcher.version !== version || launcher.private !== true) {
   throw new Error("launcher identity/private guard is invalid");
 }
 if (JSON.stringify(launcher.optionalDependencies) !== JSON.stringify(expectedOptional)) {
-  throw new Error("launcher optionalDependencies are not exact and lockstep");
+  throw new Error("launcher optionalDependencies are not exact, ordered, and lockstep");
+}
+if (JSON.stringify(launcher.career_launcher?.platform_packages) !== JSON.stringify(names)) {
+  throw new Error("launcher platform_packages are not exact and ordered");
 }
 if (launcher.dependencies !== undefined || launcher.scripts !== undefined) {
   throw new Error("launcher runtime dependencies or lifecycle scripts are forbidden");
 }
-if (platform.name !== expectedPlatformName || platform.version !== version || platform.private !== true) {
-  throw new Error("platform identity/private guard is invalid");
+for (const target of catalog.targets) {
+  const manifestPath = path.join(root, "npm", "platforms", target.platform_key, "package.json");
+  const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
+  if (manifest.name !== target.native_package || manifest.version !== version || manifest.private !== true) {
+    throw new Error("catalog platform identity/private guard is invalid");
+  }
+  if (manifest.dependencies !== undefined || manifest.optionalDependencies !== undefined || manifest.scripts !== undefined) {
+    throw new Error("catalog platform dependencies or lifecycle scripts are forbidden");
+  }
 }
-if (platform.dependencies !== undefined || platform.optionalDependencies !== undefined || platform.scripts !== undefined) {
-  throw new Error("platform dependencies or lifecycle scripts are forbidden");
+if (platform.name !== expectedPlatformName || platform.version !== version || platform.private !== true) {
+  throw new Error("selected platform identity/private guard is invalid");
 }
 NODE
 
@@ -198,6 +211,7 @@ tarball_dir="$output_dir/tarballs"
 mkdir -p "$launcher_stage/bin" "$platform_stage" "$tarball_dir"
 cp "$launcher_source/package.json" "$launcher_stage/package.json"
 cp "$launcher_source/bin/career.js" "$launcher_stage/bin/career.js"
+cp "$launcher_source/targets.json" "$launcher_stage/targets.json"
 cp "$launcher_source/README.md" "$launcher_stage/README.md"
 chmod 0755 "$launcher_stage/bin/career.js"
 cp LICENSE-MIT LICENSE-APACHE THIRD_PARTY_NOTICES.md "$launcher_stage/"
@@ -210,6 +224,7 @@ cp LICENSE-MIT LICENSE-APACHE THIRD_PARTY_NOTICES.md "$platform_stage/"
 rustc_version="$(rustc --version)"
 cargo_version="$(cargo --version)"
 python3 - \
+  "$launcher_source/targets.json" \
   "$platform_stage" \
   "$package_name" \
   "$package_version" \
@@ -229,6 +244,7 @@ import pathlib
 import stat
 import sys
 (
+    catalog_arg,
     stage_arg,
     package_name,
     package_version,
@@ -243,27 +259,33 @@ import sys
     runner_arch,
     runner_libc,
 ) = sys.argv[1:]
+catalog = json.loads(pathlib.Path(catalog_arg).read_text(encoding="utf-8"))
+targets = [value for value in catalog["targets"] if value["platform_key"] == platform_key]
+if len(targets) != 1:
+    raise SystemExit("selected target is not unique in the reviewed catalog")
+target = targets[0]
+if target["native_package"] != package_name or target["rust_target"] != target_triple:
+    raise SystemExit("selected target identity differs from the reviewed catalog")
+if target["binary_format"] != binary_format:
+    raise SystemExit("selected binary format differs from the reviewed catalog")
 stage = pathlib.Path(stage_arg)
-binary = stage / "career"
+binary = stage / target["executable"]
 binary_bytes = binary.read_bytes()
-if not 1 <= len(binary_bytes) <= 16 * 1024 * 1024:
-    raise SystemExit("native executable size is outside the 16 MiB package bound")
-if stat.S_IMODE(binary.stat().st_mode) != 0o755:
+if not 1 <= len(binary_bytes) <= target["maximum_binary_size_bytes"]:
+    raise SystemExit("native executable size is outside the catalog package bound")
+if target["executable_mode"] == "0755" and stat.S_IMODE(binary.stat().st_mode) != 0o755:
     raise SystemExit("native executable mode is not exactly 0755")
-node_platform, node_arch, minimum_glibc_version = {
-    "darwin-arm64": ("darwin", "arm64", None),
-    "linux-x64-gnu": ("linux", "x64", "2.35"),
-}[platform_key]
 provenance = {
-    "schema_version": "career.npm_native_provenance.v1",
+    "schema_version": "career.npm_native_provenance.v2",
     "package": {
         "name": package_name,
         "version": package_version,
         "platform_key": platform_key,
-        "node_platform": node_platform,
-        "node_arch": node_arch,
+        "node_platform": target["node_platform"],
+        "node_arch": target["node_arch"],
+        "libc_family": target["libc_family"],
         "rust_target": target_triple,
-        "minimum_glibc_version": minimum_glibc_version,
+        "minimum_glibc_version": target["minimum_glibc_version"],
     },
     "source": {
         "repository": "https://github.com/revazi/career-core",
@@ -296,9 +318,12 @@ provenance = {
         },
     },
     "executable": {
-        "file_name": "career",
-        "binary_format": binary_format,
-        "mode": "0755",
+        "file_name": target["executable"],
+        "binary_format": target["binary_format"],
+        "binary_architecture": target["binary_architecture"],
+        "file_invariant": target["file_invariant"],
+        "archive_mode": target["archive_mode"],
+        "mode": target["executable_mode"],
         "size_bytes": len(binary_bytes),
         "sha256": hashlib.sha256(binary_bytes).hexdigest(),
     },
@@ -322,6 +347,7 @@ platform = pathlib.Path(sys.argv[2])
 expected_launcher = {
     "package.json",
     "bin/career.js",
+    "targets.json",
     "README.md",
     "LICENSE-MIT",
     "LICENSE-APACHE",
@@ -375,6 +401,7 @@ expected = {
     "@revazi/career": {
         "package/package.json",
         "package/bin/career.js",
+        "package/targets.json",
         "package/README.md",
         "package/LICENSE-MIT",
         "package/LICENSE-APACHE",

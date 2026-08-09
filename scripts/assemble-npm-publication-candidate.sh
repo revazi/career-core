@@ -10,27 +10,25 @@ usage() {
   cat <<'EOF'
 Usage: scripts/assemble-npm-publication-candidate.sh \
   --output-dir <external-empty-directory> \
-  --darwin-tarball <file> \
-  --linux-tarball <file> \
-  --expected-ref refs/tags/v0.1.0 \
+  --native-dir <directory-containing-eight-exact-native-tarballs> \
+  --expected-ref refs/tags/v0.1.1 \
   --reviewed-sha <40-lowercase-hex>
 
-Validate both native candidates, pack the public @revazi/career launcher last,
-and emit exactly three ordered tarballs plus one integrity manifest. This
-command never queries npm, authenticates, publishes, or changes the checkout.
+Validate all eight exact native candidates, pack the public @revazi/career
+launcher last, and emit exactly nine ordered tarballs plus one integrity
+manifest. This command never queries npm, authenticates, publishes, or changes
+the checkout.
 EOF
 }
 
 output_dir=""
-darwin_tarball=""
-linux_tarball=""
+native_dir=""
 expected_ref=""
 reviewed_sha=""
 while (($# > 0)); do
   case "$1" in
     --output-dir) (($# >= 2)) || fail "--output-dir requires a value"; output_dir="$2"; shift 2 ;;
-    --darwin-tarball) (($# >= 2)) || fail "--darwin-tarball requires a value"; darwin_tarball="$2"; shift 2 ;;
-    --linux-tarball) (($# >= 2)) || fail "--linux-tarball requires a value"; linux_tarball="$2"; shift 2 ;;
+    --native-dir) (($# >= 2)) || fail "--native-dir requires a value"; native_dir="$2"; shift 2 ;;
     --expected-ref) (($# >= 2)) || fail "--expected-ref requires a value"; expected_ref="$2"; shift 2 ;;
     --reviewed-sha) (($# >= 2)) || fail "--reviewed-sha requires a value"; reviewed_sha="$2"; shift 2 ;;
     --help|-h) usage; exit 0 ;;
@@ -39,8 +37,7 @@ while (($# > 0)); do
 done
 
 [[ -n "$output_dir" ]] || fail "--output-dir is required"
-[[ -f "$darwin_tarball" && ! -L "$darwin_tarball" ]] || fail "Darwin candidate tarball is missing or unsafe"
-[[ -f "$linux_tarball" && ! -L "$linux_tarball" ]] || fail "Linux candidate tarball is missing or unsafe"
+[[ -d "$native_dir" && ! -L "$native_dir" ]] || fail "native candidate directory is missing or unsafe"
 [[ "$reviewed_sha" =~ ^[0-9a-f]{40}$ ]] || fail "--reviewed-sha must be a full lowercase commit"
 for command in git node npm python3; do
   command -v "$command" >/dev/null 2>&1 || fail "required command is unavailable: $command"
@@ -55,18 +52,53 @@ repository_root="$(cd "$script_dir/.." && pwd -P)"
   --expected-ref "$expected_ref" \
   --reviewed-sha "$reviewed_sha"
 
-"$script_dir/npm-publication-candidate.py" verify-native \
-  "$darwin_tarball" --platform-key darwin-arm64 --source-sha "$reviewed_sha"
-"$script_dir/npm-publication-candidate.py" verify-native \
-  "$linux_tarball" --platform-key linux-x64-gnu --source-sha "$reviewed_sha"
+native_dir="$(cd "$native_dir" && pwd -P)"
+platform_keys=(
+  darwin-arm64
+  darwin-x64
+  linux-x64-gnu
+  linux-arm64-gnu
+  linux-x64-musl
+  linux-arm64-musl
+  win32-x64-msvc
+  win32-arm64-msvc
+)
+native_files=(
+  10-revazi-career-darwin-arm64-0.1.1.tgz
+  20-revazi-career-darwin-x64-0.1.1.tgz
+  30-revazi-career-linux-x64-gnu-0.1.1.tgz
+  40-revazi-career-linux-arm64-gnu-0.1.1.tgz
+  50-revazi-career-linux-x64-musl-0.1.1.tgz
+  60-revazi-career-linux-arm64-musl-0.1.1.tgz
+  70-revazi-career-win32-x64-msvc-0.1.1.tgz
+  80-revazi-career-win32-arm64-msvc-0.1.1.tgz
+)
+python3 - "$native_dir" "${native_files[@]}" <<'PY'
+import pathlib
+import sys
+root = pathlib.Path(sys.argv[1])
+expected = set(sys.argv[2:])
+entries = list(root.iterdir())
+if {path.name for path in entries} != expected:
+    raise SystemExit("native candidate directory allowlist mismatch")
+if any(path.is_symlink() or not path.is_file() for path in entries):
+    raise SystemExit("native candidates must be flat regular files")
+PY
+for index in "${!platform_keys[@]}"; do
+  "$script_dir/npm-publication-candidate.py" verify-native \
+    "$native_dir/${native_files[$index]}" \
+    --platform-key "${platform_keys[$index]}" \
+    --source-sha "$reviewed_sha"
+done
 
-python3 - "$repository_root" "$darwin_tarball" "$linux_tarball" <<'PY'
+python3 - "$repository_root" "$native_dir" "${native_files[@]}" <<'PY'
 import pathlib
 import sys
 import tarfile
 root = pathlib.Path(sys.argv[1])
-for tarball_arg in sys.argv[2:]:
-    with tarfile.open(tarball_arg, "r:gz") as archive:
+native_dir = pathlib.Path(sys.argv[2])
+for filename in sys.argv[3:]:
+    with tarfile.open(native_dir / filename, "r:gz") as archive:
         for name in ("LICENSE-MIT", "LICENSE-APACHE", "THIRD_PARTY_NOTICES.md"):
             member = archive.extractfile(f"package/{name}")
             if member is None or member.read() != (root / name).read_bytes():
@@ -88,12 +120,14 @@ fi
 mkdir -p "$resolved_output_dir/work/launcher/bin"
 output_dir="$(cd "$resolved_output_dir" && pwd -P)"
 
-cp "$darwin_tarball" "$output_dir/10-revazi-career-darwin-arm64-0.1.0.tgz"
-cp "$linux_tarball" "$output_dir/20-revazi-career-linux-x64-gnu-0.1.0.tgz"
+for filename in "${native_files[@]}"; do
+  cp "$native_dir/$filename" "$output_dir/$filename"
+done
 launcher_stage="$output_dir/work/launcher"
 "$script_dir/npm-publication-candidate.py" public-manifest \
   "$repository_root/npm/career/package.json" "$launcher_stage/package.json"
 cp "$repository_root/npm/career/bin/career.js" "$launcher_stage/bin/career.js"
+cp "$repository_root/npm/career/targets.json" "$launcher_stage/targets.json"
 cp "$repository_root/npm/career/README.md" "$launcher_stage/README.md"
 chmod 0755 "$launcher_stage/bin/career.js"
 cp "$repository_root/LICENSE-MIT" "$repository_root/LICENSE-APACHE" \
@@ -118,14 +152,14 @@ print(value[0]["filename"])
 PY
 )"
 [[ -f "$output_dir/work/$packed_name" ]] || fail "npm pack launcher tarball is missing"
-mv "$output_dir/work/$packed_name" "$output_dir/30-revazi-career-0.1.0.tgz"
+mv "$output_dir/work/$packed_name" "$output_dir/90-revazi-career-0.1.1.tgz"
 rm -rf "$output_dir/work"
 
 "$script_dir/npm-publication-candidate.py" write-manifest "$output_dir" --source-sha "$reviewed_sha"
 "$script_dir/npm-publication-candidate.py" verify "$output_dir" \
   --source-sha "$reviewed_sha" \
   --repository-root "$repository_root"
-[[ "$(find "$output_dir" -mindepth 1 -maxdepth 1 -type f | wc -l | tr -d ' ')" == "4" ]] || \
+[[ "$(find "$output_dir" -mindepth 1 -maxdepth 1 -type f | wc -l | tr -d ' ')" == "10" ]] || \
   fail "assembled publication candidate output allowlist mismatch"
-printf 'Assembled ordered public npm candidate for v0.1.0 at %s; no publication performed.\n' \
+printf 'Assembled ordered public npm candidate for v0.1.1 at %s; no publication performed.\n' \
   "$reviewed_sha"
