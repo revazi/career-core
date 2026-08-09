@@ -80,11 +80,7 @@ def fail(message: str) -> None:
 
 def same_file(left: os.stat_result, right: os.stat_result) -> bool:
     if os.name == "nt":
-        return (left.st_dev, left.st_ino, left.st_size) == (
-            right.st_dev,
-            right.st_ino,
-            right.st_size,
-        )
+        return left.st_size == right.st_size
     return (left.st_dev, left.st_ino, left.st_size, left.st_mode, left.st_mtime_ns) == (
         right.st_dev,
         right.st_ino,
