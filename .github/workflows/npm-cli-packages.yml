@@ -75,7 +75,11 @@ jobs:
       - name: Run launcher and package tests
         run: |
           node --test npm/tests/launcher.test.js
-          scripts/test-npm-cli-packages.sh
+          if [ "${{ matrix.target }}" = "aarch64-unknown-linux-gnu" ]; then
+            bash -x scripts/test-npm-cli-packages.sh
+          else
+            scripts/test-npm-cli-packages.sh
+          fi
 
       - name: Prepare private packages without publishing or upload
         run: |
