@@ -550,8 +550,14 @@ def inspect_windows(binary: bytes) -> dict[str, Any]:
     unique_imports = sorted(set(imports))
     if not terminated or not 1 <= len(unique_imports) <= 128:
         fail("PE dynamic import count or termination is outside its reviewed bound")
-    if any(not approved_windows_import(value) for value in unique_imports):
-        fail("PE executable imports a non-reviewed Windows system DLL")
+    unapproved = [
+        value for value in unique_imports if not approved_windows_import(value)
+    ]
+    if unapproved:
+        fail(
+            "PE executable imports a non-reviewed Windows system DLL: "
+            + ",".join(unapproved[:16])
+        )
     return {
         "linkage": "dynamic",
         "interpreter": None,
