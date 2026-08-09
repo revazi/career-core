@@ -69,7 +69,8 @@ def run(
     if len(result.stdout) + len(result.stderr) > MAX_OUTPUT_BYTES:
         fail(f"{label} output exceeds its reviewed bound")
     if result.returncode != expected_code:
-        fail(f"{label} returned an unexpected exit code")
+        diagnostic = result.stderr[:512].decode("utf-8", errors="replace").strip()
+        fail(f"{label} returned an unexpected exit code: {diagnostic}")
     return result.stdout, result.stderr
 
 

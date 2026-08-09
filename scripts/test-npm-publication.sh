@@ -898,6 +898,11 @@ if driver.index("10-revazi-career-darwin-arm64-0.1.1.tgz") > driver.index("90-re
     raise SystemExit("publication driver does not encode native-before-launcher ordering")
 PY
 
+[[ "$(cat "$repository_root/.gitattributes")" == "* text=auto eol=lf" ]] || {
+  printf 'repository checkout text normalization policy is not exact\n' >&2
+  exit 1
+}
+
 python3 - "$repository_root/.github/workflows/npm-cli-packages.yml" <<'PY'
 import pathlib
 import sys
