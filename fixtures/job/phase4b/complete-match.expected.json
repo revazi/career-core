@@ -7,7 +7,7 @@
   "recommendation_reference_policy_version": "job_match_recommendation_safety_v1",
   "resume_normalization_policy_version": "resume_normalization_v1",
   "job_normalization_policy_version": "job_normalization_v1",
-  "core_version": "0.1.0",
+  "core_version": "0.1.1",
   "resume_document_id": "synthetic-match-resume-complete-v1",
   "job_document_id": "synthetic-match-job-complete-v1",
   "scoring_weights": {

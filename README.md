@@ -4,7 +4,7 @@
 
 The project is intentionally **not an AI service**. The core performs no network requests and has no LLM dependency. Native applications, command-line tools, and coding-agent integrations can use its versioned evidence and scoring contracts. An opted-in host may submit an external source-grounded proposal for deterministic validation, but provider calls remain outside the authoritative core.
 
-> **Status:** Phases 0–8 are complete; Phase 9 prepares exact `@revazi/career@0.1.0` publication around the unchanged CLI. Source templates remain private, publication is protected/manual, and completion requires npm provenance plus public macOS/Linux acceptance. Managed runtime, handles, persistence, providers, UI, independent binary signing, other release channels, and the SwiftUI product remain separately gated.
+> **Status:** Phases 0–8 and public `@revazi/career@0.1.0` are complete. A gated Phase 9 extension prepares proposed lockstep `0.1.1` for an exact eight-target native npm matrix. The catalog and private templates are not support claims: every final package must execute on its exact native OS and architecture before release. Publication, managed runtime, handles, persistence, providers, UI, independent binary signing, other release channels, and the SwiftUI product remain separately gated.
 
 ## Maintainer and support
 
@@ -79,7 +79,7 @@ Run the exact npm package after its protected release completes:
 npx --yes --package=@revazi/career@0.1.0 career --version
 ```
 
-The only approved package-manager consumer surface is exact `@revazi/career@0.1.0`, bin `career`; native optional packages are internal implementation details. Source templates remain `private: true`, and only the protected reviewed candidate/workflow path may create and publish external tarballs. No crate, GitHub Release binary, Homebrew formula, or other channel is included. See [`docs/distribution.md`](docs/distribution.md), [`docs/contracts/npm-cli-distribution-v1.md`](docs/contracts/npm-cli-distribution-v1.md), and [`docs/releasing.md`](docs/releasing.md).
+The currently approved package-manager consumer surface remains exact public `@revazi/career@0.1.0`, bin `career`; native optional packages are internal implementation details. Proposed source version `0.1.1` remains release-blocked while its native matrix is proven. Source templates remain `private: true`, and only a later protected reviewed candidate/workflow may publish external tarballs. No crate, GitHub Release binary, Homebrew formula, or other channel is included. See [`docs/distribution.md`](docs/distribution.md), [`docs/contracts/npm-cli-distribution-v1.md`](docs/contracts/npm-cli-distribution-v1.md), [`docs/contracts/npm-cli-distribution-v2.md`](docs/contracts/npm-cli-distribution-v2.md), and [`docs/releasing.md`](docs/releasing.md).
 
 The optional native Pi integration and its bundled skill are maintained separately in [`pi-career`](https://github.com/revazi/pi-career). This repository is not a Pi package; [`docs/pi-career-npm-handoff.md`](docs/pi-career-npm-handoff.md) is only a future transition contract.
 
@@ -96,7 +96,7 @@ JSON is the default output:
 ```json
 {
   "schema_version": "career.capabilities.v1",
-  "core_version": "0.1.0",
+  "core_version": "0.1.1",
   "deterministic": true,
   "performs_network_requests": false,
   "capabilities": [

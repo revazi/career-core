@@ -1,6 +1,6 @@
 [package]
 name = "career-core"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2024"
 rust-version = "1.85"
 description = "Deterministic, explainable career-document analysis core"
@@ -17,7 +17,7 @@ members = ["crates/career-cli", "crates/career-swift"]
 resolver = "2"
 
 [workspace.package]
-version = "0.1.0"
+version = "0.1.1"
 edition = "2024"
 rust-version = "1.85"
 authors = ["Revaz Zakalashvili"]

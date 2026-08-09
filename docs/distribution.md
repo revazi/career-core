@@ -1,6 +1,6 @@
 # Installation and distribution
 
-`career` is local-first software. The project does not provide a remote execution service or an installer that pipes network content into a shell. Phase 9 prepares the exact `@revazi/career@0.1.0` npm release; publication is complete only after the protected manual workflow and both public-registry acceptance jobs pass.
+`career` is local-first software. The project does not provide a remote execution service or an installer that pipes network content into a shell. Exact `@revazi/career@0.1.0` is the completed public npm release for its two reviewed hosts. Proposed patch `0.1.1` remains release-blocked while an exact eight-target native matrix is implemented and proven.
 
 ## Run from a source checkout
 
@@ -53,7 +53,13 @@ npx --yes --package=@revazi/career@0.1.0 career capabilities --format json-compa
 
 Use the exact version, never `latest`. npm/npx acquisition may contact npm; launcher runtime remains offline. Native platform packages are internal lockstep optional-dependency implementation details. Users and consumers must not install, invoke, or pin them directly.
 
-Supported hosts are Apple Silicon macOS and x86-64 GNU/Linux with locally detected glibc 2.35 or newer. Musl, older/malformed/unknown libc, and all other targets fail closed. Linux compatibility is not claimed below glibc 2.35.
+The currently public `0.1.0` supported hosts are Apple Silicon macOS and x86-64 GNU/Linux with locally detected glibc 2.35 or newer. Its musl, older/malformed/unknown libc, and all other targets fail closed. Linux compatibility is not claimed below glibc 2.35.
+
+### Proposed `0.1.1` native matrix
+
+Source version `0.1.1` contains one reviewed ordered catalog and private templates for Darwin ARM64/x64, GNU Linux x64/ARM64, musl Linux x64/ARM64, and MSVC Windows x64/ARM64. The launcher positively distinguishes glibc, musl, and unknown libc; unknown never falls back to musl. It validates exact package/version/target/provenance, regular non-symlink files, target-specific Unix or Windows invariants, bounded size, Mach-O/ELF/PE architecture, and SHA-256 before direct execution.
+
+These targets are **prepared, not yet supported**. Synthetic fixtures prove policy only. Cross-compilation, emulation, package metadata, and skipped jobs are not release evidence. Every final tarball must execute on its exact native OS and architecture. GNU targets have a proposed supported floor of glibc 2.35 pending native per-artifact symbol/import records. See [`contracts/npm-cli-distribution-v2.md`](contracts/npm-cli-distribution-v2.md).
 
 Checked-in templates remain `private: true` even after release. Private current-host tests are prepared outside the checkout with:
 
@@ -63,7 +69,7 @@ trap 'rm -rf "$package_dir"' EXIT
 scripts/prepare-npm-cli-packages.sh --output-dir "$package_dir"
 ```
 
-`--allow-dirty` is local-test-only and records a private dirty non-candidate. The explicit publication-candidate scripts require exact clean annotated `v0.1.0`, the reviewed `origin/main` SHA, Node 22.19.0/npm 11.6.2, rustc/Cargo 1.97.1, pinned native runners, and external empty outputs. They create exactly two internal native tarballs followed by the launcher; no candidate command publishes.
+`--allow-dirty` is local-test-only and records a private dirty non-candidate. The proposed `0.1.1` registry-free candidate scripts require exact clean annotated fixture/source binding, the reviewed `origin/main` SHA, Node 22.19.0/npm 11.6.2, rustc/Cargo 1.97.1, and external empty outputs. Synthetic non-host tarballs in policy tests are explicitly not native evidence. Final candidate authorization remains deferred until eight native jobs can supply exactly eight internal tarballs followed by the launcher; no candidate command publishes.
 
 Run registry-free package/candidate/publish-driver verification with local reviewed Node 22.19.0 and npm 10.9.3 or publication npm 11.6.2:
 

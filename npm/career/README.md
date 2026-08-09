@@ -5,12 +5,12 @@ Deterministic local CLI for Career Core resume evaluation, normalization, and co
 ## Run an exact version
 
 ```bash
-npx --yes --package=@revazi/career@0.1.0 career --version
+npx --yes --package=@revazi/career@0.1.1 career --version
 ```
 
 Use an exact version rather than `latest`. npm/npx may access the npm registry to acquire the package; after installation, the launcher and native `career` CLI perform no network requests or telemetry.
 
-The package exposes one command: `career`. It selects and verifies its package-local native implementation for Apple Silicon macOS or x86-64 GNU/Linux with glibc 2.35 or newer. Other platforms, musl, unknown libc, and older glibc fail closed.
+The `0.1.1` source prepares exact native implementations for ARM64 and x64 macOS, GNU and musl Linux, and MSVC Windows. This release remains blocked until every final package executes on its exact native OS and architecture in CI; catalog or cross-compilation evidence alone is not support. Unknown platforms, architectures, libc families, and older GNU libc fail closed.
 
 Platform-specific optional packages are internal implementation details. Do not install, invoke, or pin them directly.
 

@@ -11,13 +11,13 @@ usage() {
 Usage: scripts/prepare-npm-publication-native.sh \
   --output-dir <external-empty-directory> \
   --expected-target <approved-rust-target> \
-  --expected-ref refs/tags/v0.1.0 \
+  --expected-ref refs/tags/v0.1.1 \
   --reviewed-sha <40-lowercase-hex> \
   --runner-os <Linux|macOS> \
   --runner-arch <X64|ARM64> \
   --runner-image <bounded-runner-image>
 
-Create one public native v0.1.0 candidate tarball from the exact clean annotated
+Create one public native v0.1.1 candidate tarball from the exact clean annotated
 tag on origin/main. Source templates remain private. This command never queries
 npm, authenticates, publishes, creates a tag, or changes the checkout.
 EOF
@@ -69,13 +69,13 @@ case "$expected_target" in
     platform_key="darwin-arm64"
     expected_runner_os="macOS"
     expected_runner_arch="ARM64"
-    final_name="10-revazi-career-darwin-arm64-0.1.0.tgz"
+    final_name="10-revazi-career-darwin-arm64-0.1.1.tgz"
     ;;
   x86_64-unknown-linux-gnu)
     platform_key="linux-x64-gnu"
     expected_runner_os="Linux"
     expected_runner_arch="X64"
-    final_name="20-revazi-career-linux-x64-gnu-0.1.0.tgz"
+    final_name="30-revazi-career-linux-x64-gnu-0.1.1.tgz"
     ;;
   *) fail "expected target is not an approved native publication target" ;;
 esac

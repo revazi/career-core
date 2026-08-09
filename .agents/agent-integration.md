@@ -56,7 +56,9 @@ Schema bundles retain the requested embedded root and recursively place dependen
 
 ## npm launcher contract
 
-The Node 22+ `@revazi/career@0.1.0` package exposes the same `career` bin. It resolves only its package-local internal optional native implementation, requires glibc 2.35 or newer on Linux, verifies strict versioned provenance and binary type/mode/size/target/SHA-256 consistency, and preserves argv/stdin/stdout/stderr/exit/signal behavior. It has no PATH fallback, runtime download, lifecycle script, provider/network behavior, telemetry, or bypass. Package-contained SHA-256 is not a signature.
+The public Node 22+ `@revazi/career@0.1.0` package exposes the same `career` bin for its two reviewed native targets. It resolves only its package-local internal optional native implementation, requires glibc 2.35 or newer on Linux, verifies strict versioned provenance and binary type/mode/size/target/SHA-256 consistency, and preserves argv/stdin/stdout/stderr/exit/signal behavior. It has no PATH fallback, runtime download, lifecycle script, provider/network behavior, telemetry, or bypass. Package-contained SHA-256 is not a signature.
+
+Proposed source version `0.1.1` catalogs eight exact Darwin/Linux/Windows targets and advances only version metadata plus internal launcher/package verification contracts. It is not an installable or supported consumer pin until all eight final packages execute natively, the protected candidate is separately reviewed, and publication/public acceptance are separately authorized. Agents and `pi-career` must continue using exact public `0.1.0` until that gate completes; they must not infer support from the target catalog or private templates.
 
 Agents and managed consumers address only the user-facing package:
 

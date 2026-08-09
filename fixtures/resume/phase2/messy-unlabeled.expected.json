@@ -1,7 +1,7 @@
 {
   "schema_version": "career.resume_normalization.v1",
   "policy_version": "resume_normalization_v1",
-  "core_version": "0.1.0",
+  "core_version": "0.1.1",
   "document_id": "synthetic-messy-v1",
   "deterministic_document": {
     "contact": {

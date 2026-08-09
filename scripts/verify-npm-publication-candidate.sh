@@ -40,17 +40,17 @@ candidate_dir="$(cd "$candidate_dir" && pwd -P)"
 case "$(uname -s):$(uname -m):$expected_target" in
   Darwin:arm64:aarch64-apple-darwin|Darwin:aarch64:aarch64-apple-darwin)
     package_name="@revazi/career-darwin-arm64"
-    native_tarball="$candidate_dir/10-revazi-career-darwin-arm64-0.1.0.tgz"
+    native_tarball="$candidate_dir/10-revazi-career-darwin-arm64-0.1.1.tgz"
     ;;
   Linux:x86_64:x86_64-unknown-linux-gnu|Linux:amd64:x86_64-unknown-linux-gnu)
     package_name="@revazi/career-linux-x64-gnu"
-    native_tarball="$candidate_dir/20-revazi-career-linux-x64-gnu-0.1.0.tgz"
+    native_tarball="$candidate_dir/30-revazi-career-linux-x64-gnu-0.1.1.tgz"
     getconf GNU_LIBC_VERSION 2>/dev/null | grep -Eq '^glibc [0-9]+\.[0-9]+' || \
       fail "candidate Linux execution requires confirmed glibc"
     ;;
   *) fail "expected target does not match an approved native host" ;;
 esac
-launcher_tarball="$candidate_dir/30-revazi-career-0.1.0.tgz"
+launcher_tarball="$candidate_dir/90-revazi-career-0.1.1.tgz"
 
 temporary_root="$(mktemp -d "${TMPDIR:-/tmp}/career-npm-publication-verify.XXXXXX")"
 trap 'rm -rf "$temporary_root"' EXIT
@@ -82,11 +82,13 @@ export npm_config_ignore_scripts=true
 export npm_config_offline=true
 export npm_config_update_notifier=false
 export npm_config_cache="$temporary_root/npm-cache"
-(
+if ! (
   cd "$consumer"
   npm install --offline --ignore-scripts --no-audit --no-fund --no-package-lock \
     >"$temporary_root/npm-install.stdout" 2>"$temporary_root/npm-install.stderr"
-)
+); then
+  fail "candidate offline install failed"
+fi
 
 launcher="$consumer/node_modules/.bin/career"
 native="$consumer/node_modules/${package_name}/career"
@@ -100,7 +102,7 @@ package_name = sys.argv[2]
 launcher = root / "@revazi" / "career"
 native = root.joinpath(*package_name.split("/"))
 expected_launcher = {
-    "package.json", "bin/career.js", "README.md", "LICENSE-MIT", "LICENSE-APACHE", "THIRD_PARTY_NOTICES.md"
+    "package.json", "bin/career.js", "targets.json", "README.md", "LICENSE-MIT", "LICENSE-APACHE", "THIRD_PARTY_NOTICES.md"
 }
 expected_native = {
     "package.json", "career", "provenance.json", "LICENSE-MIT", "LICENSE-APACHE", "THIRD_PARTY_NOTICES.md"
@@ -121,7 +123,10 @@ compare_command() {
   local name="$1"
   shift
   "$native" "$@" >"$result_dir/$name.native.stdout" 2>"$result_dir/$name.native.stderr"
-  "$launcher" "$@" >"$result_dir/$name.launcher.stdout" 2>"$result_dir/$name.launcher.stderr"
+  if ! "$launcher" "$@" >"$result_dir/$name.launcher.stdout" 2>"$result_dir/$name.launcher.stderr"; then
+    cat "$result_dir/$name.launcher.stderr" >&2
+    fail "$name launcher execution failed"
+  fi
   cmp "$result_dir/$name.native.stdout" "$result_dir/$name.launcher.stdout"
   cmp "$result_dir/$name.native.stderr" "$result_dir/$name.launcher.stderr"
   [[ ! -s "$result_dir/$name.native.stderr" ]] || fail "$name wrote unexpected stderr"
