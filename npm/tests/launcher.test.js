@@ -103,6 +103,16 @@ function currentTarget() {
   return launcher.selectTarget(process.platform, process.arch, libcRuntime, CATALOG);
 }
 
+function differentRustTarget(target) {
+  const different = CATALOG.targets.find((value) => value.rust_target !== target.rust_target);
+  assert.ok(different);
+  return different.rust_target;
+}
+
+function hostCanRepresentFileInvariant(target) {
+  return process.platform !== "win32" || target.file_invariant === "windows_regular_non_symlink_exe";
+}
+
 function readJson(filePath) {
   return JSON.parse(fs.readFileSync(filePath, "utf8"));
 }
@@ -358,7 +368,7 @@ test("Linux libc detection requires positive bounded architecture-matched eviden
 });
 
 test("resolves and verifies every exact synthetic target package", () => {
-  for (const target of CATALOG.targets) {
+  for (const target of CATALOG.targets.filter(hostCanRepresentFileInvariant)) {
     const tree = makeInstalledTree(target, true);
     const result = resolveTree(tree);
     assert.equal(result.binaryPath, tree.binaryPath);
@@ -521,7 +531,7 @@ test("rejects malformed and mismatched platform manifests", async (t) => {
   await t.test("target metadata", () => {
     const tree = makeInstalledTree();
     mutateJson(tree.platformManifestPath, (manifest) => {
-      manifest.career_native.rust_target = "x86_64-pc-windows-msvc";
+      manifest.career_native.rust_target = differentRustTarget(tree.target);
     });
     expectCode(() => resolveTree(tree), "CAREER_NPM_TARGET_MISMATCH");
   });
@@ -569,7 +579,7 @@ test("rejects missing, malformed, and mismatched provenance", async (t) => {
   await t.test("target", () => {
     const tree = makeInstalledTree();
     mutateJson(tree.provenancePath, (value) => {
-      value.package.rust_target = "x86_64-pc-windows-msvc";
+      value.package.rust_target = differentRustTarget(tree.target);
     });
     expectCode(() => resolveTree(tree), "CAREER_NPM_PROVENANCE_TARGET_MISMATCH");
   });
