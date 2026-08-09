@@ -79,6 +79,12 @@ def fail(message: str) -> None:
 
 
 def same_file(left: os.stat_result, right: os.stat_result) -> bool:
+    if os.name == "nt":
+        return left.st_ino != 0 and (left.st_dev, left.st_ino, left.st_size) == (
+            right.st_dev,
+            right.st_ino,
+            right.st_size,
+        )
     return (left.st_dev, left.st_ino, left.st_size, left.st_mode, left.st_mtime_ns) == (
         right.st_dev,
         right.st_ino,
@@ -409,7 +415,12 @@ def pe_integer(binary: bytes, offset: int, width: int, label: str) -> int:
     return int.from_bytes(binary[offset : offset + width], "little")
 
 
-def pe_layout(binary: bytes) -> tuple[int, int, int, list[tuple[int, int, int, int]]]:
+def overlapping_ranges(values: list[tuple[int, int]]) -> bool:
+    ordered = sorted((start, end) for start, end in values if end > start)
+    return any(left[1] > right[0] for left, right in zip(ordered, ordered[1:]))
+
+
+def pe_layout(binary: bytes) -> tuple[int, int, list[tuple[int, int, int, int]]]:
     pe_offset = pe_integer(binary, 0x3C, 4, "header offset")
     if pe_offset < 64 or binary[pe_offset : pe_offset + 4] != b"PE\0\0":
         fail("PE signature is invalid")
@@ -424,45 +435,67 @@ def pe_layout(binary: bytes) -> tuple[int, int, int, list[tuple[int, int, int, i
     if characteristics & 0x0002 == 0:
         fail("PE file is not marked as an executable image")
     section_offset = optional_offset + optional_size
-    if section_offset + section_count * 40 > len(binary):
+    section_table_end = section_offset + section_count * 40
+    if section_table_end > len(binary):
         fail("PE section table exceeds the bounded executable")
     size_of_headers = pe_integer(binary, optional_offset + 60, 4, "header size")
+    if not section_table_end <= size_of_headers <= len(binary):
+        fail("PE header size does not contain the section table")
     sections = []
+    virtual_ranges = []
+    file_ranges = []
     for index in range(section_count):
         offset = section_offset + index * 40
-        sections.append(
-            (
-                pe_integer(binary, offset + 12, 4, "section virtual address"),
-                pe_integer(binary, offset + 8, 4, "section virtual size"),
-                pe_integer(binary, offset + 20, 4, "section file offset"),
-                pe_integer(binary, offset + 16, 4, "section file size"),
-            )
-        )
-    return optional_offset, size_of_headers, section_count, sections
+        virtual_address = pe_integer(binary, offset + 12, 4, "section virtual address")
+        virtual_size = pe_integer(binary, offset + 8, 4, "section virtual size")
+        file_offset = pe_integer(binary, offset + 20, 4, "section file offset")
+        file_size = pe_integer(binary, offset + 16, 4, "section file size")
+        virtual_span = max(virtual_size, file_size)
+        if virtual_span > 0:
+            virtual_end = virtual_address + virtual_span
+            if virtual_end > 2**32:
+                fail("PE section virtual range overflows")
+            virtual_ranges.append((virtual_address, virtual_end))
+        if file_size > 0:
+            file_end = file_offset + file_size
+            if file_offset < size_of_headers or file_end > len(binary):
+                fail("PE section file range is outside bounded section data")
+            file_ranges.append((file_offset, file_end))
+        sections.append((virtual_address, virtual_size, file_offset, file_size))
+    if overlapping_ranges(virtual_ranges) or overlapping_ranges(file_ranges):
+        fail("PE section ranges overlap")
+    return optional_offset, size_of_headers, sections
 
 
-def pe_rva_offset(
+def pe_rva_span(
     binary: bytes,
     rva: int,
+    length: int,
     size_of_headers: int,
     sections: list[tuple[int, int, int, int]],
-) -> int:
-    if rva < size_of_headers and rva < len(binary):
-        return rva
+) -> tuple[int, int]:
+    if length < 1 or rva + length > 2**32:
+        fail("PE import range length or RVA is invalid")
+    if rva < size_of_headers:
+        if rva + length > size_of_headers:
+            fail("PE import range crosses the bounded header region")
+        return rva, size_of_headers - rva
     for virtual_address, virtual_size, file_offset, file_size in sections:
-        span = max(virtual_size, file_size)
-        if virtual_address <= rva < virtual_address + span:
+        mapped_size = min(virtual_size or file_size, file_size)
+        if virtual_address <= rva and rva + length <= virtual_address + mapped_size:
             delta = rva - virtual_address
-            if delta >= file_size or file_offset + delta >= len(binary):
+            offset = file_offset + delta
+            if offset + length > len(binary):
                 break
-            return file_offset + delta
-    fail("PE import RVA does not map to bounded file data")
+            return offset, mapped_size - delta
+    fail("PE import range does not map wholly within bounded file data")
 
 
-def pe_ascii_name(binary: bytes, offset: int) -> str:
-    end = binary.find(b"\0", offset, min(len(binary), offset + 261))
+def pe_ascii_name(binary: bytes, offset: int, available: int) -> str:
+    maximum = min(len(binary), offset + available, offset + 261)
+    end = binary.find(b"\0", offset, maximum)
     if end < 0 or end == offset:
-        fail("PE import name is missing or exceeds its bound")
+        fail("PE import name is missing or exceeds its mapped bound")
     try:
         value = binary[offset:end].decode("ascii").lower()
     except UnicodeError as error:
@@ -473,13 +506,11 @@ def pe_ascii_name(binary: bytes, offset: int) -> str:
 
 
 def approved_windows_import(value: str) -> bool:
-    return value in WINDOWS_SYSTEM_IMPORTS or value.startswith(
-        ("api-ms-win-", "ext-ms-win-")
-    )
+    return value in WINDOWS_SYSTEM_IMPORTS
 
 
 def inspect_windows(binary: bytes) -> dict[str, Any]:
-    optional_offset, size_of_headers, _, sections = pe_layout(binary)
+    optional_offset, size_of_headers, sections = pe_layout(binary)
     directory_count = pe_integer(
         binary, optional_offset + 108, 4, "data-directory count"
     )
@@ -489,14 +520,14 @@ def inspect_windows(binary: bytes) -> dict[str, Any]:
     import_size = pe_integer(binary, optional_offset + 124, 4, "import-directory size")
     if import_rva == 0 or not 20 <= import_size <= 1024 * 1024:
         fail("PE import directory is missing or outside its reviewed bound")
+    import_offset, _ = pe_rva_span(
+        binary, import_rva, import_size, size_of_headers, sections
+    )
     imports = []
     terminated = False
     descriptor_limit = min(129, import_size // 20)
     for index in range(descriptor_limit):
-        descriptor_rva = import_rva + index * 20
-        descriptor = pe_rva_offset(binary, descriptor_rva, size_of_headers, sections)
-        if descriptor + 20 > len(binary):
-            fail("PE import descriptor exceeds the bounded executable")
+        descriptor = import_offset + index * 20
         values = [
             pe_integer(binary, descriptor + offset, 4, "import descriptor")
             for offset in range(0, 20, 4)
@@ -505,8 +536,10 @@ def inspect_windows(binary: bytes) -> dict[str, Any]:
             terminated = True
             break
         name_rva = values[3]
-        name_offset = pe_rva_offset(binary, name_rva, size_of_headers, sections)
-        imports.append(pe_ascii_name(binary, name_offset))
+        name_offset, name_available = pe_rva_span(
+            binary, name_rva, 1, size_of_headers, sections
+        )
+        imports.append(pe_ascii_name(binary, name_offset, name_available))
     unique_imports = sorted(set(imports))
     if not terminated or not 1 <= len(unique_imports) <= 128:
         fail("PE dynamic import count or termination is outside its reviewed bound")

@@ -937,6 +937,7 @@ for value in (
     "chmod 0644 /output/evidence.json",
     "windows-2025",
     "windows-11-arm",
+    "RuntimeInformation]::ProcessArchitecture",
     "scripts/prepare-npm-cli-packages-windows.py",
     "scripts/test-npm-cli-packages-windows.py",
     "career.exe",
@@ -1029,11 +1030,13 @@ PY
 python3 - \
   "$repository_root/scripts/inspect-npm-native-binary.py" \
   "$repository_root/scripts/prepare-npm-cli-packages-windows.py" \
-  "$repository_root/scripts/test-npm-cli-packages-windows.py" <<'PY'
+  "$repository_root/scripts/test-npm-cli-packages-windows.py" \
+  "$repository_root/scripts/npm_windows_process.py" <<'PY'
 import importlib.util
 import pathlib
 import sys
-inspection_path, preparation_path, test_path = map(pathlib.Path, sys.argv[1:])
+sys.dont_write_bytecode = True
+inspection_path, preparation_path, test_path, process_path = map(pathlib.Path, sys.argv[1:])
 for path in (preparation_path, test_path):
     text = path.read_text(encoding="utf-8")
     for value in (
@@ -1051,6 +1054,10 @@ preparation = preparation_path.read_text(encoding="utf-8")
 for value in ("windows_regular_non_symlink_exe", "0644"):
     if value not in preparation:
         raise SystemExit(f"Windows preparation is missing file policy text: {value}")
+process_source = process_path.read_text(encoding="utf-8")
+for value in ("TemporaryFile", "Popen", "maximum_output_bytes", "process.kill()"):
+    if value not in process_source:
+        raise SystemExit(f"Windows bounded process helper is missing policy text: {value}")
 spec = importlib.util.spec_from_file_location("career_native_inspection", inspection_path)
 if spec is None or spec.loader is None:
     raise SystemExit("could not load native inspection policy")
@@ -1083,13 +1090,47 @@ module.verify_header(bytes(binary), target)
 linkage = module.inspect_windows(bytes(binary))
 if linkage["dynamic_imports"] != ["kernel32.dll"] or linkage["linkage"] != "dynamic":
     raise SystemExit("synthetic bounded PE import inspection did not match")
-binary[0x250:0x250 + len(b"evil.dll\0")] = b"evil.dll\0"
+reviewed_binary = bytes(binary)
+def expect_pe_rejection(candidate, label):
+    try:
+        module.inspect_windows(bytes(candidate))
+    except module.InspectionError:
+        return
+    raise SystemExit(f"PE import inspection accepted {label}")
+non_system = bytearray(reviewed_binary)
+non_system[0x250:0x250 + len(b"api-ms-win-evil.dll\0")] = b"api-ms-win-evil.dll\0"
+expect_pe_rejection(non_system, "a non-reviewed API-set DLL")
+truncated_descriptor = bytearray(reviewed_binary)
+truncated_descriptor[section + 16:section + 20] = (4).to_bytes(4, "little")
+expect_pe_rejection(truncated_descriptor, "a cross-section import descriptor")
+unterminated = bytearray(reviewed_binary)
+unterminated[optional + 124:optional + 128] = (20).to_bytes(4, "little")
+expect_pe_rejection(unterminated, "an unterminated import table")
+crossing_name = bytearray(reviewed_binary)
+crossing_name[0x200 + 12:0x200 + 16] = (0x11FC).to_bytes(4, "little")
+crossing_name[0x3FC:0x400] = b"abcd"
+expect_pe_rejection(crossing_name, "a cross-section import name")
+overlapping = bytearray(reviewed_binary)
+overlapping[pe + 6:pe + 8] = (2).to_bytes(2, "little")
+second = section + 40
+overlapping[second + 8:second + 12] = (0x200).to_bytes(4, "little")
+overlapping[second + 12:second + 16] = (0x1100).to_bytes(4, "little")
+expect_pe_rejection(overlapping, "overlapping PE sections")
+process_spec = importlib.util.spec_from_file_location("career_windows_process", process_path)
+if process_spec is None or process_spec.loader is None:
+    raise SystemExit("could not load Windows bounded process helper")
+process_module = importlib.util.module_from_spec(process_spec)
+process_spec.loader.exec_module(process_module)
 try:
-    module.inspect_windows(bytes(binary))
-except module.InspectionError:
+    process_module.run_bounded(
+        [sys.executable, "-c", "import sys; sys.stdout.write('x' * 4096)"],
+        "synthetic over-bound child",
+        maximum_output_bytes=1024,
+    )
+except process_module.BoundedProcessError:
     pass
 else:
-    raise SystemExit("PE import inspection accepted a non-reviewed DLL")
+    raise SystemExit("Windows process helper accepted over-bound child output")
 PY
 
 for package in \

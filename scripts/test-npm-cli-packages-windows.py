@@ -9,10 +9,11 @@ import os
 import pathlib
 import platform
 import shutil
-import subprocess
 import sys
 import tarfile
 import tempfile
+
+from npm_windows_process import BoundedProcessError, run_bounded
 
 MAX_OUTPUT_BYTES = 32 * 1024 * 1024
 TARGETS = {
@@ -55,23 +56,17 @@ def run(
     timeout: int = 180,
 ) -> tuple[bytes, bytes]:
     try:
-        result = subprocess.run(
+        return run_bounded(
             command,
+            label,
+            maximum_output_bytes=MAX_OUTPUT_BYTES,
             cwd=cwd,
             env=env,
-            check=False,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
+            expected_code=expected_code,
             timeout=timeout,
         )
-    except (OSError, subprocess.TimeoutExpired) as error:
-        raise TestError(f"{label} could not run") from error
-    if len(result.stdout) + len(result.stderr) > MAX_OUTPUT_BYTES:
-        fail(f"{label} output exceeds its reviewed bound")
-    if result.returncode != expected_code:
-        diagnostic = result.stderr[:512].decode("utf-8", errors="replace").strip()
-        fail(f"{label} returned an unexpected exit code: {diagnostic}")
-    return result.stdout, result.stderr
+    except BoundedProcessError as error:
+        raise TestError(str(error)) from error
 
 
 def npm_environment(cache: pathlib.Path) -> dict[str, str]:

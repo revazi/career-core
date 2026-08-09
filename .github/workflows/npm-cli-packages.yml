@@ -291,7 +291,9 @@ jobs:
           if ($env:RUNNER_OS -ne 'Windows') { throw 'runner OS is not exact Windows' }
           if ($env:RUNNER_ARCH -ne $env:EXPECTED_RUNNER_ARCH) { throw 'runner architecture is not exact' }
           $osArchitecture = [System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture.ToString()
-          if ($osArchitecture -ne $env:EXPECTED_DOTNET_ARCH) { throw 'process OS architecture is not exact' }
+          if ($osArchitecture -ne $env:EXPECTED_DOTNET_ARCH) { throw 'runner OS architecture is not exact' }
+          $processArchitecture = [System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture.ToString()
+          if ($processArchitecture -ne $env:EXPECTED_DOTNET_ARCH) { throw 'PowerShell process architecture is not exact' }
           $pythonMachine = python -c "import platform; print(platform.machine())"
           if ($pythonMachine -ne $env:EXPECTED_PYTHON_MACHINE) { throw 'Python is not native to the runner architecture' }
 

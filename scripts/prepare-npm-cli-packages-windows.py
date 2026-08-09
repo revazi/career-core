@@ -12,11 +12,12 @@ import platform
 import re
 import shutil
 import stat
-import subprocess
 import sys
 import tarfile
 import tempfile
 from typing import Any
+
+from npm_windows_process import BoundedProcessError, run_bounded
 
 CATALOG_SHA256 = "9e56a3ca9b68799b0ff4bd52bbd2e71c2839d05a70398c5942062cb6e68032e2"
 MAX_BINARY_BYTES = 16 * 1024 * 1024
@@ -71,23 +72,16 @@ def run(
     timeout: int = 900,
 ) -> tuple[bytes, bytes]:
     try:
-        result = subprocess.run(
+        return run_bounded(
             command,
+            label,
+            maximum_output_bytes=MAX_OUTPUT_BYTES,
             cwd=cwd,
             env=env,
-            check=False,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
             timeout=timeout,
         )
-    except (OSError, subprocess.TimeoutExpired) as error:
-        raise PreparationError(f"{label} could not run") from error
-    if len(result.stdout) + len(result.stderr) > MAX_OUTPUT_BYTES:
-        fail(f"{label} output exceeds its reviewed bound")
-    if result.returncode != 0:
-        diagnostic = result.stderr[:512].decode("utf-8", errors="replace").strip()
-        fail(f"{label} failed: {diagnostic}")
-    return result.stdout, result.stderr
+    except BoundedProcessError as error:
+        raise PreparationError(str(error)) from error
 
 
 def text(command: list[str], label: str, *, cwd: pathlib.Path | None = None) -> str:
