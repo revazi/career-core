@@ -68,6 +68,15 @@ case "$kernel:$machine" in
     runner_arch="ARM64"
     runner_libc=""
     ;;
+  Darwin:x86_64|Darwin:amd64)
+    platform_key="darwin-x64"
+    package_name="@revazi/career-darwin-x64"
+    target_triple="x86_64-apple-darwin"
+    binary_format="mach-o-64-x86_64"
+    runner_os="macOS"
+    runner_arch="X64"
+    runner_libc=""
+    ;;
   Linux:x86_64|Linux:amd64)
     platform_key="linux-x64-gnu"
     package_name="@revazi/career-linux-x64-gnu"
@@ -75,6 +84,17 @@ case "$kernel:$machine" in
     binary_format="elf-64-x86_64"
     runner_os="Linux"
     runner_arch="X64"
+    command -v getconf >/dev/null 2>&1 || fail "required command is unavailable: getconf"
+    runner_libc="$(getconf GNU_LIBC_VERSION 2>/dev/null)" || fail "GNU libc version could not be determined"
+    [[ "$runner_libc" =~ ^glibc\ [0-9]+\.[0-9]+ ]] || fail "native Linux package requires a confirmed glibc build host"
+    ;;
+  Linux:aarch64|Linux:arm64)
+    platform_key="linux-arm64-gnu"
+    package_name="@revazi/career-linux-arm64-gnu"
+    target_triple="aarch64-unknown-linux-gnu"
+    binary_format="elf-64-aarch64"
+    runner_os="Linux"
+    runner_arch="ARM64"
     command -v getconf >/dev/null 2>&1 || fail "required command is unavailable: getconf"
     runner_libc="$(getconf GNU_LIBC_VERSION 2>/dev/null)" || fail "GNU libc version could not be determined"
     [[ "$runner_libc" =~ ^glibc\ [0-9]+\.[0-9]+ ]] || fail "native Linux package requires a confirmed glibc build host"

@@ -54,6 +54,8 @@ Internal `career.npm_launcher.v2`, `career.npm_native_package.v2`, and `career.n
 
 ## Evidence and release blockers
 
-Synthetic headers and non-host tarballs test fail-closed policy only. They do not execute and cannot support a platform claim. A target becomes release-eligible only when its final packaged binary executes on the exact native OS and architecture in CI without emulation and passes version, discovery, managed-adapter, representative operation, package, format, linkage, size, file-invariant, and SHA-256 checks.
+Synthetic headers and non-host tarballs test fail-closed policy only. They do not execute and cannot support a platform claim. The preparation-only native evidence workflow uses exact `macos-14` ARM64, `macos-15-intel` x64, `ubuntu-22.04` x64, and `ubuntu-24.04-arm` with native Ubuntu 22.04 ARM64 userland for the Darwin/GNU sub-gate. It executes offline extracted packages and emits bounded `career.npm_native_inspection.v1` evidence for source/catalog binding, host architecture, version, format, linkage/imports, interpreter, GLIBC symbols, size, mode, and SHA-256. Evidence remains in logs and is neither uploaded nor published.
+
+A target becomes release-eligible only when its final packaged binary executes on the exact native OS and architecture in CI without emulation and passes version, discovery, managed-adapter, representative operation, package, format, linkage, size, file-invariant, and SHA-256 checks. Intermediate evidence proves runner/build policy but all targets must be reproven from final release source.
 
 The protected `v0.1.1` publication workflow remains deferred until all eight native targets have such evidence. If any required native runner is unavailable, that target and the release remain blocked.

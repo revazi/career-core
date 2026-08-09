@@ -898,6 +898,85 @@ if driver.index("10-revazi-career-darwin-arm64-0.1.1.tgz") > driver.index("90-re
     raise SystemExit("publication driver does not encode native-before-launcher ordering")
 PY
 
+python3 - "$repository_root/.github/workflows/npm-cli-packages.yml" <<'PY'
+import pathlib
+import sys
+text = pathlib.Path(sys.argv[1]).read_text(encoding="utf-8")
+ordered = [
+    "aarch64-apple-darwin",
+    "x86_64-apple-darwin",
+    "x86_64-unknown-linux-gnu",
+    "aarch64-unknown-linux-gnu",
+]
+positions = [text.index(value) for value in ordered]
+if positions != sorted(positions):
+    raise SystemExit("private native evidence targets are not in exact catalog order")
+for value in (
+    "macos-14",
+    "macos-15-intel",
+    "ubuntu-22.04",
+    "ubuntu-24.04-arm",
+    "container: ubuntu:22.04",
+    "scripts/inspect-npm-native-binary.py",
+    'test "$(node --version)" = "v22.19.0"',
+    "--evidence-kind exact_native_ci",
+    "Confirm workflow remains preparation-only",
+):
+    if value not in text:
+        raise SystemExit(f"private native evidence workflow is missing policy text: {value}")
+for forbidden in (
+    "pull_request:",
+    "schedule:",
+    "macos-latest",
+    "ubuntu-latest",
+    "continue-on-error:",
+    "actions/upload-artifact",
+    "npm publish",
+    "cargo publish",
+):
+    if forbidden in text:
+        raise SystemExit(f"private native evidence workflow contains forbidden text: {forbidden}")
+for line in text.splitlines():
+    stripped = line.strip()
+    if stripped.startswith("uses: actions/"):
+        ref = stripped.rsplit("@", 1)[-1].split()[0]
+        if len(ref) != 40 or any(character not in "0123456789abcdef" for character in ref):
+            raise SystemExit(f"private evidence action is not SHA-pinned: {stripped}")
+PY
+
+python3 - \
+  "$repository_root/scripts/inspect-npm-native-binary.py" \
+  "$repository_root/scripts/prepare-npm-publication-native.sh" <<'PY'
+import pathlib
+import sys
+inspection = pathlib.Path(sys.argv[1]).read_text(encoding="utf-8")
+preparation = pathlib.Path(sys.argv[2]).read_text(encoding="utf-8")
+for value in (
+    '"aarch64-apple-darwin": "macos-14"',
+    '"x86_64-apple-darwin": "macos-15-intel"',
+    '"x86_64-unknown-linux-gnu": "ubuntu-22.04"',
+    '"aarch64-unknown-linux-gnu": "ubuntu-24.04-arm+ubuntu:22.04"',
+    "MAX_COMMAND_OUTPUT_BYTES",
+    "MAX_EVIDENCE_BYTES",
+    "O_NOFOLLOW",
+    '"glibc 2.35"',
+    '"career.npm_native_inspection.v1"',
+):
+    if value not in inspection:
+        raise SystemExit(f"native inspection script is missing fail-closed policy text: {value}")
+for forbidden in ("requests", "urllib", "http.client", "qemu", "--platform"):
+    if forbidden in inspection.lower():
+        raise SystemExit(f"native inspection script contains forbidden mechanism: {forbidden}")
+for value in (
+    "20-revazi-career-darwin-x64-0.1.1.tgz",
+    "40-revazi-career-linux-arm64-gnu-0.1.1.tgz",
+    "x86_64-apple-darwin)",
+    "aarch64-unknown-linux-gnu)",
+):
+    if value not in preparation:
+        raise SystemExit(f"native publication preparation is missing target policy text: {value}")
+PY
+
 for package in \
   @revazi/career-darwin-arm64 \
   @revazi/career-linux-x64-gnu \

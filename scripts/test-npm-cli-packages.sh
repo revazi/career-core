@@ -4,6 +4,7 @@ set -euo pipefail
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 repository_root="$(cd "$script_dir/.." && pwd -P)"
 prepare_script="$script_dir/prepare-npm-cli-packages.sh"
+inspection_script="$script_dir/inspect-npm-native-binary.py"
 
 case "$(uname -s):$(uname -m)" in
   Darwin:arm64|Darwin:aarch64)
@@ -12,11 +13,23 @@ case "$(uname -s):$(uname -m)" in
     expected_target="aarch64-apple-darwin"
     wrong_target="x86_64-unknown-linux-gnu"
     ;;
+  Darwin:x86_64|Darwin:amd64)
+    platform_key="darwin-x64"
+    package_name="@revazi/career-darwin-x64"
+    expected_target="x86_64-apple-darwin"
+    wrong_target="aarch64-unknown-linux-gnu"
+    ;;
   Linux:x86_64|Linux:amd64)
     platform_key="linux-x64-gnu"
     package_name="@revazi/career-linux-x64-gnu"
     expected_target="x86_64-unknown-linux-gnu"
     wrong_target="aarch64-apple-darwin"
+    ;;
+  Linux:aarch64|Linux:arm64)
+    platform_key="linux-arm64-gnu"
+    package_name="@revazi/career-linux-arm64-gnu"
+    expected_target="aarch64-unknown-linux-gnu"
+    wrong_target="x86_64-apple-darwin"
     ;;
   *)
     printf 'npm CLI package test requires an approved native host\n' >&2
@@ -33,9 +46,10 @@ done
 
 temporary_root="$(mktemp -d "${TMPDIR:-/tmp}/career-npm-package-test.XXXXXX")"
 inside_output="$repository_root/.npm-package-test-inside-$$"
+inside_inspection="$repository_root/.npm-native-inspection-inside-$$.json"
 inside_link="$temporary_root/repository-link"
 inside_argument="$inside_link/$(basename "$inside_output")"
-trap 'rm -rf "$temporary_root" "$inside_output"' EXIT
+trap 'rm -rf "$temporary_root" "$inside_output" "$inside_inspection"' EXIT
 ln -s "$repository_root" "$inside_link"
 
 if "$prepare_script" \
@@ -180,6 +194,83 @@ for path in (root / "npm").rglob("*"):
 assert tracked == [], tracked
 assert re.fullmatch(r"[0-9a-f]{40}", provenance["source"]["git_sha"])
 PY
+
+inspection="$temporary_root/native-inspection.json"
+"$inspection_script" \
+  --repository-root "$repository_root" \
+  --binary "$platform_stage/career" \
+  --target "$expected_target" \
+  --source-sha "$(git -C "$repository_root" rev-parse HEAD)" \
+  --runner-image local-package-test \
+  --evidence-kind local_policy \
+  --output "$inspection" \
+  >"$temporary_root/native-inspection.stdout"
+python3 - "$inspection" "$platform_key" "$expected_target" <<'PY'
+import json
+import pathlib
+import sys
+path = pathlib.Path(sys.argv[1])
+platform_key = sys.argv[2]
+target = sys.argv[3]
+value = json.loads(path.read_text())
+assert value["schema_version"] == "career.npm_native_inspection.v1"
+assert value["evidence_kind"] == "local_policy"
+assert value["target"]["platform_key"] == platform_key
+assert value["target"]["rust_target"] == target
+assert value["binary"]["observed_version"] == "career 0.1.1"
+assert value["linkage"]["dynamic_imports"]
+assert path.stat().st_size <= 64 * 1024
+PY
+
+if "$inspection_script" \
+  --repository-root "$repository_root" \
+  --binary "$platform_stage/career" \
+  --target "$expected_target" \
+  --source-sha "0000000000000000000000000000000000000000" \
+  --runner-image local-package-test \
+  --evidence-kind local_policy \
+  --output "$temporary_root/wrong-source-inspection.json" \
+  >"$temporary_root/wrong-source-inspection.stdout" \
+  2>"$temporary_root/wrong-source-inspection.stderr"; then
+  printf 'native inspection accepted an incorrect source SHA\n' >&2
+  exit 1
+fi
+grep -Fq 'source SHA does not match' "$temporary_root/wrong-source-inspection.stderr"
+[[ ! -e "$temporary_root/wrong-source-inspection.json" ]]
+
+if "$inspection_script" \
+  --repository-root "$repository_root" \
+  --binary "$platform_stage/career" \
+  --target "$expected_target" \
+  --source-sha "$(git -C "$repository_root" rev-parse HEAD)" \
+  --runner-image local-package-test \
+  --evidence-kind local_policy \
+  --output "$inside_inspection" \
+  >"$temporary_root/inside-inspection.stdout" \
+  2>"$temporary_root/inside-inspection.stderr"; then
+  printf 'native inspection accepted in-checkout evidence output\n' >&2
+  exit 1
+fi
+grep -Fq 'must be written outside the checkout' "$temporary_root/inside-inspection.stderr"
+[[ ! -e "$inside_inspection" ]]
+
+inspection_symlink="$temporary_root/symlinked-native"
+ln -s "$platform_stage/career" "$inspection_symlink"
+if "$inspection_script" \
+  --repository-root "$repository_root" \
+  --binary "$inspection_symlink" \
+  --target "$expected_target" \
+  --source-sha "$(git -C "$repository_root" rev-parse HEAD)" \
+  --runner-image local-package-test \
+  --evidence-kind local_policy \
+  --output "$temporary_root/symlink-inspection.json" \
+  >"$temporary_root/symlink-inspection.stdout" \
+  2>"$temporary_root/symlink-inspection.stderr"; then
+  printf 'native inspection accepted a symlinked executable path\n' >&2
+  exit 1
+fi
+grep -Fq 'must not be a symbolic link' "$temporary_root/symlink-inspection.stderr"
+[[ ! -e "$temporary_root/symlink-inspection.json" ]]
 
 launcher_tarball=""
 platform_tarball=""
