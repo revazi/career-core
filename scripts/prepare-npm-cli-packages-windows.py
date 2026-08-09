@@ -17,7 +17,9 @@ import tarfile
 import tempfile
 from typing import Any
 
-from npm_windows_process import BoundedProcessError, run_bounded
+sys.dont_write_bytecode = True
+
+from npm_windows_process import BoundedProcessError, run_bounded  # noqa: E402
 
 CATALOG_SHA256 = "9e56a3ca9b68799b0ff4bd52bbd2e71c2839d05a70398c5942062cb6e68032e2"
 MAX_BINARY_BYTES = 16 * 1024 * 1024

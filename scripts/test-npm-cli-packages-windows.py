@@ -13,7 +13,9 @@ import sys
 import tarfile
 import tempfile
 
-from npm_windows_process import BoundedProcessError, run_bounded
+sys.dont_write_bytecode = True
+
+from npm_windows_process import BoundedProcessError, run_bounded  # noqa: E402
 
 MAX_OUTPUT_BYTES = 32 * 1024 * 1024
 TARGETS = {
