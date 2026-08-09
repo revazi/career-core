@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 - Prepare an explicit reviewed eight-target npm catalog and private lockstep `0.1.1` launcher/native templates without claiming support before exact native package execution.
 - Generalize the npm launcher to fail-closed glibc/musl detection, Mach-O/ELF/PE architecture checks, and explicit Unix/Windows file invariants using internal npm metadata/provenance v2.
+- Add preparation-only exact native Darwin ARM64/x64 and GNU Linux x64/ARM64 packaged-binary execution plus bounded linkage/import inspection evidence; this does not yet claim new platform support.
 
 ### Changed
 

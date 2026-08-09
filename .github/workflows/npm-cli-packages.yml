@@ -15,24 +15,56 @@ jobs:
   prepare:
     name: Private native package (${{ matrix.platform_key }})
     runs-on: ${{ matrix.runner }}
-    timeout-minutes: 25
+    container: ${{ matrix.container }}
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
         include:
-          - runner: ubuntu-22.04
-            platform_key: linux-x64-gnu
-            target: x86_64-unknown-linux-gnu
           - runner: macos-14
             platform_key: darwin-arm64
             target: aarch64-apple-darwin
+            runner_image: macos-14
+          - runner: macos-15-intel
+            platform_key: darwin-x64
+            target: x86_64-apple-darwin
+            runner_image: macos-15-intel
+          - runner: ubuntu-22.04
+            platform_key: linux-x64-gnu
+            target: x86_64-unknown-linux-gnu
+            runner_image: ubuntu-22.04
+          - runner: ubuntu-24.04-arm
+            container: ubuntu:22.04
+            platform_key: linux-arm64-gnu
+            target: aarch64-unknown-linux-gnu
+            runner_image: ubuntu-24.04-arm+ubuntu:22.04
 
     steps:
+      - name: Bootstrap native ARM64 GNU build container
+        if: matrix.container != ''
+        run: |
+          apt-get update
+          DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+            binutils build-essential ca-certificates curl diffutils file git python3
+          rm -rf /var/lib/apt/lists/*
+
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
+      - name: Configure exact container checkout ownership
+        if: matrix.container != ''
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          test "$(git -C "$GITHUB_WORKSPACE" rev-parse --show-toplevel)" = "$GITHUB_WORKSPACE"
+
       - name: Configure exact reviewed release Rust
         run: |
+          if ! command -v rustup >/dev/null 2>&1; then
+            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs |
+              sh -s -- -y --profile minimal --default-toolchain 1.97.1
+            printf '%s\n' "$HOME/.cargo/bin" >>"$GITHUB_PATH"
+            export PATH="$HOME/.cargo/bin:$PATH"
+          fi
           rustup toolchain install 1.97.1 --profile minimal --no-self-update
           rustup default 1.97.1
           rustc --version | grep -q '^rustc 1\.97\.1 '
@@ -42,6 +74,9 @@ jobs:
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: '22.19.0'
+
+      - name: Verify exact reviewed Node.js
+        run: test "$(node --version)" = "v22.19.0"
 
       - name: Run launcher and package tests
         run: |
@@ -57,6 +92,22 @@ jobs:
           test "$(find "$output_dir/tarballs" -maxdepth 1 -type f -name '*.tgz' | wc -l | tr -d ' ')" = "2"
           test -f "$output_dir/stage/${{ matrix.platform_key }}/provenance.json"
           test -z "$(find "$output_dir" -type f \( -name '*.sig' -o -name '*.pem' -o -name '*.key' \) -print -quit)"
+
+      - name: Inspect exact native binary and linkage evidence
+        run: |
+          output_dir="$RUNNER_TEMP/career-npm-cli-packages"
+          evidence="$RUNNER_TEMP/career-npm-native-inspection-${{ matrix.platform_key }}.json"
+          scripts/inspect-npm-native-binary.py \
+            --repository-root "$GITHUB_WORKSPACE" \
+            --binary "$output_dir/stage/${{ matrix.platform_key }}/career" \
+            --target "${{ matrix.target }}" \
+            --source-sha "${{ github.sha }}" \
+            --runner-image "${{ matrix.runner_image }}" \
+            --evidence-kind exact_native_ci \
+            --output "$evidence"
+          python3 -m json.tool "$evidence" >/dev/null
+          grep -Fq '"evidence_kind": "exact_native_ci"' "$evidence"
+          test "$(wc -c <"$evidence" | tr -d ' ')" -le 65536
 
       - name: Confirm workflow remains preparation-only
         run: |

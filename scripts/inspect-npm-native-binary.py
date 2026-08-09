@@ -1,0 +1,376 @@
+#!/usr/bin/env python3
+"""Inspect one exact native npm CLI binary without network or publication."""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import os
+import pathlib
+import platform
+import re
+import resource
+import stat
+import subprocess
+import sys
+import tempfile
+from typing import Any
+
+CATALOG_SHA256 = "9e56a3ca9b68799b0ff4bd52bbd2e71c2839d05a70398c5942062cb6e68032e2"
+MAX_BINARY_BYTES = 16 * 1024 * 1024
+MAX_CATALOG_BYTES = 64 * 1024
+MAX_COMMAND_OUTPUT_BYTES = 8 * 1024 * 1024
+MAX_EVIDENCE_BYTES = 64 * 1024
+SUPPORTED_TARGETS = {
+    "aarch64-apple-darwin": ("Darwin", "arm64"),
+    "x86_64-apple-darwin": ("Darwin", "x86_64"),
+    "x86_64-unknown-linux-gnu": ("Linux", "x86_64"),
+    "aarch64-unknown-linux-gnu": ("Linux", "aarch64"),
+}
+EXACT_RUNNER_IMAGES = {
+    "aarch64-apple-darwin": "macos-14",
+    "x86_64-apple-darwin": "macos-15-intel",
+    "x86_64-unknown-linux-gnu": "ubuntu-22.04",
+    "aarch64-unknown-linux-gnu": "ubuntu-24.04-arm+ubuntu:22.04",
+}
+
+
+class InspectionError(ValueError):
+    pass
+
+
+def fail(message: str) -> None:
+    raise InspectionError(message)
+
+
+def same_file(left: os.stat_result, right: os.stat_result) -> bool:
+    return (left.st_dev, left.st_ino, left.st_size, left.st_mode, left.st_mtime_ns) == (
+        right.st_dev,
+        right.st_ino,
+        right.st_size,
+        right.st_mode,
+        right.st_mtime_ns,
+    )
+
+
+def bounded_regular_bytes(path: pathlib.Path, maximum: int, label: str) -> bytes:
+    before = path.lstat()
+    if not stat.S_ISREG(before.st_mode) or not 1 <= before.st_size <= maximum:
+        fail(f"{label} must be one bounded regular non-symlink file")
+    flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0)
+    descriptor = os.open(path, flags)
+    try:
+        opened = os.fstat(descriptor)
+        if not stat.S_ISREG(opened.st_mode) or not same_file(before, opened):
+            fail(f"{label} changed before inspection")
+        chunks: list[bytes] = []
+        total = 0
+        while total <= maximum:
+            chunk = os.read(descriptor, min(64 * 1024, maximum + 1 - total))
+            if not chunk:
+                break
+            chunks.append(chunk)
+            total += len(chunk)
+    finally:
+        os.close(descriptor)
+    after = path.lstat()
+    data = b"".join(chunks)
+    if len(data) != opened.st_size or len(data) > maximum or not same_file(opened, after):
+        fail(f"{label} changed or exceeded its byte bound during inspection")
+    return data
+
+
+def load_catalog(repository_root: pathlib.Path) -> tuple[dict[str, Any], bytes]:
+    path = repository_root / "npm/career/targets.json"
+    data = bounded_regular_bytes(path, MAX_CATALOG_BYTES, "target catalog")
+    if hashlib.sha256(data).hexdigest() != CATALOG_SHA256:
+        fail("target catalog bytes are not the reviewed catalog")
+    try:
+        document = json.loads(data)
+    except json.JSONDecodeError as error:
+        raise InspectionError("target catalog is malformed") from error
+    if (
+        not isinstance(document, dict)
+        or set(document) != {"schema_version", "targets"}
+        or document.get("schema_version") != "career.npm_target_catalog.v1"
+        or not isinstance(document.get("targets"), list)
+        or len(document["targets"]) != 8
+    ):
+        fail("target catalog shape is invalid")
+    return document, data
+
+
+def selected_target(document: dict[str, Any], rust_target: str) -> dict[str, Any]:
+    matches = [value for value in document["targets"] if value.get("rust_target") == rust_target]
+    if len(matches) != 1 or rust_target not in SUPPORTED_TARGETS:
+        fail("inspection target is not approved for this native evidence gate")
+    return matches[0]
+
+
+def normalized_machine() -> str:
+    machine = platform.machine().lower()
+    aliases = {"amd64": "x86_64", "arm64": "arm64", "aarch64": "aarch64"}
+    return aliases.get(machine, machine)
+
+
+def require_native_host(rust_target: str) -> tuple[str, str]:
+    expected_system, expected_machine = SUPPORTED_TARGETS[rust_target]
+    actual_system = platform.system()
+    actual_machine = normalized_machine()
+    accepted_machines = {expected_machine}
+    if expected_machine in {"arm64", "aarch64"}:
+        accepted_machines = {"arm64", "aarch64"}
+    if actual_system != expected_system or actual_machine not in accepted_machines:
+        fail("binary inspection is not running on the exact native OS and architecture")
+    return actual_system, actual_machine
+
+
+def limit_command_output_file_size() -> None:
+    resource.setrlimit(
+        resource.RLIMIT_FSIZE, (MAX_COMMAND_OUTPUT_BYTES, MAX_COMMAND_OUTPUT_BYTES)
+    )
+
+
+def run_bounded(command: list[str], label: str) -> str:
+    try:
+        with tempfile.TemporaryFile() as stdout, tempfile.TemporaryFile() as stderr:
+            result = subprocess.run(
+                command,
+                check=False,
+                stdout=stdout,
+                stderr=stderr,
+                timeout=60,
+                preexec_fn=limit_command_output_file_size,
+            )
+            stdout_size = os.fstat(stdout.fileno()).st_size
+            stderr_size = os.fstat(stderr.fileno()).st_size
+            if stdout_size + stderr_size > MAX_COMMAND_OUTPUT_BYTES:
+                fail(f"{label} output exceeds its reviewed bound")
+            stdout.seek(0)
+            output = stdout.read(MAX_COMMAND_OUTPUT_BYTES + 1)
+    except (OSError, subprocess.TimeoutExpired) as error:
+        raise InspectionError(f"{label} could not run") from error
+    if result.returncode != 0:
+        fail(f"{label} failed")
+    try:
+        return output.decode("utf-8")
+    except UnicodeError as error:
+        raise InspectionError(f"{label} output is not UTF-8") from error
+
+
+def verify_header(binary: bytes, target: dict[str, Any]) -> None:
+    binary_format = target["binary_format"]
+    architecture = target["binary_architecture"]
+    if binary_format.startswith("mach-o-64-"):
+        expected_cpu = 0x0100000C if architecture == "aarch64" else 0x01000007
+        valid = (
+            len(binary) >= 8
+            and int.from_bytes(binary[0:4], "little") == 0xFEEDFACF
+            and int.from_bytes(binary[4:8], "little") == expected_cpu
+        )
+    else:
+        expected_machine = 0xB7 if architecture == "aarch64" else 0x3E
+        valid = (
+            binary[:6] == bytes([0x7F, 0x45, 0x4C, 0x46, 2, 1])
+            and len(binary) >= 20
+            and int.from_bytes(binary[18:20], "little") == expected_machine
+        )
+    if not valid:
+        fail("native executable header does not match the reviewed target")
+
+
+def version_tuple(value: str) -> tuple[int, ...]:
+    if re.fullmatch(r"(?:0|[1-9][0-9]*)(?:\.(?:0|[1-9][0-9]*)){1,3}", value) is None:
+        fail("GNU libc symbol version is malformed")
+    return tuple(int(part) for part in value.split("."))
+
+
+def inspect_darwin(binary_path: pathlib.Path, target: dict[str, Any]) -> dict[str, Any]:
+    expected_arch = "arm64" if target["binary_architecture"] == "aarch64" else "x86_64"
+    architectures = run_bounded(["lipo", "-archs", str(binary_path)], "lipo inspection").strip()
+    if architectures != expected_arch:
+        fail("Mach-O binary is not one exact thin reviewed architecture")
+    output = run_bounded(["otool", "-L", str(binary_path)], "Mach-O import inspection")
+    lines = output.splitlines()
+    imports = sorted({line.strip().split(" ", 1)[0] for line in lines[1:] if line.strip()})
+    if not 1 <= len(imports) <= 128:
+        fail("Mach-O dynamic import count is outside its reviewed bound")
+    if any(not value.startswith(("/usr/lib/", "/System/Library/")) for value in imports):
+        fail("Mach-O binary imports a non-system dynamic library")
+    return {
+        "linkage": "dynamic",
+        "interpreter": None,
+        "dynamic_imports": imports,
+        "highest_glibc_symbol_version": None,
+        "runtime_libc": None,
+    }
+
+
+def inspect_linux(binary_path: pathlib.Path, target: dict[str, Any]) -> dict[str, Any]:
+    program_headers = run_bounded(
+        ["readelf", "--program-headers", "--wide", str(binary_path)],
+        "ELF program-header inspection",
+    )
+    interpreter_matches = re.findall(r"Requesting program interpreter: ([^\]]+)", program_headers)
+    expected_interpreter = (
+        "/lib/ld-linux-aarch64.so.1"
+        if target["binary_architecture"] == "aarch64"
+        else "/lib64/ld-linux-x86-64.so.2"
+    )
+    if interpreter_matches != [expected_interpreter]:
+        fail("ELF interpreter does not match the reviewed GNU target")
+    dynamic = run_bounded(
+        ["readelf", "--dynamic", "--wide", str(binary_path)], "ELF import inspection"
+    )
+    imports = sorted(set(re.findall(r"Shared library: \[([^\]]+)\]", dynamic)))
+    if not 1 <= len(imports) <= 128:
+        fail("ELF dynamic import count is outside its reviewed bound")
+    symbols = run_bounded(
+        ["readelf", "--dyn-syms", "--wide", str(binary_path)], "GNU symbol inspection"
+    )
+    versions = sorted(
+        set(re.findall(r"GLIBC_([0-9]+(?:\.[0-9]+)+)", symbols)), key=version_tuple
+    )
+    if not versions:
+        fail("GNU binary has no bounded imported GLIBC symbol evidence")
+    highest = versions[-1]
+    minimum = target["minimum_glibc_version"]
+    if version_tuple(highest) > version_tuple(minimum):
+        fail("GNU binary imports a GLIBC symbol newer than the proposed floor")
+    runtime_libc = run_bounded(["getconf", "GNU_LIBC_VERSION"], "GNU libc runtime inspection").strip()
+    if re.fullmatch(r"glibc [0-9]+(?:\.[0-9]+){1,3}", runtime_libc) is None:
+        fail("GNU libc runtime evidence is malformed")
+    return {
+        "linkage": "dynamic",
+        "interpreter": expected_interpreter,
+        "dynamic_imports": imports,
+        "highest_glibc_symbol_version": highest,
+        "runtime_libc": runtime_libc,
+    }
+
+
+def require_source_state(
+    repository_root: pathlib.Path, source_sha: str, evidence_kind: str
+) -> None:
+    head = run_bounded(
+        ["git", "-C", str(repository_root), "rev-parse", "HEAD"], "source SHA inspection"
+    ).strip()
+    if head != source_sha:
+        fail("native evidence source SHA does not match the checked-out commit")
+    if evidence_kind != "exact_native_ci":
+        return
+    status_output = run_bounded(
+        ["git", "-C", str(repository_root), "status", "--porcelain", "--untracked-files=normal"],
+        "source cleanliness inspection",
+    )
+    if status_output:
+        fail("exact native CI evidence requires a clean source checkout")
+    rustc_version = run_bounded(["rustc", "--version"], "rustc inspection").strip()
+    cargo_version = run_bounded(["cargo", "--version"], "Cargo inspection").strip()
+    if not rustc_version.startswith("rustc 1.97.1 ") or not cargo_version.startswith("cargo 1.97.1 "):
+        fail("exact native CI evidence requires rustc and Cargo 1.97.1")
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--repository-root", type=pathlib.Path, required=True)
+    parser.add_argument("--binary", type=pathlib.Path, required=True)
+    parser.add_argument("--target", required=True, choices=sorted(SUPPORTED_TARGETS))
+    parser.add_argument("--source-sha", required=True)
+    parser.add_argument("--runner-image", required=True)
+    parser.add_argument("--evidence-kind", required=True, choices=["exact_native_ci", "local_policy"])
+    parser.add_argument("--output", type=pathlib.Path, required=True)
+    return parser.parse_args()
+
+
+def main() -> int:
+    args = parse_args()
+    try:
+        repository_root = args.repository_root.resolve(strict=True)
+        output = args.output.resolve(strict=False)
+        if repository_root == output or repository_root in output.parents:
+            fail("native inspection evidence must be written outside the checkout")
+        if re.fullmatch(r"[0-9a-f]{40}", args.source_sha) is None:
+            fail("source SHA must be one full lowercase commit identifier")
+        if re.fullmatch(r"[A-Za-z0-9._/+:-]{1,128}", args.runner_image) is None:
+            fail("runner image label is outside its reviewed bound")
+        require_source_state(repository_root, args.source_sha, args.evidence_kind)
+        document, catalog_bytes = load_catalog(repository_root)
+        target = selected_target(document, args.target)
+        system, machine = require_native_host(args.target)
+        binary_argument = args.binary.expanduser()
+        if stat.S_ISLNK(binary_argument.lstat().st_mode):
+            fail("native executable path must not be a symbolic link")
+        binary_path = binary_argument.resolve(strict=True)
+        binary = bounded_regular_bytes(
+            binary_path, target["maximum_binary_size_bytes"], "native executable"
+        )
+        if stat.S_IMODE(binary_path.lstat().st_mode) != 0o755:
+            fail("native executable mode is not exactly 0755")
+        verify_header(binary, target)
+        observed_version = run_bounded([str(binary_path), "--version"], "native execution").strip()
+        if observed_version != "career 0.1.1":
+            fail("native executable version is not exact lockstep 0.1.1")
+        if system == "Darwin":
+            linkage = inspect_darwin(binary_path, target)
+        else:
+            linkage = inspect_linux(binary_path, target)
+        if args.evidence_kind == "exact_native_ci":
+            if args.runner_image != EXACT_RUNNER_IMAGES[args.target]:
+                fail("exact native CI evidence runner image does not match the reviewed target")
+            if target["libc_family"] == "glibc" and linkage["runtime_libc"] != "glibc 2.35":
+                fail("exact GNU CI evidence requires Ubuntu 22.04 glibc 2.35 userland")
+        evidence = {
+            "schema_version": "career.npm_native_inspection.v1",
+            "evidence_kind": args.evidence_kind,
+            "source_sha": args.source_sha,
+            "target_catalog_sha256": hashlib.sha256(catalog_bytes).hexdigest(),
+            "runner": {
+                "image": args.runner_image,
+                "system": system,
+                "machine": machine,
+            },
+            "target": {
+                "platform_key": target["platform_key"],
+                "rust_target": target["rust_target"],
+                "node_platform": target["node_platform"],
+                "node_arch": target["node_arch"],
+                "libc_family": target["libc_family"],
+            },
+            "binary": {
+                "file_name": target["executable"],
+                "binary_format": target["binary_format"],
+                "binary_architecture": target["binary_architecture"],
+                "size_bytes": len(binary),
+                "sha256": hashlib.sha256(binary).hexdigest(),
+                "mode": "0755",
+                "observed_version": observed_version,
+            },
+            "linkage": linkage,
+        }
+        encoded = (json.dumps(evidence, indent=2, sort_keys=True) + "\n").encode("utf-8")
+        if len(encoded) > MAX_EVIDENCE_BYTES:
+            fail("native inspection evidence exceeds its reviewed bound")
+        output.parent.mkdir(parents=True, exist_ok=True)
+        flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
+        descriptor = os.open(output, flags, 0o600)
+        try:
+            written = 0
+            while written < len(encoded):
+                count = os.write(descriptor, encoded[written:])
+                if count <= 0:
+                    fail("native inspection evidence could not be written completely")
+                written += count
+            os.fsync(descriptor)
+        finally:
+            os.close(descriptor)
+        print(encoded.decode("utf-8"), end="")
+        return 0
+    except (InspectionError, OSError) as error:
+        print(f"native npm binary inspection failed: {error}", file=sys.stderr)
+        return 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

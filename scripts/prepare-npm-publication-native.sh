@@ -71,11 +71,23 @@ case "$expected_target" in
     expected_runner_arch="ARM64"
     final_name="10-revazi-career-darwin-arm64-0.1.1.tgz"
     ;;
+  x86_64-apple-darwin)
+    platform_key="darwin-x64"
+    expected_runner_os="macOS"
+    expected_runner_arch="X64"
+    final_name="20-revazi-career-darwin-x64-0.1.1.tgz"
+    ;;
   x86_64-unknown-linux-gnu)
     platform_key="linux-x64-gnu"
     expected_runner_os="Linux"
     expected_runner_arch="X64"
     final_name="30-revazi-career-linux-x64-gnu-0.1.1.tgz"
+    ;;
+  aarch64-unknown-linux-gnu)
+    platform_key="linux-arm64-gnu"
+    expected_runner_os="Linux"
+    expected_runner_arch="ARM64"
+    final_name="40-revazi-career-linux-arm64-gnu-0.1.1.tgz"
     ;;
   *) fail "expected target is not an approved native publication target" ;;
 esac
@@ -103,7 +115,7 @@ private_output="$output_dir/work/private"
   --expected-target "$expected_target"
 
 platform_stage="$private_output/stage/$platform_key"
-if [[ "$platform_key" == "linux-x64-gnu" ]]; then
+if [[ "$platform_key" == "linux-x64-gnu" || "$platform_key" == "linux-arm64-gnu" ]]; then
   command -v getconf >/dev/null 2>&1 || fail "Linux candidate requires getconf"
   command -v readelf >/dev/null 2>&1 || fail "Linux candidate requires readelf"
   [[ "$(getconf GNU_LIBC_VERSION 2>/dev/null)" == "glibc 2.35" ]] || \

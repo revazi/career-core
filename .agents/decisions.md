@@ -101,3 +101,9 @@ The next immutable npm version is proposed patch `0.1.1`, preserving every publi
 A catalog entry, private template, synthetic header, cross-compiled artifact, emulator result, or skipped CI job is not platform support. Every final packaged binary must execute on the exact native OS and architecture in CI. Linux must be positively classified as glibc or musl; missing glibc evidence never implies musl. GNU packages retain a proposed supported glibc 2.35 floor pending exact native symbol/import records. Windows uses `career.exe`, regular non-symlink file checks, and exact PE32+ machine verification instead of a Unix executable-mode claim.
 
 The extension proceeds through separately approved target groups and ends with an exact eight-native-plus-launcher candidate. Public `0.1.0` packages and evidence remain immutable. The protected `0.1.1` workflow, publication, tags, releases, npm queries, credentials, and `pi-career` edits remain forbidden until their later explicit gates.
+
+## D-024 — Darwin/GNU evidence is exact native, bounded, and preparation-only
+
+The Darwin/GNU sub-gate uses exact `macos-14` ARM64, `macos-15-intel` x64, `ubuntu-22.04` x64/glibc 2.35, and `ubuntu-24.04-arm` with a native Ubuntu 22.04 ARM64/glibc 2.35 container. Each job builds with rustc/Cargo 1.97.1, executes the offline extracted npm package, and emits bounded `career.npm_native_inspection.v1` source/catalog/host/version/format/architecture/linkage/import/interpreter/GLIBC-symbol/mode/size/SHA-256 evidence outside the checkout.
+
+This manual workflow remains preparation-only: no artifact upload, publication, tag, release, registry query, credential, cross-compilation, or emulation. Intermediate green evidence proves the runners and package path, not final public support; every target must execute again from the final release source.
