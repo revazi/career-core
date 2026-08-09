@@ -2,7 +2,7 @@
 
 The `career` executable is the universal local adapter for coding agents and scripts. It depends on `career-core`, performs no implicit network requests, and does not persist or modify source documents.
 
-Phase 9's Node 22+ `@revazi/career@0.1.0` launcher is a transparent distribution wrapper around this exact native executable. It does not change commands, JSON/text bytes, exit meanings, schemas, or the 33,554,432-byte successful machine-output bound. Launcher selection/verification failures use separate bounded `CAREER_NPM_*` stderr codes before the CLI starts; see [`contracts/npm-cli-distribution-v1.md`](contracts/npm-cli-distribution-v1.md). Checked-in templates remain private; only protected external candidate staging may create public tarballs. Native optional packages are not consumer interfaces.
+Phase 9's Node 22+ `@revazi/career@0.1.1` launcher is a transparent distribution wrapper around this exact native executable after protected publication and all-eight public acceptance. It does not change commands, JSON/text bytes, exit meanings, schemas, or the 33,554,432-byte successful machine-output bound. Launcher selection/verification failures use separate bounded `CAREER_NPM_*` stderr codes before the CLI starts; see [`contracts/npm-cli-distribution-v2.md`](contracts/npm-cli-distribution-v2.md). Checked-in templates remain private; only protected external candidate staging may create public tarballs. Native optional packages are not consumer interfaces.
 
 ## Command hierarchy
 

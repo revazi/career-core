@@ -47,8 +47,12 @@ LIFECYCLE_NAMES = {
 }
 LICENSE_FILES = {"LICENSE-MIT", "LICENSE-APACHE", "THIRD_PARTY_NOTICES.md"}
 LAUNCHER_NAME = "@revazi/career"
-TARGET_CATALOG_SHA256 = "9e56a3ca9b68799b0ff4bd52bbd2e71c2839d05a70398c5942062cb6e68032e2"
-TARGET_CATALOG_PATH = pathlib.Path(__file__).resolve().parent.parent / "npm/career/targets.json"
+TARGET_CATALOG_SHA256 = (
+    "9e56a3ca9b68799b0ff4bd52bbd2e71c2839d05a70398c5942062cb6e68032e2"
+)
+TARGET_CATALOG_PATH = (
+    pathlib.Path(__file__).resolve().parent.parent / "npm/career/targets.json"
+)
 
 
 class CandidateError(ValueError):
@@ -60,6 +64,8 @@ def fail(message: str) -> None:
 
 
 def same_file_identity(left: os.stat_result, right: os.stat_result) -> bool:
+    if os.name == "nt":
+        return left.st_size == right.st_size
     return (left.st_dev, left.st_ino, left.st_size, left.st_mode, left.st_mtime_ns) == (
         right.st_dev,
         right.st_ino,
@@ -78,7 +84,9 @@ def bounded_file_bytes(path: pathlib.Path, maximum: int, label: str) -> bytes:
             fail(f"{label} is outside its reviewed byte bound")
         with path.open("rb") as handle:
             opened = os.fstat(handle.fileno())
-            if not stat.S_ISREG(opened.st_mode) or not same_file_identity(before, opened):
+            if not stat.S_ISREG(opened.st_mode) or not same_file_identity(
+                before, opened
+            ):
                 fail(f"{label} changed before it could be read")
             data = handle.read(maximum + 1)
         after = path.lstat()
@@ -93,7 +101,9 @@ def bounded_file_bytes(path: pathlib.Path, maximum: int, label: str) -> bytes:
     return data
 
 
-def load_object(path: pathlib.Path, maximum: int = MAX_METADATA_BYTES) -> dict[str, Any]:
+def load_object(
+    path: pathlib.Path, maximum: int = MAX_METADATA_BYTES
+) -> dict[str, Any]:
     try:
         value = json.loads(bounded_file_bytes(path, maximum, path.name).decode("utf-8"))
     except (UnicodeError, json.JSONDecodeError) as error:
@@ -151,7 +161,9 @@ def no_code_fields(manifest: dict[str, Any], allow_optional: bool) -> bool:
     forbidden = {"scripts", "dependencies", "devDependencies", "peerDependencies"}
     if not allow_optional:
         forbidden.add("optionalDependencies")
-    return not forbidden.intersection(manifest) and not LIFECYCLE_NAMES.intersection(manifest)
+    return not forbidden.intersection(manifest) and not LIFECYCLE_NAMES.intersection(
+        manifest
+    )
 
 
 def manifest_property_set(name: str, publication_candidate: bool) -> set[str]:
@@ -301,7 +313,9 @@ def read_tarball(
             fail("candidate tarball is outside the 32 MiB compressed bound")
         with path.open("rb") as handle:
             opened = os.fstat(handle.fileno())
-            if not stat.S_ISREG(opened.st_mode) or not same_file_identity(before, opened):
+            if not stat.S_ISREG(opened.st_mode) or not same_file_identity(
+                before, opened
+            ):
                 fail("candidate tarball changed before it could be read")
             with gzip.GzipFile(fileobj=handle, mode="rb") as decompressed:
                 bounded = BoundedDecompressedReader(
@@ -317,7 +331,9 @@ def read_tarball(
                             fail("candidate tarball contains duplicate paths")
                         maximum = member_limits[member.name]
                         if not 1 <= member.size <= maximum:
-                            fail("candidate tarball member exceeds its reviewed byte bound")
+                            fail(
+                                "candidate tarball member exceeds its reviewed byte bound"
+                            )
                         extracted = archive.extractfile(member)
                         if extracted is None:
                             fail("candidate tarball member is unreadable")
@@ -353,12 +369,20 @@ def validate_launcher_metadata(manifest: dict[str, Any]) -> None:
         fail("candidate launcher homepage metadata mismatch")
     if manifest.get("bugs") != {"url": "https://github.com/revazi/career-core/issues"}:
         fail("candidate launcher bugs metadata mismatch")
-    if manifest.get("keywords") != ["career", "resume", "job-search", "matching", "cli"]:
+    if manifest.get("keywords") != [
+        "career",
+        "resume",
+        "job-search",
+        "matching",
+        "cli",
+    ]:
         fail("candidate launcher keywords metadata mismatch")
     expected_optional = {target["name"]: VERSION for target in TARGETS.values()}
     optional = manifest.get("optionalDependencies")
     if optional != expected_optional or list(optional) != list(expected_optional):
-        fail("candidate launcher optional dependencies are not exact, ordered, and lockstep")
+        fail(
+            "candidate launcher optional dependencies are not exact, ordered, and lockstep"
+        )
     if manifest.get("bin") != {"career": "bin/career.js"}:
         fail("candidate launcher bin surface mismatch")
     if manifest.get("engines") != {"node": ">=22"}:
@@ -381,8 +405,12 @@ def validate_launcher_metadata(manifest: dict[str, Any]) -> None:
         fail("candidate launcher metadata mismatch")
 
 
-def validate_native_manifest_metadata(manifest: dict[str, Any], target: dict[str, Any]) -> None:
-    if manifest.get("os") != [target["node_platform"]] or manifest.get("cpu") != [target["node_arch"]]:
+def validate_native_manifest_metadata(
+    manifest: dict[str, Any], target: dict[str, Any]
+) -> None:
+    if manifest.get("os") != [target["node_platform"]] or manifest.get("cpu") != [
+        target["node_arch"]
+    ]:
         fail("candidate native os/cpu metadata mismatch")
     if target["libc"] is None:
         if "libc" in manifest:
@@ -423,7 +451,9 @@ def validate_native_manifest_metadata(manifest: dict[str, Any], target: dict[str
 def validate_public_manifest(manifest: dict[str, Any], expected_name: str) -> None:
     if manifest.get("name") != expected_name or manifest.get("version") != VERSION:
         fail("candidate package identity/version mismatch")
-    if set(manifest) != manifest_property_set(expected_name, publication_candidate=True):
+    if set(manifest) != manifest_property_set(
+        expected_name, publication_candidate=True
+    ):
         fail("candidate package property set is not exact")
     if manifest.get("publishConfig") != {"access": "public", "provenance": True}:
         fail("candidate package public access/provenance metadata mismatch")
@@ -434,7 +464,9 @@ def validate_public_manifest(manifest: dict[str, Any], expected_name: str) -> No
     if expected_name == LAUNCHER_NAME:
         validate_launcher_metadata(manifest)
         return
-    target = next((value for value in TARGETS.values() if value["name"] == expected_name), None)
+    target = next(
+        (value for value in TARGETS.values() if value["name"] == expected_name), None
+    )
     if target is None:
         fail("candidate native package is not approved")
     validate_native_manifest_metadata(manifest, target)
@@ -472,12 +504,31 @@ def valid_binary_header(binary: bytes, target: dict[str, Any]) -> bool:
 
 
 def validate_runner(runner: Any, target: dict[str, Any]) -> None:
+    expected_images = {
+        "darwin-arm64": "macos-14",
+        "darwin-x64": "macos-15-intel",
+        "linux-x64-gnu": "ubuntu-22.04",
+        "linux-arm64-gnu": "ubuntu-24.04-arm+ubuntu:22.04",
+        "linux-x64-musl": (
+            "ubuntu-22.04+node:22.19.0-alpine3.22+sha256:"
+            "d2166de198f26e17e5a442f537754dd616ab069c47cc57b889310a717e0abbf9"
+        ),
+        "linux-arm64-musl": (
+            "ubuntu-24.04-arm+node:22.19.0-alpine3.22+sha256:"
+            "d2166de198f26e17e5a442f537754dd616ab069c47cc57b889310a717e0abbf9"
+        ),
+        "win32-x64-msvc": "windows-2025",
+        "win32-arm64-msvc": "windows-11-arm",
+    }
     if not exact_keys(runner, {"os", "arch", "image", "libc"}):
         fail("candidate runner provenance property set mismatch")
-    if runner.get("os") != target["runner_os"] or runner.get("arch") != target["runner_arch"]:
+    if (
+        runner.get("os") != target["runner_os"]
+        or runner.get("arch") != target["runner_arch"]
+    ):
         fail("candidate runner OS/architecture mismatch")
-    if not bounded_text(runner.get("image"), 128):
-        fail("candidate runner image is invalid")
+    if runner.get("image") != expected_images.get(target["platform_key"]):
+        fail("candidate runner image is not the exact reviewed native environment")
     libc = runner.get("libc")
     if target["libc"] is None:
         if libc is not None:
@@ -490,11 +541,18 @@ def validate_runner(runner: Any, target: dict[str, Any]) -> None:
 
 
 def validate_provenance(
-    provenance: dict[str, Any], manifest: dict[str, Any], target: dict[str, Any], source_sha: str
+    provenance: dict[str, Any],
+    manifest: dict[str, Any],
+    target: dict[str, Any],
+    source_sha: str,
 ) -> None:
-    if not exact_keys(
-        provenance, {"schema_version", "package", "source", "build", "executable", "integrity"}
-    ) or provenance.get("schema_version") != "career.npm_native_provenance.v2":
+    if (
+        not exact_keys(
+            provenance,
+            {"schema_version", "package", "source", "build", "executable", "integrity"},
+        )
+        or provenance.get("schema_version") != "career.npm_native_provenance.v2"
+    ):
         fail("candidate native provenance schema/property mismatch")
     package = provenance.get("package")
     expected_package = {
@@ -532,7 +590,8 @@ def validate_provenance(
         target["rust_target"],
     ]
     if not exact_keys(
-        build, {"command", "profile", "locked", "rustc_version", "cargo_version", "runner"}
+        build,
+        {"command", "profile", "locked", "rustc_version", "cargo_version", "runner"},
     ):
         fail("candidate build provenance property set mismatch")
     if build.get("command") != expected_command or build.get("profile") != "release":
@@ -578,11 +637,15 @@ def validate_provenance(
         "archive_mode": target["archive_mode"],
         "mode": target["executable_mode"],
     }
-    if not all(executable.get(key) == value for key, value in expected_executable.items()):
+    if not all(
+        executable.get(key) == value for key, value in expected_executable.items()
+    ):
         fail("candidate executable target provenance mismatch")
 
 
-def verify_native_tarball(path: pathlib.Path, platform_key: str, source_sha: str) -> None:
+def verify_native_tarball(
+    path: pathlib.Path, platform_key: str, source_sha: str
+) -> None:
     target = TARGETS.get(platform_key)
     if target is None:
         fail("unsupported native candidate target")
@@ -606,10 +669,9 @@ def verify_native_tarball(path: pathlib.Path, platform_key: str, source_sha: str
     validate_provenance(provenance, manifest, target, source_sha)
     binary = files[binary_member]
     executable = provenance["executable"]
-    if (
-        not 1 <= len(binary) <= target["maximum_binary_size_bytes"]
-        or executable.get("size_bytes") != len(binary)
-    ):
+    if not 1 <= len(binary) <= target["maximum_binary_size_bytes"] or executable.get(
+        "size_bytes"
+    ) != len(binary):
         fail("candidate executable size mismatch")
     if modes[binary_member] != int(target["archive_mode"], 8):
         fail("candidate executable packed mode mismatch")
@@ -674,7 +736,9 @@ def package_rows(directory: pathlib.Path) -> list[dict[str, Any]]:
     return values
 
 
-def expected_publication_manifest(directory: pathlib.Path, source_sha: str) -> dict[str, Any]:
+def expected_publication_manifest(
+    directory: pathlib.Path, source_sha: str
+) -> dict[str, Any]:
     return {
         "schema_version": "career.npm_publication_candidate.v1",
         "source": {
@@ -699,10 +763,15 @@ def expected_publication_manifest(directory: pathlib.Path, source_sha: str) -> d
 
 
 def write_publication_manifest(directory: pathlib.Path, source_sha: str) -> None:
-    write_object(directory / "publication-manifest.json", expected_publication_manifest(directory, source_sha))
+    write_object(
+        directory / "publication-manifest.json",
+        expected_publication_manifest(directory, source_sha),
+    )
 
 
-def verify_reviewed_package_bytes(directory: pathlib.Path, repository_root: pathlib.Path) -> None:
+def verify_reviewed_package_bytes(
+    directory: pathlib.Path, repository_root: pathlib.Path
+) -> None:
     launcher_limits = launcher_member_limits()
     launcher_files, _ = read_tarball(directory / LAUNCHER_FILE, launcher_limits)
     reviewed = {
@@ -713,7 +782,9 @@ def verify_reviewed_package_bytes(directory: pathlib.Path, repository_root: path
     for name in LICENSE_FILES:
         reviewed[f"package/{name}"] = repository_root / name
     for member, source_path in reviewed.items():
-        source = bounded_file_bytes(source_path, launcher_limits[member], f"reviewed {member}")
+        source = bounded_file_bytes(
+            source_path, launcher_limits[member], f"reviewed {member}"
+        )
         if launcher_files.get(member) != source:
             fail(f"launcher candidate {member} differs from reviewed source")
     if not 1 <= len(launcher_files["package/README.md"]) <= 16 * 1024:
@@ -723,12 +794,16 @@ def verify_reviewed_package_bytes(directory: pathlib.Path, repository_root: path
         native_files, _ = read_tarball(directory / target["file"], limits)
         for name in LICENSE_FILES:
             member = f"package/{name}"
-            source = bounded_file_bytes(repository_root / name, limits[member], f"reviewed {name}")
+            source = bounded_file_bytes(
+                repository_root / name, limits[member], f"reviewed {name}"
+            )
             if native_files.get(member) != source:
                 fail(f"native candidate {name} differs from reviewed source")
 
 
-def bounded_directory_entries(directory: pathlib.Path, maximum: int) -> list[pathlib.Path]:
+def bounded_directory_entries(
+    directory: pathlib.Path, maximum: int
+) -> list[pathlib.Path]:
     entries: list[pathlib.Path] = []
     try:
         for path in directory.iterdir():
@@ -736,12 +811,16 @@ def bounded_directory_entries(directory: pathlib.Path, maximum: int) -> list[pat
                 fail("publication candidate directory exceeds its entry bound")
             entries.append(path)
     except OSError as error:
-        raise CandidateError("publication candidate directory could not be read") from error
+        raise CandidateError(
+            "publication candidate directory could not be read"
+        ) from error
     return entries
 
 
 def verify_candidate(
-    directory: pathlib.Path, source_sha: str, repository_root: Optional[pathlib.Path] = None
+    directory: pathlib.Path,
+    source_sha: str,
+    repository_root: Optional[pathlib.Path] = None,
 ) -> None:
     expected_names = {
         *(target["file"] for target in TARGETS.values()),
@@ -750,12 +829,16 @@ def verify_candidate(
     }
     entries = bounded_directory_entries(directory, len(expected_names))
     actual = {path.name for path in entries}
-    if actual != expected_names or any(path.is_symlink() or not path.is_file() for path in entries):
+    if actual != expected_names or any(
+        path.is_symlink() or not path.is_file() for path in entries
+    ):
         fail("publication candidate directory allowlist mismatch")
     for platform_key, target in TARGETS.items():
         verify_native_tarball(directory / target["file"], platform_key, source_sha)
     verify_launcher_tarball(directory / LAUNCHER_FILE)
-    actual_manifest = load_object(directory / "publication-manifest.json", MAX_METADATA_BYTES)
+    actual_manifest = load_object(
+        directory / "publication-manifest.json", MAX_METADATA_BYTES
+    )
     expected_manifest = expected_publication_manifest(directory, source_sha)
     if actual_manifest != expected_manifest:
         fail("publication manifest/order/integrity mismatch")
@@ -806,7 +889,11 @@ def main() -> int:
             make_public_manifest(args.source, args.destination)
         elif args.command == "promote-provenance":
             promote_provenance(
-                args.path, args.source_sha, args.runner_os, args.runner_arch, args.runner_image
+                args.path,
+                args.source_sha,
+                args.runner_os,
+                args.runner_arch,
+                args.runner_image,
             )
         elif args.command == "verify-native":
             verify_native_tarball(args.tarball, args.platform_key, args.source_sha)
@@ -817,7 +904,9 @@ def main() -> int:
         else:  # pragma: no cover
             fail("unsupported command")
     except CandidateError as error:
-        print(f"npm publication candidate verification failed: {error}", file=sys.stderr)
+        print(
+            f"npm publication candidate verification failed: {error}", file=sys.stderr
+        )
         return 1
     return 0
 

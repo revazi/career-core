@@ -213,7 +213,7 @@ case "$(uname -s):$(uname -m)" in
     current_target="aarch64-apple-darwin"
     runner_os="macOS"
     runner_arch="ARM64"
-    runner_image="macos-14-fixture"
+    runner_image="macos-14"
     current_file="10-revazi-career-darwin-arm64-0.1.1.tgz"
     ;;
   Linux:x86_64|Linux:amd64)
@@ -221,7 +221,7 @@ case "$(uname -s):$(uname -m)" in
     current_target="x86_64-unknown-linux-gnu"
     runner_os="Linux"
     runner_arch="X64"
-    runner_image="ubuntu-fixture"
+    runner_image="ubuntu-22.04"
     current_file="30-revazi-career-linux-x64-gnu-0.1.1.tgz"
     ;;
   *) fail "candidate test requires an approved native host" ;;
@@ -283,6 +283,17 @@ def add_file(archive, name, data, mode):
     member.mode = mode
     archive.addfile(member, io.BytesIO(data))
 
+runner_images = {
+    "darwin-arm64": "macos-14",
+    "darwin-x64": "macos-15-intel",
+    "linux-x64-gnu": "ubuntu-22.04",
+    "linux-arm64-gnu": "ubuntu-24.04-arm+ubuntu:22.04",
+    "linux-x64-musl": "ubuntu-22.04+node:22.19.0-alpine3.22+sha256:d2166de198f26e17e5a442f537754dd616ab069c47cc57b889310a717e0abbf9",
+    "linux-arm64-musl": "ubuntu-24.04-arm+node:22.19.0-alpine3.22+sha256:d2166de198f26e17e5a442f537754dd616ab069c47cc57b889310a717e0abbf9",
+    "win32-x64-msvc": "windows-2025",
+    "win32-arm64-msvc": "windows-11-arm",
+}
+
 for index, target in enumerate(catalog["targets"], start=1):
     key = target["platform_key"]
     if key == current_key:
@@ -316,7 +327,7 @@ for index, target in enumerate(catalog["targets"], start=1):
             "cargo_version": "cargo 1.97.1 (synthetic fixture)",
             "runner": {
                 "os": target["runner_os"], "arch": target["runner_arch"],
-                "image": "synthetic-non-execution-fixture", "libc": runner_libc,
+                "image": runner_images[key], "libc": runner_libc,
             },
         },
         "executable": {
@@ -350,6 +361,39 @@ CARGO_TARGET_DIR="$repository_root/target" \
 "$fixture_repository/scripts/verify-npm-publication-candidate.sh" \
   --candidate-dir "$candidate_dir" \
   --reviewed-sha "$fixture_sha" \
+  --expected-target "$current_target"
+
+acceptance_consumer="$temporary_root/public-acceptance-consumer"
+mkdir -p "$acceptance_consumer"
+python3 - "$acceptance_consumer/package.json" "$candidate_dir/90-revazi-career-0.1.1.tgz" "$current_tarball" "$current_key" <<'PY'
+import json
+import pathlib
+import sys
+package_names = {
+    "darwin-arm64": "@revazi/career-darwin-arm64",
+    "linux-x64-gnu": "@revazi/career-linux-x64-gnu",
+}
+path = pathlib.Path(sys.argv[1])
+launcher = pathlib.Path(sys.argv[2]).resolve().as_uri()
+native = pathlib.Path(sys.argv[3]).resolve().as_uri()
+manifest = {
+    "name": "career-public-acceptance-fixture",
+    "version": "0.0.0",
+    "private": True,
+    "dependencies": {
+        "@revazi/career": launcher,
+        package_names[sys.argv[4]]: native,
+    },
+}
+path.write_text(json.dumps(manifest) + "\n", encoding="utf-8")
+PY
+(
+  cd "$acceptance_consumer"
+  npm install --offline --ignore-scripts --no-audit --no-fund --no-package-lock >/dev/null
+)
+python3 "$fixture_repository/scripts/verify-npm-public-package.py" \
+  --consumer-dir "$acceptance_consumer" \
+  --repository-root "$fixture_repository" \
   --expected-target "$current_target"
 
 mutate_candidate() {
@@ -835,22 +879,34 @@ if run_driver auth-failure bootstrap absent '{"@revazi/career-darwin-arm64":"aut
 fi
 ! grep -Fq '@revazi/career-linux-x64-gnu' <(grep '^publish' "$driver_root/auth-failure/npm.log" || true)
 
-python3 - "$repository_root/.github/workflows/npm-publish.yml" "$publication_driver" <<'PY'
+python3 - \
+  "$repository_root/.github/workflows/npm-publish.yml" \
+  "$repository_root/.github/workflows/npm-publish-v0.1.1.yml" \
+  "$publication_driver" <<'PY'
+import hashlib
 import pathlib
 import sys
-path = pathlib.Path(sys.argv[1])
-driver_path = pathlib.Path(sys.argv[2])
+historical_path = pathlib.Path(sys.argv[1])
+path = pathlib.Path(sys.argv[2])
+driver_path = pathlib.Path(sys.argv[3])
+historical = historical_path.read_bytes()
 text = path.read_text(encoding="utf-8")
 driver = driver_path.read_text(encoding="utf-8")
+if hashlib.sha256(historical).hexdigest() != "4b085e8a71a527ccf800ca218dab053febe95ad8fcdb3edbbd86c231ccf55414":
+    raise SystemExit("historical v0.1.0 publication workflow bytes changed")
 required = [
     "workflow_dispatch:", "bootstrap:", "default: false", "npm-production",
     "node-version: '22.19.0'", "npm@11.6.2", "id-token: write",
-    "ubuntu-22.04", "macos-14", "1.97.1", "1.85.0",
-    "scripts/publish-npm-publication-candidate.sh", "public-acceptance:",
-    "dist.attestations",
+    "ubuntu-22.04", "ubuntu-24.04-arm", "macos-14", "macos-15-intel",
+    "windows-2025", "windows-11-arm", "1.97.1", "1.85.0",
+    "node:22.19.0-alpine3.22@sha256:d2166de198f26e17e5a442f537754dd616ab069c47cc57b889310a717e0abbf9",
+    "scripts/publish-npm-publication-candidate.sh",
+    "scripts/verify-npm-public-package.py",
+    "public-acceptance-unix:", "public-acceptance-musl:",
+    "public-acceptance-windows:", "dist.attestations",
     "actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f",
     "actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3",
-    "timeout-minutes: 40", "registry_visibility_attempts=61",
+    "timeout-minutes: 110", "registry_visibility_attempts=61",
     "require_registry_package_ready",
     "10-revazi-career-darwin-arm64-0.1.1.tgz",
     "20-revazi-career-darwin-x64-0.1.1.tgz",
@@ -865,8 +921,8 @@ required = [
 for value in required:
     if value not in text and value not in driver:
         raise SystemExit(f"publication workflow/driver is missing required policy text: {value}")
-if "name: Publish npm CLI v0.1.0" not in text or "Publish npm CLI v0.1.1" in text:
-    raise SystemExit("protected v0.1.1 publication workflow must remain deferred until the final publication PR")
+if "name: Publish npm CLI v0.1.1" not in text or "refs/tags/v0.1.1" not in text:
+    raise SystemExit("protected v0.1.1 publication workflow identity is not exact")
 for value in (
     "--access public", "--provenance", "--ignore-scripts", "_authToken=${NODE_AUTH_TOKEN}",
     "dist.attestations", "https://slsa.dev/provenance/v1",
@@ -886,8 +942,8 @@ for forbidden in (
         raise SystemExit(f"publication workflow contains forbidden policy text: {forbidden}")
 if text.count("secrets.NPM_TOKEN") != 1:
     raise SystemExit("bootstrap token must appear in exactly one explicit workflow step")
-if text.index("Configure exact release Rust for publication fixtures") > text.index("Run registry-free publication fixtures and policy tests"):
-    raise SystemExit("publication fixtures run before exact Rust 1.97.1 setup")
+if text.index("Configure exact release Rust for publication policy") > text.index("Run registry-free publication and adversarial tests"):
+    raise SystemExit("publication tests run before exact Rust 1.97.1 setup")
 for line in text.splitlines():
     stripped = line.strip()
     if stripped.startswith("uses: actions/"):
@@ -1021,10 +1077,16 @@ for value in (
     "40-revazi-career-linux-arm64-gnu-0.1.1.tgz",
     "50-revazi-career-linux-x64-musl-0.1.1.tgz",
     "60-revazi-career-linux-arm64-musl-0.1.1.tgz",
+    "70-revazi-career-win32-x64-msvc-0.1.1.tgz",
+    "80-revazi-career-win32-arm64-msvc-0.1.1.tgz",
     "x86_64-apple-darwin)",
     "aarch64-unknown-linux-gnu)",
     "x86_64-unknown-linux-musl)",
     "aarch64-unknown-linux-musl)",
+    "x86_64-pc-windows-msvc)",
+    "aarch64-pc-windows-msvc)",
+    "prepare-npm-cli-packages-windows.py",
+    "--evidence-kind exact_native_ci",
     'readelf --file-header --wide "$platform_stage/career"',
     "Type:[[:space:]]+DYN",
     "Type:[[:space:]]+EXEC",
@@ -1160,13 +1222,20 @@ PY
 
 for package in \
   @revazi/career-darwin-arm64 \
+  @revazi/career-darwin-x64 \
   @revazi/career-linux-x64-gnu \
+  @revazi/career-linux-arm64-gnu \
+  @revazi/career-linux-x64-musl \
+  @revazi/career-linux-arm64-musl \
+  @revazi/career-win32-x64-msvc \
+  @revazi/career-win32-arm64-msvc \
   @revazi/career
 do
-  grep -Fq "\"\$trust_npm\" trust github $package" "$repository_root/docs/releasing.md"
-  grep -Fq "\"\$trust_npm\" trust list $package" "$repository_root/docs/releasing.md"
+  grep -Fq "$package" "$repository_root/docs/releasing.md"
 done
-grep -Fq -- '--file npm-publish.yml' "$repository_root/docs/releasing.md"
+grep -Fq '"$trust_npm" trust github "$package"' "$repository_root/docs/releasing.md"
+grep -Fq '"$trust_npm" trust list "$package"' "$repository_root/docs/releasing.md"
+grep -Fq -- '--file npm-publish-v0.1.1.yml' "$repository_root/docs/releasing.md"
 grep -Fq -- '--environment npm-production' "$repository_root/docs/releasing.md"
 grep -Fq -- '--allow-publish' "$repository_root/docs/releasing.md"
 grep -Fq 'exact npm CLI 11.15.0' "$repository_root/docs/releasing.md"

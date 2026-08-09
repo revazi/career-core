@@ -907,7 +907,7 @@ test("pi-career handoff pins the exact public package and version", () => {
   );
   assert.match(
     handoff,
-    /npx --yes --package=@revazi\/career@0\.1\.0 career <args>/u,
+    /npx --yes --package=@revazi\/career@0\.1\.1 career <args>/u,
   );
   assert.match(handoff, /[Nn]ever substitute `latest`/u);
 });

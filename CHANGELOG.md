@@ -12,11 +12,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Generalize the npm launcher to fail-closed glibc/musl detection, Mach-O/ELF/PE architecture checks, and explicit Unix/Windows file invariants using internal npm metadata/provenance v2.
 - Add preparation-only exact native Darwin ARM64/x64 and GNU Linux x64/ARM64 packaged-binary execution plus bounded linkage/import inspection evidence; this does not yet claim new platform support.
 - Add digest-pinned exact native Alpine 3.22/musl 1.2.5 x64/ARM64 packaged-binary execution and static ELF/no-interpreter/no-import evidence; this remains release-blocked and unpublished.
-- Add preparation-only native Windows x64/ARM64 package execution and bounded PE32+/machine/system-import evidence without a Unix mode claim; this remains release-blocked and unpublished.
+- Add preparation-only native Windows x64/ARM64 package execution and bounded PE32+/machine/system-import evidence without a Unix mode claim.
+- Add the protected exact nine-package `v0.1.1` workflow with native final-source rebuilds, launcher-last assembly, integrity/SLSA provenance gates, and public acceptance on all eight target classes.
+- Add an exact `@revazi/career@0.1.1` pi-career consumer handoff and a cross-platform public-package parity verifier.
 
 ### Changed
 
-- Advance Cargo, npm source templates, `career --version`, and version-bearing synthetic contract fixtures to proposed patch version `0.1.1`; v1 operation and schema semantics remain unchanged.
+- Advance Cargo, npm source templates, `career --version`, and version-bearing synthetic contract fixtures to patch version `0.1.1`; v1 operation and schema semantics remain unchanged.
+- Rewrite the public README to lead with verified scope, exact installation, limitations, supported target policy, discovery, and integration boundaries.
 
 ### Fixed
 

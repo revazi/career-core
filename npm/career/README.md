@@ -10,7 +10,7 @@ npx --yes --package=@revazi/career@0.1.1 career --version
 
 Use an exact version rather than `latest`. npm/npx may access the npm registry to acquire the package; after installation, the launcher and native `career` CLI perform no network requests or telemetry.
 
-The `0.1.1` source prepares exact native implementations for ARM64 and x64 macOS, GNU and musl Linux, and MSVC Windows. This release remains blocked until every final package executes on its exact native OS and architecture in CI; catalog or cross-compilation evidence alone is not support. Unknown platforms, architectures, libc families, and older GNU libc fail closed.
+`0.1.1` provides exact native implementations for ARM64 and x64 macOS, GNU and musl Linux, and MSVC Windows after the protected publication workflow and all eight public-registry acceptance jobs complete. Catalog metadata, cross-compilation, and skipped jobs are not support evidence. Unknown platforms, architectures, libc families, and GNU libc older than 2.35 fail closed.
 
 Platform-specific optional packages are internal implementation details. Do not install, invoke, or pin them directly.
 

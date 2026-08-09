@@ -55,10 +55,10 @@ Career Core ships no harness-specific package or bundled Agent Skill. The option
 Phase 9 adds one generic npm consumer surface for the same CLI:
 
 ```bash
-npx --yes --package=@revazi/career@0.1.0 career <args>
+npx --yes --package=@revazi/career@0.1.1 career <args>
 ```
 
-Use exact `0.1.0`, never `latest`. npx acquisition may use the network and remains caller-owned; launcher/native runtime is network-free, package-local, and fail-closed. Native optional packages are internal implementation details and must never appear in consumer installation or invocation logic. See [`contracts/npm-cli-distribution-v1.md`](contracts/npm-cli-distribution-v1.md).
+Use exact `0.1.1` only after protected publication and all-eight public acceptance; until then use completed public `0.1.0`. Never use `latest` or a range. npx acquisition may use the network and remains caller-owned; launcher/native runtime is network-free, package-local, and fail-closed. Native optional packages are internal implementation details and must never appear in consumer installation or invocation logic. See [`contracts/npm-cli-distribution-v2.md`](contracts/npm-cli-distribution-v2.md).
 
 All harnesses may invoke the installed `career` CLI directly using the safe process rules in this document.
 
