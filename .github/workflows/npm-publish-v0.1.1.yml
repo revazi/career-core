@@ -1,0 +1,692 @@
+name: Publish npm CLI v0.1.1
+run-name: Publish npm CLI v0.1.1 from ${{ inputs.reviewed_sha }} (bootstrap=${{ inputs.bootstrap }})
+
+on:
+  workflow_dispatch:
+    inputs:
+      reviewed_sha:
+        description: Exact reviewed 40-character commit at annotated v0.1.1 and origin/main
+        required: true
+        type: string
+      bootstrap:
+        description: Explicit temporary-token first-publication/recovery mode (default is OIDC-only)
+        required: true
+        type: boolean
+        default: false
+
+permissions: {}
+
+concurrency:
+  group: npm-production-v0.1.1
+  cancel-in-progress: false
+
+jobs:
+  source:
+    name: Verify exact v0.1.1 source and MSRV
+    runs-on: ubuntu-22.04
+    timeout-minutes: 35
+    permissions:
+      contents: read
+    steps:
+      - name: Check out exact selected tag
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Configure exact publication Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22.19.0'
+
+      - name: Configure exact publication npm
+        run: |
+          set -euo pipefail
+          test "$(node --version)" = "v22.19.0"
+          npm install --global --ignore-scripts npm@11.6.2
+          test "$(npm --version)" = "11.6.2"
+
+      - name: Verify reviewed main, tag, SHA, and version binding
+        env:
+          REVIEWED_SHA: ${{ inputs.reviewed_sha }}
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF" = "refs/tags/v0.1.1"
+          test "$GITHUB_REF_NAME" = "v0.1.1"
+          test "$GITHUB_SHA" = "$REVIEWED_SHA"
+          scripts/verify-npm-publication-source.sh \
+            --repository-root "$GITHUB_WORKSPACE" \
+            --expected-ref "$GITHUB_REF" \
+            --reviewed-sha "$REVIEWED_SHA"
+
+      - name: Verify Rust 1.85 MSRV separately
+        run: |
+          set -euo pipefail
+          rustup toolchain install 1.85.0 --profile minimal --no-self-update
+          rustup run 1.85.0 cargo check --workspace --all-targets --all-features --locked
+
+      - name: Configure exact release Rust for publication policy
+        run: |
+          set -euo pipefail
+          rustup toolchain install 1.97.1 --profile minimal --no-self-update
+          rustup default 1.97.1
+          rustc --version | grep -q '^rustc 1\.97\.1 '
+          cargo --version | grep -q '^cargo 1\.97\.1 '
+
+      - name: Run registry-free publication and adversarial tests
+        run: scripts/test-npm-publication.sh
+
+  native-unix:
+    name: Final native candidate (${{ matrix.platform_key }})
+    needs: source
+    runs-on: ${{ matrix.runner }}
+    container: ${{ matrix.container }}
+    timeout-minutes: 40
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-14
+            platform_key: darwin-arm64
+            target: aarch64-apple-darwin
+            runner_os: macOS
+            runner_arch: ARM64
+            runner_image: macos-14
+          - runner: macos-15-intel
+            platform_key: darwin-x64
+            target: x86_64-apple-darwin
+            runner_os: macOS
+            runner_arch: X64
+            runner_image: macos-15-intel
+          - runner: ubuntu-22.04
+            platform_key: linux-x64-gnu
+            target: x86_64-unknown-linux-gnu
+            runner_os: Linux
+            runner_arch: X64
+            runner_image: ubuntu-22.04
+          - runner: ubuntu-24.04-arm
+            container: ubuntu:22.04
+            platform_key: linux-arm64-gnu
+            target: aarch64-unknown-linux-gnu
+            runner_os: Linux
+            runner_arch: ARM64
+            runner_image: ubuntu-24.04-arm+ubuntu:22.04
+    steps:
+      - name: Bootstrap native ARM64 GNU container
+        if: matrix.container != ''
+        run: |
+          apt-get update
+          DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+            binutils build-essential ca-certificates curl diffutils file git python3
+          rm -rf /var/lib/apt/lists/*
+
+      - name: Check out exact selected tag
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Configure exact container checkout ownership
+        if: matrix.container != ''
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
+      - name: Configure exact release Rust
+        run: |
+          set -euo pipefail
+          if ! command -v rustup >/dev/null 2>&1; then
+            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs |
+              sh -s -- -y --profile minimal --default-toolchain 1.97.1
+            printf '%s\n' "$HOME/.cargo/bin" >>"$GITHUB_PATH"
+            export PATH="$HOME/.cargo/bin:$PATH"
+          fi
+          rustup toolchain install 1.97.1 --profile minimal --no-self-update
+          rustup default 1.97.1
+          rustc --version | grep -q '^rustc 1\.97\.1 '
+          cargo --version | grep -q '^cargo 1\.97\.1 '
+
+      - name: Configure exact publication Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22.19.0'
+
+      - name: Configure exact publication npm
+        run: |
+          set -euo pipefail
+          test "$(node --version)" = "v22.19.0"
+          npm install --global --ignore-scripts npm@11.6.2
+          test "$(npm --version)" = "11.6.2"
+
+      - name: Build, execute, inspect, and pack exact native candidate
+        env:
+          REVIEWED_SHA: ${{ inputs.reviewed_sha }}
+        run: |
+          set -euo pipefail
+          scripts/prepare-npm-publication-native.sh \
+            --output-dir "$RUNNER_TEMP/npm-native-${{ matrix.platform_key }}" \
+            --expected-target "${{ matrix.target }}" \
+            --expected-ref "$GITHUB_REF" \
+            --reviewed-sha "$REVIEWED_SHA" \
+            --runner-os "${{ matrix.runner_os }}" \
+            --runner-arch "${{ matrix.runner_arch }}" \
+            --runner-image "${{ matrix.runner_image }}"
+          test "$(find "$RUNNER_TEMP/npm-native-${{ matrix.platform_key }}/tarballs" -type f -name '*.tgz' | wc -l | tr -d ' ')" = "1"
+
+      - name: Transfer exact native candidate
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          name: npm-native-${{ matrix.platform_key }}
+          path: ${{ runner.temp }}/npm-native-${{ matrix.platform_key }}/tarballs/*.tgz
+          if-no-files-found: error
+          retention-days: 1
+          include-hidden-files: false
+
+  native-musl:
+    name: Final native candidate (${{ matrix.platform_key }})
+    needs: source
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-22.04
+            runner_arch: X64
+            machine: x86_64
+            platform_key: linux-x64-musl
+            target: x86_64-unknown-linux-musl
+            runner_image: ubuntu-22.04+node:22.19.0-alpine3.22+sha256:d2166de198f26e17e5a442f537754dd616ab069c47cc57b889310a717e0abbf9
+          - runner: ubuntu-24.04-arm
+            runner_arch: ARM64
+            machine: aarch64
+            platform_key: linux-arm64-musl
+            target: aarch64-unknown-linux-musl
+            runner_image: ubuntu-24.04-arm+node:22.19.0-alpine3.22+sha256:d2166de198f26e17e5a442f537754dd616ab069c47cc57b889310a717e0abbf9
+    steps:
+      - name: Check out exact selected tag
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Verify native Docker host architecture
+        env:
+          EXPECTED_MACHINE: ${{ matrix.machine }}
+          EXPECTED_RUNNER_ARCH: ${{ matrix.runner_arch }}
+        run: |
+          set -euo pipefail
+          test "$RUNNER_OS" = "Linux"
+          test "$RUNNER_ARCH" = "$EXPECTED_RUNNER_ARCH"
+          test "$(uname -m)" = "$EXPECTED_MACHINE"
+          test "$(docker info --format '{{.Architecture}}')" = "$EXPECTED_MACHINE"
+
+      - name: Build, execute, inspect, and pack in exact native musl
+        env:
+          EXPECTED_REF: refs/tags/v0.1.1
+          EXPECTED_TARGET: ${{ matrix.target }}
+          PLATFORM_KEY: ${{ matrix.platform_key }}
+          REVIEWED_SHA: ${{ inputs.reviewed_sha }}
+          RUNNER_ARCH_VALUE: ${{ matrix.runner_arch }}
+          RUNNER_IMAGE: ${{ matrix.runner_image }}
+          MUSL_CONTAINER: node:22.19.0-alpine3.22@sha256:d2166de198f26e17e5a442f537754dd616ab069c47cc57b889310a717e0abbf9
+        run: |
+          set -euo pipefail
+          output="$RUNNER_TEMP/npm-native-${PLATFORM_KEY}"
+          mkdir -p "$output"
+          docker run --rm --interactive \
+            --env EXPECTED_REF \
+            --env EXPECTED_TARGET \
+            --env REVIEWED_SHA \
+            --env RUNNER_ARCH_VALUE \
+            --env RUNNER_IMAGE \
+            --mount "type=bind,src=$GITHUB_WORKSPACE,dst=/workspace,readonly" \
+            --mount "type=bind,src=$output,dst=/output" \
+            --workdir /workspace \
+            "$MUSL_CONTAINER" \
+            /bin/sh -s <<'MUSL'
+          set -eu
+          apk add --no-cache bash binutils build-base curl diffutils git python3 tar
+          git config --global --add safe.directory /workspace
+          test "$(git rev-parse HEAD)" = "$REVIEWED_SHA"
+          test "$(node --version)" = "v22.19.0"
+          npm install --global --ignore-scripts npm@11.6.2
+          test "$(npm --version)" = "11.6.2"
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs |
+            sh -s -- -y --profile minimal --default-toolchain 1.97.1
+          . "$HOME/.cargo/env"
+          export CARGO_TARGET_DIR=/tmp/career-target
+          scripts/prepare-npm-publication-native.sh \
+            --output-dir /output/candidate \
+            --expected-target "$EXPECTED_TARGET" \
+            --expected-ref "$EXPECTED_REF" \
+            --reviewed-sha "$REVIEWED_SHA" \
+            --runner-os Linux \
+            --runner-arch "$RUNNER_ARCH_VALUE" \
+            --runner-image "$RUNNER_IMAGE"
+          chmod 0644 /output/candidate/tarballs/*.tgz
+          MUSL
+          test "$(find "$output/candidate/tarballs" -type f -name '*.tgz' | wc -l | tr -d ' ')" = "1"
+
+      - name: Transfer exact native candidate
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          name: npm-native-${{ matrix.platform_key }}
+          path: ${{ runner.temp }}/npm-native-${{ matrix.platform_key }}/candidate/tarballs/*.tgz
+          if-no-files-found: error
+          retention-days: 1
+          include-hidden-files: false
+
+  native-windows:
+    name: Final native candidate (${{ matrix.platform_key }})
+    needs: source
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: windows-2025
+            runner_arch: X64
+            dotnet_arch: X64
+            python_machine: AMD64
+            node_arch: x64
+            platform_key: win32-x64-msvc
+            target: x86_64-pc-windows-msvc
+            runner_image: windows-2025
+          - runner: windows-11-arm
+            runner_arch: ARM64
+            dotnet_arch: Arm64
+            python_machine: ARM64
+            node_arch: arm64
+            platform_key: win32-arm64-msvc
+            target: aarch64-pc-windows-msvc
+            runner_image: windows-11-arm
+    steps:
+      - name: Check out exact selected tag
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Verify exact native Windows host
+        shell: pwsh
+        env:
+          EXPECTED_ARCH: ${{ matrix.dotnet_arch }}
+          EXPECTED_PYTHON_MACHINE: ${{ matrix.python_machine }}
+          EXPECTED_RUNNER_ARCH: ${{ matrix.runner_arch }}
+        run: |
+          if ($env:RUNNER_OS -ne 'Windows' -or $env:RUNNER_ARCH -ne $env:EXPECTED_RUNNER_ARCH) { throw 'Windows runner mismatch' }
+          if ([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture.ToString() -ne $env:EXPECTED_ARCH) { throw 'Windows OS architecture mismatch' }
+          if ([System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture.ToString() -ne $env:EXPECTED_ARCH) { throw 'PowerShell architecture mismatch' }
+          if ((python -c "import platform; print(platform.machine())") -ne $env:EXPECTED_PYTHON_MACHINE) { throw 'Python architecture mismatch' }
+
+      - name: Configure exact native Windows Rust
+        shell: pwsh
+        env:
+          EXPECTED_TARGET: ${{ matrix.target }}
+        run: |
+          $toolchain = "1.97.1-$env:EXPECTED_TARGET"
+          rustup toolchain install $toolchain --profile minimal --no-self-update
+          rustup default $toolchain
+          if (-not ((rustc --version) -match '^rustc 1\.97\.1 ')) { throw 'rustc version mismatch' }
+          if (-not ((cargo --version) -match '^cargo 1\.97\.1 ')) { throw 'Cargo version mismatch' }
+          $hostTarget = rustc -vV | Select-String '^host: ' | ForEach-Object { $_.Line.Substring(6) }
+          if ($hostTarget -ne $env:EXPECTED_TARGET) { throw 'rustc host mismatch' }
+
+      - name: Configure exact publication Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22.19.0'
+          architecture: ${{ matrix.node_arch }}
+
+      - name: Configure exact publication npm and Python command
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(node --version)" = "v22.19.0"
+          npm install --global --ignore-scripts npm@11.6.2
+          test "$(npm --version)" = "11.6.2"
+          if ! command -v python3 >/dev/null 2>&1; then
+            mkdir -p "$RUNNER_TEMP/career-command-bin"
+            printf '#!/usr/bin/env bash\nexec python "$@"\n' >"$RUNNER_TEMP/career-command-bin/python3"
+            chmod 0755 "$RUNNER_TEMP/career-command-bin/python3"
+            printf '%s\n' "$RUNNER_TEMP/career-command-bin" >>"$GITHUB_PATH"
+          fi
+
+      - name: Build, execute, inspect, and pack exact Windows candidate
+        shell: bash
+        env:
+          REVIEWED_SHA: ${{ inputs.reviewed_sha }}
+        run: |
+          set -euo pipefail
+          scripts/prepare-npm-publication-native.sh \
+            --output-dir "$RUNNER_TEMP/npm-native-${{ matrix.platform_key }}" \
+            --expected-target "${{ matrix.target }}" \
+            --expected-ref "$GITHUB_REF" \
+            --reviewed-sha "$REVIEWED_SHA" \
+            --runner-os Windows \
+            --runner-arch "${{ matrix.runner_arch }}" \
+            --runner-image "${{ matrix.runner_image }}"
+
+      - name: Transfer exact native candidate
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          name: npm-native-${{ matrix.platform_key }}
+          path: ${{ runner.temp }}/npm-native-${{ matrix.platform_key }}/tarballs/*.tgz
+          if-no-files-found: error
+          retention-days: 1
+          include-hidden-files: false
+
+  assemble:
+    name: Assemble and execute exact nine-package candidate
+    needs: [source, native-unix, native-musl, native-windows]
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - name: Check out exact selected tag
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Configure exact publication Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22.19.0'
+
+      - name: Configure exact publication npm
+        run: |
+          set -euo pipefail
+          npm install --global --ignore-scripts npm@11.6.2
+          test "$(node --version)" = "v22.19.0"
+          test "$(npm --version)" = "11.6.2"
+
+      - name: Download exactly eight native candidates
+        uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v8.0.0
+        with:
+          pattern: npm-native-*
+          path: ${{ runner.temp }}/npm-native
+          merge-multiple: true
+
+      - name: Assemble launcher last and verify all candidate bytes
+        env:
+          REVIEWED_SHA: ${{ inputs.reviewed_sha }}
+        run: |
+          set -euo pipefail
+          scripts/assemble-npm-publication-candidate.sh \
+            --output-dir "$RUNNER_TEMP/npm-publication-candidate" \
+            --native-dir "$RUNNER_TEMP/npm-native" \
+            --expected-ref "$GITHUB_REF" \
+            --reviewed-sha "$REVIEWED_SHA"
+          scripts/verify-npm-publication-candidate.sh \
+            --candidate-dir "$RUNNER_TEMP/npm-publication-candidate" \
+            --reviewed-sha "$REVIEWED_SHA" \
+            --expected-target x86_64-unknown-linux-gnu
+
+      - name: Transfer only the exact reviewed publication candidate
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          name: npm-publication-candidate-v0.1.1
+          path: ${{ runner.temp }}/npm-publication-candidate/*
+          if-no-files-found: error
+          retention-days: 1
+          include-hidden-files: false
+
+  publish:
+    name: Publish exact nine-package npm candidate
+    needs: [source, assemble]
+    runs-on: ubuntu-22.04
+    timeout-minutes: 110
+    environment:
+      name: npm-production
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Check out only the reviewed publish driver
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+          path: publication-source
+          sparse-checkout: scripts/publish-npm-publication-candidate.sh
+          sparse-checkout-cone-mode: false
+
+      - name: Configure exact publication Node.js without an auth npmrc
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22.19.0'
+
+      - name: Configure exact publication npm
+        run: |
+          set -euo pipefail
+          npm install --global --ignore-scripts npm@11.6.2
+          test "$(node --version)" = "v22.19.0"
+          test "$(npm --version)" = "11.6.2"
+
+      - name: Download exact reviewed candidate
+        uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v8.0.0
+        with:
+          name: npm-publication-candidate-v0.1.1
+          path: ${{ runner.temp }}/npm-publication-candidate
+
+      - name: Recheck selected source identity before privileged mode
+        env:
+          REVIEWED_SHA: ${{ inputs.reviewed_sha }}
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF" = "refs/tags/v0.1.1"
+          test "$GITHUB_SHA" = "$REVIEWED_SHA"
+          test -x "$GITHUB_WORKSPACE/publication-source/scripts/publish-npm-publication-candidate.sh"
+
+      - name: Publish explicit bootstrap or recovery with temporary granular token
+        if: ${{ inputs.bootstrap }}
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          REVIEWED_SHA: ${{ inputs.reviewed_sha }}
+        run: |
+          "$GITHUB_WORKSPACE/publication-source/scripts/publish-npm-publication-candidate.sh" \
+            --mode bootstrap \
+            --candidate-dir "$RUNNER_TEMP/npm-publication-candidate" \
+            --reviewed-sha "$REVIEWED_SHA"
+
+      - name: Publish default steady-state with OIDC trusted publishing only
+        if: ${{ !inputs.bootstrap }}
+        env:
+          REVIEWED_SHA: ${{ inputs.reviewed_sha }}
+        run: |
+          env -u NODE_AUTH_TOKEN \
+            "$GITHUB_WORKSPACE/publication-source/scripts/publish-npm-publication-candidate.sh" \
+            --mode oidc \
+            --candidate-dir "$RUNNER_TEMP/npm-publication-candidate" \
+            --reviewed-sha "$REVIEWED_SHA"
+
+  public-acceptance-unix:
+    name: Public acceptance (${{ matrix.platform_key }})
+    needs: publish
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 25
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-14
+            platform_key: darwin-arm64
+            target: aarch64-apple-darwin
+          - runner: macos-15-intel
+            platform_key: darwin-x64
+            target: x86_64-apple-darwin
+          - runner: ubuntu-22.04
+            platform_key: linux-x64-gnu
+            target: x86_64-unknown-linux-gnu
+          - runner: ubuntu-24.04-arm
+            platform_key: linux-arm64-gnu
+            target: aarch64-unknown-linux-gnu
+    steps:
+      - name: Check out exact acceptance fixtures and verifier
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Configure exact public acceptance Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22.19.0'
+
+      - name: Acquire exact package and verify public parity
+        run: |
+          set -euo pipefail
+          npm install --global --ignore-scripts npm@11.6.2
+          test "$(npm --version)" = "11.6.2"
+          export npm_config_audit=false npm_config_fund=false npm_config_update_notifier=false
+          export npm_config_cache="$RUNNER_TEMP/npm-public-cache"
+          ready=false
+          for attempt in $(seq 1 6); do
+            if npx --yes --package=@revazi/career@0.1.1 career --version >"$RUNNER_TEMP/version.stdout" 2>"$RUNNER_TEMP/version.stderr"; then ready=true; break; fi
+            sleep 10
+          done
+          test "$ready" = true
+          test "$(cat "$RUNNER_TEMP/version.stdout")" = "career 0.1.1"
+          test ! -s "$RUNNER_TEMP/version.stderr"
+          consumer="$RUNNER_TEMP/public-consumer"
+          mkdir -p "$consumer"
+          printf '%s\n' '{"name":"career-public-acceptance","version":"0.0.0","private":true,"dependencies":{"@revazi/career":"0.1.1"}}' >"$consumer/package.json"
+          (cd "$consumer" && npm install --ignore-scripts --no-audit --no-fund --no-package-lock)
+          python3 scripts/verify-npm-public-package.py \
+            --consumer-dir "$consumer" \
+            --repository-root "$GITHUB_WORKSPACE" \
+            --expected-target "${{ matrix.target }}"
+
+  public-acceptance-musl:
+    name: Public acceptance (${{ matrix.platform_key }})
+    needs: publish
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-22.04
+            runner_arch: X64
+            machine: x86_64
+            platform_key: linux-x64-musl
+            target: x86_64-unknown-linux-musl
+          - runner: ubuntu-24.04-arm
+            runner_arch: ARM64
+            machine: aarch64
+            platform_key: linux-arm64-musl
+            target: aarch64-unknown-linux-musl
+    steps:
+      - name: Check out exact acceptance fixtures and verifier
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Verify native Docker host architecture
+        env:
+          EXPECTED_MACHINE: ${{ matrix.machine }}
+          EXPECTED_RUNNER_ARCH: ${{ matrix.runner_arch }}
+        run: |
+          set -euo pipefail
+          test "$RUNNER_ARCH" = "$EXPECTED_RUNNER_ARCH"
+          test "$(uname -m)" = "$EXPECTED_MACHINE"
+          test "$(docker info --format '{{.Architecture}}')" = "$EXPECTED_MACHINE"
+
+      - name: Acquire exact package and verify public musl parity
+        env:
+          EXPECTED_TARGET: ${{ matrix.target }}
+          MUSL_CONTAINER: node:22.19.0-alpine3.22@sha256:d2166de198f26e17e5a442f537754dd616ab069c47cc57b889310a717e0abbf9
+        run: |
+          set -euo pipefail
+          output="$RUNNER_TEMP/public-musl"
+          mkdir -p "$output"
+          docker run --rm --interactive \
+            --env EXPECTED_TARGET \
+            --mount "type=bind,src=$GITHUB_WORKSPACE,dst=/workspace,readonly" \
+            --mount "type=bind,src=$output,dst=/output" \
+            --workdir /workspace \
+            "$MUSL_CONTAINER" \
+            /bin/sh -s <<'MUSL'
+          set -eu
+          apk add --no-cache bash python3
+          npm install --global --ignore-scripts npm@11.6.2
+          test "$(npm --version)" = "11.6.2"
+          export npm_config_audit=false npm_config_fund=false npm_config_update_notifier=false npm_config_cache=/output/npm-cache
+          test "$(npx --yes --package=@revazi/career@0.1.1 career --version)" = "career 0.1.1"
+          mkdir -p /output/consumer
+          printf '%s\n' '{"name":"career-public-acceptance","version":"0.0.0","private":true,"dependencies":{"@revazi/career":"0.1.1"}}' >/output/consumer/package.json
+          (cd /output/consumer && npm install --ignore-scripts --no-audit --no-fund --no-package-lock)
+          python3 scripts/verify-npm-public-package.py \
+            --consumer-dir /output/consumer \
+            --repository-root /workspace \
+            --expected-target "$EXPECTED_TARGET"
+          MUSL
+
+  public-acceptance-windows:
+    name: Public acceptance (${{ matrix.platform_key }})
+    needs: publish
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: windows-2025
+            runner_arch: X64
+            node_arch: x64
+            platform_key: win32-x64-msvc
+            target: x86_64-pc-windows-msvc
+          - runner: windows-11-arm
+            runner_arch: ARM64
+            node_arch: arm64
+            platform_key: win32-arm64-msvc
+            target: aarch64-pc-windows-msvc
+    steps:
+      - name: Check out exact acceptance fixtures and verifier
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Configure exact public acceptance Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22.19.0'
+          architecture: ${{ matrix.node_arch }}
+
+      - name: Acquire exact package and verify public Windows parity
+        shell: pwsh
+        run: |
+          if ($env:RUNNER_OS -ne 'Windows' -or $env:RUNNER_ARCH -ne '${{ matrix.runner_arch }}') { throw 'Windows acceptance host mismatch' }
+          npm install --global --ignore-scripts npm@11.6.2
+          if ((npm --version) -ne '11.6.2') { throw 'npm version mismatch' }
+          $env:npm_config_audit = 'false'
+          $env:npm_config_fund = 'false'
+          $env:npm_config_update_notifier = 'false'
+          $env:npm_config_cache = Join-Path $env:RUNNER_TEMP 'npm-public-cache'
+          if ((npx --yes --package=@revazi/career@0.1.1 career --version) -ne 'career 0.1.1') { throw 'npx version mismatch' }
+          $consumer = Join-Path $env:RUNNER_TEMP 'public-consumer'
+          New-Item -ItemType Directory -Path $consumer | Out-Null
+          $manifest = @{name='career-public-acceptance'; version='0.0.0'; private=$true; dependencies=@{'@revazi/career'='0.1.1'}}
+          $manifest | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath (Join-Path $consumer 'package.json') -Encoding utf8NoBOM
+          Push-Location $consumer
+          try { npm install --ignore-scripts --no-audit --no-fund --no-package-lock } finally { Pop-Location }
+          python scripts/verify-npm-public-package.py `
+            --consumer-dir $consumer `
+            --repository-root $env:GITHUB_WORKSPACE `
+            --expected-target '${{ matrix.target }}'

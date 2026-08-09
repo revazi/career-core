@@ -1,6 +1,6 @@
 # Release preparation checklist
 
-This checklist defines the reviewed release process. Public `v0.1.0` is complete and immutable. Proposed `v0.1.1` is an active multi-PR preparation only: implementation agents may perform explicitly approved branch/PR work but must not merge, tag, dispatch a protected publication workflow, authenticate to npm, release, or publish. The final `v0.1.1` release checklist and protected workflow remain deferred until every exact native target has execution evidence.
+This checklist defines the reviewed release process. Public `v0.1.0` and its workflow remain immutable. The `v0.1.1` source prepares a protected nine-package release for eight native targets. Implementation agents must not create the tag or GitHub Release, dispatch the protected workflow, authenticate/query/publish npm, or use release credentials. Those actions belong to the parent maintainer after exact-head review and CI.
 
 The current release maintenance owner is [Revaz Zakalashvili](https://github.com/revazi). Ownership and governance are documented in [`../MAINTAINERS.md`](../MAINTAINERS.md).
 
@@ -11,9 +11,9 @@ The current release maintenance owner is [Revaz Zakalashvili](https://github.com
 - record the supported target triples and maintenance owner
 - confirm both licenses and security documentation are included
 - obtain explicit approval to create and upload release artifacts
-- for npm, prove control of `@revazi`, review exact `@revazi/career@0.1.0`, public access, bootstrap/trusted-publisher ownership, and the explicit absent independent-binary-signature policy
+- for npm, prove control of `@revazi`, review exact `@revazi/career@0.1.1` plus all eight internal packages, public access, bootstrap/trusted-publisher ownership, and the explicit absent independent-binary-signature policy
 
-Maintainer observations from 2026-08-09—`npm view` `E404` for all three names, `npm whoami` `E401`, and no GitHub environment/secrets/variables—showed apparent name availability but did not prove `@revazi` ownership. Successful authenticated scope verification remains mandatory. No platform is implied merely because it can compile in CI.
+The completed `v0.1.0` release proved scope ownership and trusted publishing for its three package names. The six new native package names still require the protected bootstrap path before package-level trusted publishers can be configured. Apparent name availability is not ownership. No platform is supported merely because it compiles.
 
 ## 2. Verify a clean source tree
 
@@ -60,7 +60,7 @@ cp "target/$target/release/career" "dist/$artifact/career"
 cp LICENSE-MIT LICENSE-APACHE README.md THIRD_PARTY_NOTICES.md "dist/$artifact/"
 ```
 
-Use `career.exe` and a ZIP archive if a future Windows target is separately approved. Do not cross-compile an artifact and label it supported without executing CLI smoke tests on that platform.
+Windows uses exact `career.exe`; npm packages remain tarballs with archive mode `0644` and no POSIX runtime-mode claim. Do not cross-compile an artifact and label it supported without native execution.
 
 Before packaging, run the built binary directly:
 
@@ -87,7 +87,7 @@ Record the runner image, Rust version, target triple, source commit, and exact c
 
 ### npm publication candidate and protected workflow
 
-For proposed `0.1.1`, registry-free tests may assemble an exact nine-package synthetic policy candidate: eight ordered native tarballs followed by the launcher. Only the current host tarball executes in that local test; every synthetic non-host tarball is marked as policy-only evidence and cannot satisfy release acceptance. The manual preparation-only workflow separately executes private packaged-binary tests on exact native `macos-14` ARM64, `macos-15-intel` x64, `ubuntu-22.04` x64, and `ubuntu-24.04-arm` with native Ubuntu 22.04 ARM64 userland, plus digest-pinned native Alpine 3.22/musl 1.2.5 x64/ARM64 containers on architecture-matched hosted runners. It records bounded Mach-O/ELF/PE architecture, linkage/import, interpreter, libc, SHA-256, and highest imported GLIBC-symbol evidence without uploading or publishing; musl requires x64 ELF `DYN` static PIE or AArch64 ELF `EXEC`, with no interpreter or shared-library imports. Native `windows-2025` x64 and `windows-11-arm` ARM64 jobs require exact process/toolchain architecture, `career.exe`, PE32+ machine/import evidence, and no Unix mode claim. A real candidate remains blocked until all eight native jobs produce and execute exact packages. The protected workflow remains the completed `v0.1.0` workflow until the separately approved final publication PR prepares exact `v0.1.1` source/tag/SHA, runner, assembly, trusted-publisher/bootstrap, and public-acceptance gates.
+For `0.1.1`, registry-free tests assemble an exact nine-package synthetic policy candidate: eight ordered native tarballs followed by the launcher. Only the current host tarball executes in that local test; every synthetic non-host tarball is marked as policy-only evidence and cannot satisfy release acceptance. The manual preparation-only workflow separately executes private packaged-binary tests on exact native `macos-14` ARM64, `macos-15-intel` x64, `ubuntu-22.04` x64, and `ubuntu-24.04-arm` with native Ubuntu 22.04 ARM64 userland, plus digest-pinned native Alpine 3.22/musl 1.2.5 x64/ARM64 containers on architecture-matched hosted runners. It records bounded Mach-O/ELF/PE architecture, linkage/import, interpreter, libc, SHA-256, and highest imported GLIBC-symbol evidence without uploading or publishing; musl requires x64 ELF `DYN` static PIE or AArch64 ELF `EXEC`, with no interpreter or shared-library imports. Native `windows-2025` x64 and `windows-11-arm` ARM64 jobs require exact process/toolchain architecture, `career.exe`, PE32+ machine/import evidence, and no Unix mode claim. Pre-candidate exact native run `31332323220` passed all eight jobs. Protected `npm-publish-v0.1.1.yml` must repeat the build, execution, inspection, packaging, assembly, and post-publication acceptance from the final annotated tag. Every skipped or failed target blocks the release.
 
 Keep private local verification available:
 
@@ -100,28 +100,36 @@ scripts/test-npm-cli-packages.sh
 scripts/test-npm-publication.sh
 ```
 
-Source templates must remain `private: true`. Never hand-edit a tarball. The completed `v0.1.0` candidate path required exact clean fetched `origin/main`, reviewed SHA, annotated unmoved tag, Node 22.19.0/npm 11.6.2, exact rustc/Cargo 1.97.1, and its two approved native runners. Proposed `v0.1.1` retains those source/toolchain principles. Darwin/GNU runner labels and GNU symbol records are established, the musl sub-gate establishes digest-pinned native Alpine 3.22/musl 1.2.5 static-linkage evidence, and the Windows sub-gate establishes native `windows-2025`/`windows-11-arm` PE evidence. Exact nine-package protected workflow inputs remain deferred until the final candidate sub-gate. Rust 1.85 remains a separate MSRV check.
+Source templates must remain `private: true`. Never hand-edit a tarball. The `v0.1.1` path requires exact clean fetched `origin/main`, reviewed SHA, annotated unmoved tag, Node 22.19.0/npm 11.6.2, rustc/Cargo 1.97.1, and all eight exact native runner environments. Darwin/GNU runner labels and GNU symbol records, digest-pinned native Alpine 3.22/musl 1.2.5 linkage, and native `windows-2025`/`windows-11-arm` PE evidence are mandatory. Rust 1.85 remains a separate MSRV check.
 
-The following protected `.github/workflows/npm-publish.yml` dispatch inputs describe the completed `v0.1.0` path and are not authorization to dispatch proposed `v0.1.1`:
+The protected `.github/workflows/npm-publish-v0.1.1.yml` accepts:
 
 - `reviewed_sha`: exact 40-character tagged `origin/main` commit;
 - `bootstrap=false`: default OIDC-only steady state;
 - `bootstrap=true`: explicitly approved temporary granular-token first publication or interrupted-bootstrap recovery.
 
-The `npm-production` environment must require maintainer approval. The workflow builds and executes both native packages, assembles exactly Darwin native, Linux native, then `@revazi/career`, validates package and provenance bytes, and publishes with `--access public --provenance --ignore-scripts`. The publish job has only read-only contents plus `id-token: write`; it checks out only the tracked publish driver. No project dependency install, crate publication, signing, notarization, GitHub Release, or custom release asset is allowed.
+The `npm-production` environment must require maintainer approval. The workflow builds, executes, and inspects all eight native packages, assembles them in catalog order followed by `@revazi/career`, validates package and provenance bytes, and publishes with `--access public --provenance --ignore-scripts`. The publish job has only read-only contents plus `id-token: write`; it checks out only the tracked publish driver. No project dependency install, crate publication, signing, notarization, GitHub Release, or custom release asset is allowed.
 
 #### One-time first-publication bootstrap
 
 Package-level trusted publishers cannot be configured before each package exists. Before the first dispatch:
 
 1. Prove npm account/scope ownership independently of the prior `E404` results.
-2. Create one shortest-lived granular npm token with only the minimum public-publish access available for these three package names/scope. Do not use it for interactive trusted-publisher configuration.
+2. Create one shortest-lived granular npm token with only the minimum public-publish access available for the nine exact package names/scope. Do not use it for interactive trusted-publisher configuration.
 3. Create protected GitHub environment `npm-production` and add the temporary environment secret `NPM_TOKEN`; add no repository-level token fallback.
-4. Dispatch exact `v0.1.0`/reviewed SHA with `bootstrap=true`.
+4. Dispatch exact `v0.1.1`/reviewed SHA with `bootstrap=true`.
 
-Bootstrap accepts only an absent package name or exact already-published `name@0.1.0` with matching candidate integrity and valid npm SLSA provenance. This permits safe rerun after interruption. A name with no exact reviewed version, conflicting integrity, or missing/malformed registry provenance blocks publication. Native packages always finish before the launcher.
+Bootstrap models the real mixed registry state. The six new native package names must be absent or already contain exact candidate `0.1.1` with matching integrity and valid SLSA provenance. The three historical names must contain exact reviewed `0.1.0` with the following integrity and valid SLSA provenance when `0.1.1` is absent, or exact candidate `0.1.1` on an interrupted rerun:
 
-A successful `npm publish` response is not treated as complete until exact public integrity and valid SLSA provenance become visible. Each package gets one combined bounded readiness loop of 61 attempts at ten-second intervals (at most ten minutes of sleeps shared by integrity and provenance); the protected publish job allows 40 minutes for all three sequential packages plus setup and bounded transient retries. This bound reflects the 3–5 minute propagation observed during the `v0.1.0` bootstrap while still failing closed on absence, conflict, malformed provenance, or timeout.
+```text
+@revazi/career-darwin-arm64@0.1.0  sha512-2h+TLqrZx+UfSb7pYxhZjZLxImAaUjERgHvlGZ/OJDe2rxFrOvBbvwFHA4iiyeU6Qkd+XeOhqKcBUYPvLC9lWQ==
+@revazi/career-linux-x64-gnu@0.1.0 sha512-e/EwBLqAWJyOy9/q1+BK/5dCuC6c554sWBfDKMvevWhQM+ymD9qniTWKhExEpFXrCHlpAUpdHw9z5uWx2FvMuA==
+@revazi/career@0.1.0                sha512-pyH821D9QsWTxbMXYit35+Yl8EdIiaaqpjUh8+CyJc2urE48de6Gh4POLUL4EnP0zJZe4efxtHVfDMyD5kJivg==
+```
+
+These values come from the exact reviewed `v0.1.0` publication candidate. An absent historical name, an unexpectedly claimed new name, conflicting integrity, or missing/malformed provenance blocks all publication. This permits safe mixed-state first publication and exact interrupted recovery. Native packages always finish before the launcher.
+
+A successful `npm publish` response is not treated as complete until exact public integrity and valid SLSA provenance become visible. Each package gets one combined bounded readiness loop of 61 attempts at ten-second intervals (at most ten minutes of sleeps shared by integrity and provenance); the protected publish job allows 110 minutes for nine sequential packages plus setup and bounded transient retries. This bound reflects the 3–5 minute propagation observed during the `v0.1.0` bootstrap while still failing closed on absence, conflict, malformed provenance, or timeout.
 
 Immediately after successful bootstrap, delete the GitHub environment secret and revoke/delete the granular token in npm. For example, after confirming the workflow result:
 
@@ -159,38 +167,37 @@ test "$($trust_npm --version)" = "11.15.0"
 unset NODE_AUTH_TOKEN NPM_TOKEN
 "$trust_npm" login
 
-"$trust_npm" trust github @revazi/career-darwin-arm64 \
-  --repo revazi/career-core \
-  --file npm-publish.yml \
-  --environment npm-production \
-  --allow-publish
-"$trust_npm" trust github @revazi/career-linux-x64-gnu \
-  --repo revazi/career-core \
-  --file npm-publish.yml \
-  --environment npm-production \
-  --allow-publish
-"$trust_npm" trust github @revazi/career \
-  --repo revazi/career-core \
-  --file npm-publish.yml \
-  --environment npm-production \
-  --allow-publish
-
-"$trust_npm" trust list @revazi/career-darwin-arm64
-"$trust_npm" trust list @revazi/career-linux-x64-gnu
-"$trust_npm" trust list @revazi/career
+for package in \
+  @revazi/career-darwin-arm64 \
+  @revazi/career-darwin-x64 \
+  @revazi/career-linux-x64-gnu \
+  @revazi/career-linux-arm64-gnu \
+  @revazi/career-linux-x64-musl \
+  @revazi/career-linux-arm64-musl \
+  @revazi/career-win32-x64-msvc \
+  @revazi/career-win32-arm64-msvc \
+  @revazi/career
+do
+  "$trust_npm" trust github "$package" \
+    --repo revazi/career-core \
+    --file npm-publish-v0.1.1.yml \
+    --environment npm-production \
+    --allow-publish
+  "$trust_npm" trust list "$package"
+done
 ```
 
-Review each list result for repository `revazi/career-core`, workflow file `npm-publish.yml`, environment `npm-production`, and publish permission. Keep `NPM_TOKEN` absent, then use only default `bootstrap=false`. OIDC mode creates no auth-token npmrc and fails if `NODE_AUTH_TOKEN` is present or any package name lacks the configured trusted-publisher prerequisite.
+Review each list result for repository `revazi/career-core`, workflow file `npm-publish-v0.1.1.yml`, environment `npm-production`, and publish permission. Keep `NPM_TOKEN` absent, then dispatch exact `v0.1.1`/reviewed SHA with `bootstrap=false` once to prove idempotent no-token OIDC. OIDC mode creates no auth-token npmrc and fails if `NODE_AUTH_TOKEN` is present or any package name lacks the configured trusted-publisher prerequisite.
 
 Publication success additionally requires exact registry integrity plus bounded validation of `dist.attestations.provenance.predicateType == https://slsa.dev/provenance/v1` and the registry attestations URL. npm registry provenance, npm registry signatures, package-contained SHA-256, and the explicitly absent independent native-binary signature are distinct.
 
-The workflow is not complete until no-secret public-registry acceptance passes on both approved runners using only exact:
+The workflow is not complete until no-secret public-registry acceptance passes on all eight native target classes using only exact:
 
 ```bash
-npx --yes --package=@revazi/career@0.1.0 career --version
+npx --yes --package=@revazi/career@0.1.1 career --version
 ```
 
-The smokes confirm the selected internal optional package and deterministic version/discovery/schema/resume/job parity without a source or PATH binary fallback.
+The smokes cover macOS ARM64/x64, GNU Linux ARM64/x64, musl Linux ARM64/x64, and Windows MSVC ARM64/x64. They confirm exact optional-native selection plus deterministic version/discovery/schema/resume/job parity without a source or PATH binary fallback.
 
 ### Swift artifact preparation
 
@@ -225,10 +232,11 @@ Shell glob order keeps the manifest stable for the same asset names. Review `SHA
 ## 5. Publish only after final approval
 
 - verify local review and CI are green for the exact source commit
-- merge the reviewed change to `main`, then create annotated `v0.1.0` only at that exact commit
-- run only the protected manual npm workflow with the exact reviewed SHA/mode
-- require both no-secret public-registry acceptance jobs to pass before declaring npm complete
-- only after both public acceptance jobs pass, create the GitHub Release for annotated `v0.1.0` with dated notes identifying exact `@revazi/career@0.1.0`, source SHA, npm provenance, supported hosts/glibc floor, and known limitations
+- merge the reviewed change to `main`, then create annotated `v0.1.1` only at that exact commit
+- run only `npm-publish-v0.1.1.yml` with the exact reviewed SHA/mode
+- require all eight no-secret public-registry acceptance jobs to pass before declaring npm complete
+- configure all nine trusted publishers, delete/revoke bootstrap credentials, and prove one no-token OIDC rerun
+- only then create the GitHub Release for annotated `v0.1.1` with dated notes identifying exact `@revazi/career@0.1.1`, source SHA, npm provenance, supported hosts/glibc floor, and known limitations
 - attach no custom binary asset, checksum archive, signature, notarization, crate publication, or formula to that GitHub Release
 - update installation status only for the exact package/version that passed public acceptance
 

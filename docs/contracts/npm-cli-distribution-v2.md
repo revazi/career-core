@@ -1,10 +1,10 @@
-# Proposed npm CLI distribution v2 (`0.1.1`)
+# npm CLI distribution v2 (`0.1.1`)
 
-This contract describes the release-blocked Phase 9 matrix extension. Public `@revazi/career@0.1.0` and its v1 npm metadata remain immutable. Nothing in this document claims a new supported platform or authorizes publication.
+This contract describes the protected Phase 9 release candidate. Public `@revazi/career@0.1.0` and its v1 npm metadata remain immutable. The v2 matrix becomes a support claim only after exact `0.1.1` publication and all eight public-registry acceptance jobs pass.
 
 ## Consumer and compatibility boundary
 
-The only future consumer surface remains exact `@revazi/career@0.1.1`, bin `career`, after separately authorized publication. Internal platform packages are never consumer interfaces. npm/npx package acquisition may use the network; the installed launcher and native CLI perform no network requests or telemetry.
+The only consumer surface is exact `@revazi/career@0.1.1`, bin `career`, after separately authorized publication and public acceptance. Internal platform packages are never consumer interfaces. npm/npx package acquisition may use the network; the installed launcher and native CLI perform no network requests or telemetry.
 
 Patch `0.1.1` changes exact Core version metadata from `0.1.0` to `0.1.1`. `career operations` retains the same schema and descriptor set with exact `core_version: "0.1.1"`. Existing v1 operations, schemas, limits, ordering, algorithms, evidence, warnings, uncertainty, and assisted authority remain stable.
 
@@ -58,4 +58,4 @@ Synthetic headers and non-host tarballs test fail-closed policy only. They do no
 
 A target becomes release-eligible only when its final packaged binary executes on the exact native OS and architecture in CI without emulation and passes version, discovery, managed-adapter, representative operation, package, format, linkage, size, file-invariant, and SHA-256 checks. Intermediate evidence proves runner/build policy but all targets must be reproven from final release source.
 
-The protected `v0.1.1` publication workflow remains deferred until all eight native targets have such evidence. If any required native runner is unavailable, that target and the release remain blocked.
+Protected workflow `npm-publish-v0.1.1.yml` rebuilds and reproves all eight final-tag packages, assembles the launcher ninth and last, publishes through `npm-production`, and runs no-secret public acceptance on every target. If any required runner, package, integrity record, provenance record, or acceptance job is unavailable, the target and release remain blocked.

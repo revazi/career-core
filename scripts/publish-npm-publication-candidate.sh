@@ -347,6 +347,21 @@ matching_or_absent_version() {
   fi
 }
 
+historical_v010_integrity() {
+  case "$1" in
+    @revazi/career-darwin-arm64)
+      printf '%s\n' 'sha512-2h+TLqrZx+UfSb7pYxhZjZLxImAaUjERgHvlGZ/OJDe2rxFrOvBbvwFHA4iiyeU6Qkd+XeOhqKcBUYPvLC9lWQ=='
+      ;;
+    @revazi/career-linux-x64-gnu)
+      printf '%s\n' 'sha512-e/EwBLqAWJyOy9/q1+BK/5dCuC6c554sWBfDKMvevWhQM+ymD9qniTWKhExEpFXrCHlpAUpdHw9z5uWx2FvMuA=='
+      ;;
+    @revazi/career)
+      printf '%s\n' 'sha512-pyH821D9QsWTxbMXYit35+Yl8EdIiaaqpjUh8+CyJc2urE48de6Gh4POLUL4EnP0zJZe4efxtHVfDMyD5kJivg=='
+      ;;
+    *) return 4 ;;
+  esac
+}
+
 registry_provenance_ready() {
   local name="$1" version="$2" raw status
   if raw="$(lookup "$name@$version" dist.attestations)"; then
@@ -396,14 +411,43 @@ require_registry_package_ready() {
   done
 }
 
-preflight_bootstrap_package() {
-  local name="$1" version="$2" expected="$3" status
-  if name_exists "$name"; then
-    require_registry_package_ready "$name" "$version" "$expected"
+require_historical_v010_package() {
+  local name="$1" expected status
+  if ! expected="$(historical_v010_integrity "$name")"; then
+    fail "existing package name has no reviewed historical release: $name"
+  fi
+  if matching_or_absent_version "$name" "0.1.0" "$expected"; then
+    if ! registry_provenance_ready "$name" "0.1.0"; then
+      fail "$name@0.1.0 is missing valid reviewed npm registry SLSA provenance"
+    fi
     return 0
   else
     status=$?
-    [[ "$status" -eq 4 ]] && return 0
+    [[ "$status" -eq 4 ]] && fail "$name is missing its exact reviewed historical 0.1.0 release"
+    return "$status"
+  fi
+}
+
+preflight_bootstrap_package() {
+  local name="$1" version="$2" expected="$3" status
+  if name_exists "$name"; then
+    if matching_or_absent_version "$name" "$version" "$expected"; then
+      require_registry_package_ready "$name" "$version" "$expected"
+      return 0
+    else
+      status=$?
+      [[ "$status" -eq 4 ]] || return "$status"
+    fi
+    require_historical_v010_package "$name"
+    return 0
+  else
+    status=$?
+    if [[ "$status" -eq 4 ]]; then
+      if historical_v010_integrity "$name" >/dev/null; then
+        fail "reviewed historical package name is unexpectedly absent: $name"
+      fi
+      return 0
+    fi
     return "$status"
   fi
 }

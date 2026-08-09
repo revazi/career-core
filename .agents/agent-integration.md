@@ -4,7 +4,7 @@
 
 The `career` executable is the primary agent interface. A CLI is portable across coding-agent harnesses, inspectable, scriptable, and does not require each harness to implement a protocol client.
 
-Harness-specific adapters and bundled skills are maintained outside this repository. The optional native Pi integration lives in [`pi-career`](https://github.com/revazi/pi-career). Phase 9 adds exact `@revazi/career@0.1.0` distribution around the same CLI; internal optional native packages are launcher-owned implementation details and do not move `pi-career` runtime ownership or Core authority.
+Harness-specific adapters and bundled skills are maintained outside this repository. The optional native Pi integration lives in [`pi-career`](https://github.com/revazi/pi-career). Phase 9 prepares exact `@revazi/career@0.1.1` distribution around the same CLI; internal optional native packages are launcher-owned implementation details and do not move `pi-career` runtime ownership or Core authority.
 
 The installed CLI embeds reviewed Draft 2020-12 schemas. Agents can discover exact contracts without a source checkout or network request:
 
@@ -56,17 +56,17 @@ Schema bundles retain the requested embedded root and recursively place dependen
 
 ## npm launcher contract
 
-The public Node 22+ `@revazi/career@0.1.0` package exposes the same `career` bin for its two reviewed native targets. It resolves only its package-local internal optional native implementation, requires glibc 2.35 or newer on Linux, verifies strict versioned provenance and binary type/mode/size/target/SHA-256 consistency, and preserves argv/stdin/stdout/stderr/exit/signal behavior. It has no PATH fallback, runtime download, lifecycle script, provider/network behavior, telemetry, or bypass. Package-contained SHA-256 is not a signature.
+The Node 22+ `@revazi/career@0.1.1` candidate exposes the same `career` bin for eight exact native targets. It resolves only its package-local optional implementation, positively identifies Linux libc, requires glibc 2.35 or newer for GNU packages, verifies strict versioned provenance and binary type/file-invariant/size/target/SHA-256 consistency, and preserves argv/stdin/stdout/stderr/exit/signal behavior. It has no PATH fallback, runtime download, lifecycle script, provider/network behavior, telemetry, or bypass. Package-contained SHA-256 is not a signature.
 
-Proposed source version `0.1.1` catalogs eight exact Darwin/Linux/Windows targets and advances only version metadata plus internal launcher/package verification contracts. It is not an installable or supported consumer pin until all eight final packages execute natively, the protected candidate is separately reviewed, and publication/public acceptance are separately authorized. Agents and `pi-career` must continue using exact public `0.1.0` until that gate completes; they must not infer support from the target catalog or private templates.
+Agents and pi-career may use `0.1.1` only after the protected workflow publishes all nine packages and all eight no-secret public-registry acceptance jobs pass. Until then exact public `0.1.0` remains the completed consumer pin. Catalog data, private templates, cross-compilation, emulation, and skipped jobs are never support evidence.
 
-Agents and managed consumers address only the user-facing package:
+After that gate, agents and managed consumers address only:
 
 ```bash
-npx --yes --package=@revazi/career@0.1.0 career <args>
+npx --yes --package=@revazi/career@0.1.1 career <args>
 ```
 
-Use exact `0.1.0`, never `latest`. Never install or resolve a native implementation package directly. npx acquisition is outside launcher runtime. The separate [`../docs/pi-career-npm-handoff.md`](../docs/pi-career-npm-handoff.md) defines the consumer transition gate.
+Use exact `0.1.1`, never `latest` or a range. Never install or resolve a native implementation package directly. npx acquisition is outside launcher runtime. The separate [`../docs/pi-career-npm-handoff.md`](../docs/pi-career-npm-handoff.md) defines the consumer transition and bundled-runtime removal gates.
 
 ## Agent safety rules
 
@@ -208,8 +208,9 @@ Low/unknown normalization or truncation bounds all category scores to 50–75, m
 2. local CLI install via `cargo install --path crates/career-cli --locked`
 3. private external npm staging/testing through `scripts/prepare-npm-cli-packages.sh`
 4. exact clean/tagged npm candidate verification through `scripts/test-npm-publication.sh`
-5. protected `@revazi/career@0.1.0` publication only through `npm-publish.yml`, followed by both public-registry acceptance jobs
-6. every other package-manager or binary channel only after separate approval
+5. protected `@revazi/career@0.1.1` publication only through `npm-publish-v0.1.1.yml`, followed by all eight public-registry acceptance jobs
+6. pi-career migration only after its separate handoff gates
+7. every other package-manager or binary channel only after separate approval
 
 Source installation, future checksum verification, and the release-preparation gate are documented under `docs/`. Do not tell users to pipe remote scripts into a shell.
 

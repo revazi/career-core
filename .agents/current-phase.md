@@ -2,7 +2,7 @@
 
 ## Active phase
 
-**Phase 9 extension — prepare proposed lockstep `v0.1.1` for an exact eight-target npm native matrix. Phases 0–8 and the public `v0.1.0` release remain complete and immutable. No new `0.1.1` platform is supported until its final packaged binary executes on the exact native OS and architecture in CI.**
+**Phase 9 extension, final sub-gate — prepare the exact protected nine-package `v0.1.1` candidate, conservative public documentation, and pi-career handoff. Phases 0–8 and public `v0.1.0` remain complete and immutable. `0.1.1` becomes supported only after protected publication and all eight no-secret public-registry acceptance jobs pass.**
 
 ## Phase 9 extension authorized scope
 
@@ -14,7 +14,9 @@ The second reviewed sub-gate is complete: exact native Darwin x64 and GNU Linux 
 
 The third reviewed sub-gate is complete: exact native musl x64/ARM64 packaged-binary execution and target-specific static-linkage evidence merged through PR `#26` as `7054a4a0ec05c278a00ba1b53d5365634fc95f37`. Exact-head six-target preparation-only run `31325713420` and full CI run `31325713347` passed. Musl x64 is ELF `DYN` static PIE with `NOW PIE`; musl AArch64 is ELF `EXEC`; both use exact Alpine 3.22/musl 1.2.5 and have no interpreter, shared-library import, or imported GLIBC symbol.
 
-The active fourth sub-gate adds exact native MSVC Windows x64/ARM64 packaged-binary execution and bounded PE32+ import evidence on `windows-2025` and `windows-11-arm`. It must positively prove native OS/process/Python/Node/Rust architecture, exact PE machine and executable name, Windows regular non-symlink semantics without a Unix mode claim, reviewed system-DLL imports, offline extracted package/launcher parity, and bounded source/catalog/version/size/SHA-256 evidence. The remaining later sub-gate is the exact nine-package protected candidate plus final documentation. Do not begin it without explicit maintainer approval. The protected `v0.1.1` workflow remains deferred until that final publication-candidate sub-gate; the existing `v0.1.0` workflow and public bytes remain historical and immutable.
+The fourth reviewed sub-gate is complete. Native MSVC Windows x64/ARM64 package execution and bounded PE32+ evidence merged through PR `#27` as `8cd5083`. Exact-head run `31332323220` passed all eight target jobs, including native `windows-2025` x64 and `windows-11-arm` ARM64; exact-head CI run `31332445218` also passed. Windows evidence proves native OS/process/Python/Node/Rust architecture, PE machine and executable name, regular non-symlink semantics without a Unix mode claim, explicit reviewed system-DLL imports, offline package/launcher parity, bounded source/catalog/version/size/SHA-256 evidence, and npm command-shim execution.
+
+The active fifth sub-gate adds the protected `npm-publish-v0.1.1.yml` candidate: eight exact native packages in catalog order, the launcher ninth and last, temporary-token bootstrap/recovery for new package names, steady-state OIDC, exact integrity/SLSA provenance checks, and no-secret public acceptance on all eight native targets. It also updates final distribution documentation and the external pi-career handoff. The historical `v0.1.0` workflow remains byte-immutable. Implementation work must not dispatch publication, authenticate to npm, create the tag/release, or edit pi-career.
 
 The deterministic Core algorithms, public v1 operation/schema descriptors, limits, ordering, warnings, evidence, uncertainty, and assisted authority remain unchanged. The Cargo/npm/CLI version metadata advances to `0.1.1`, so `career operations` and all successful result documents report exact `core_version: "0.1.1"`; descriptor and schema semantics do not change.
 

@@ -1,59 +1,188 @@
-# career-core
+# Career Core
 
-`career-core` is an open-source Rust library for deterministic, explainable resume evaluation and resume-to-job matching.
+Career Core is a deterministic, local-first Rust engine for resume evaluation, resume and job-description normalization, and conservative resume-to-job matching.
 
-The project is intentionally **not an AI service**. The core performs no network requests and has no LLM dependency. Native applications, command-line tools, and coding-agent integrations can use its versioned evidence and scoring contracts. An opted-in host may submit an external source-grounded proposal for deterministic validation, but provider calls remain outside the authoritative core.
+It is **not** an AI service. The core library performs no network requests, model calls, telemetry, filesystem access, database access, or UI work. Given the same versioned input, it produces the same bounded, explainable output.
 
-> **Status:** Phases 0–8 and public `@revazi/career@0.1.0` are complete. A gated Phase 9 extension prepares proposed lockstep `0.1.1` for an exact eight-target native npm matrix. The catalog and private templates are not support claims: every final package must execute on its exact native OS and architecture before release. Publication, managed runtime, handles, persistence, providers, UI, independent binary signing, other release channels, and the SwiftUI product remain separately gated.
+## Release status
 
-## Maintainer and support
+- Source and CLI version: `0.1.1`
+- Intended npm consumer package: exact `@revazi/career@0.1.1`
+- Public CLI name: `career`
+- Minimum Rust version for source builds: Rust `1.85`
+- npm launcher runtime: Node.js `22` or newer
 
-**Revaz Zakalashvili** is the primary maintainer of Career Core.
+Treat `@revazi/career@0.1.1` as available only after the protected npm workflow and all eight public-registry acceptance jobs complete. Do not infer availability from source templates, target metadata, cross-compilation, or CI configuration. Until then, exact public `@revazi/career@0.1.0` remains the completed npm release.
 
-- GitHub: [@revazi](https://github.com/revazi)
-- Contact: [revaz.zakalashvili@gmail.com](mailto:revaz.zakalashvili@gmail.com)
-- Ownership, support, and governance: [`MAINTAINERS.md`](MAINTAINERS.md)
-- Private vulnerability reporting: [`SECURITY.md`](SECURITY.md)
+Use exact versions, never `latest` or a range.
 
-Project-authored source is dual-licensed under `MIT OR Apache-2.0` at your option. See [`LICENSE-MIT`](LICENSE-MIT) and [`LICENSE-APACHE`](LICENSE-APACHE).
+## What Career Core does
 
-## Goals
+| Operation | Purpose |
+|---|---|
+| `resume evaluate` | Checks recognized core resume-section coverage. This is not a complete quality or ATS score. |
+| `resume analyze` | Runs 18 deterministic readiness checks with confidence-aware evidence and limitations. |
+| `resume normalize` | Extracts bounded, source-grounded resume facts and parser confidence. |
+| `resume enrich` | Validates an explicit external proposal without making a provider call. |
+| `resume analysis-suggestions-review` | Reviews bounded external advisory suggestions beside an unchanged baseline analysis. |
+| `resume analysis-replacements-review` | Reviews bounded exact replacements beside an unchanged baseline analysis. |
+| `resume variant-review` | Reviews evidence-linked external resume changes without certifying generated prose. |
+| `resume variant-materialize` | Revalidates and applies only explicitly selected assisted changes. |
+| `job normalize` | Extracts source-grounded job requirements and confidence from caller-supplied text. |
+| `job match` | Conservatively matches independently normalized resume and job baselines. |
 
-- deterministic output for identical versioned input
-- explainable scores with bounded evidence and warnings
-- conservative matching that prefers false negatives over unsafe equivalence
-- stable JSON contracts suitable for CLIs and coding agents
-- a portable Rust library with a reviewed local Swift binding boundary
-- local-first operation with no telemetry or implicit network access
+Every score is bounded and explainable. Low-confidence parsing remains provisional. A field reported as `not_detected` is not necessarily absent. Assisted content is labeled non-authoritative and cannot alter deterministic analysis or matching.
 
-## Repository layout
+## What Career Core does not do
 
-```text
-.
-├── src/                         career-core library package
-├── crates/career-cli/           `career` command-line adapter
-├── crates/career-swift/         narrow UniFFI adapter and pinned bindgen tool
-├── swift/CareerCoreSwift/       local Swift Package wrapper and smoke tests
-├── npm/                         private npm source templates and launcher tests
-├── schemas/                     versioned public JSON schemas
-├── fixtures/                    synthetic reviewed golden contracts
-├── docs/contracts/              public scoring and limit rules
-├── .agents/                     project and agent-integration handbook
-├── AGENTS.md                    instructions loaded by coding agents
-├── LICENSE-MIT
-└── LICENSE-APACHE
+Career Core does not:
+
+- fetch resumes, job URLs, or other remote content
+- call an LLM or provider
+- guarantee ATS performance, interviews, hiring, or factual correctness
+- inspect visual PDF/DOCX layout
+- treat related technologies as interchangeable without a reviewed equivalence
+- write to the original resume
+- use assisted fields as authoritative scoring or matching input
+- publish telemetry or log complete resume/job payloads
+
+Document text is always data, never instructions.
+
+## Install the CLI
+
+### npm
+
+After exact `0.1.1` public acceptance completes:
+
+```bash
+npm install --save-exact @revazi/career@0.1.1
+npx --yes --package=@revazi/career@0.1.1 career --version
 ```
 
-The repository root is the `career-core` library package. The CLI is a separate workspace package so UI and argument-parsing dependencies do not leak into the core library.
+Users install only `@revazi/career`. Its eight platform-specific optional packages are internal launcher implementation details and must not be installed, invoked, or pinned directly.
 
-## Requirements
+npm/npx may contact the npm registry to acquire packages. After installation, the launcher and native CLI make no network requests and provide no PATH or runtime-download fallback.
 
-- Rust 1.85 or newer
-- Node 22.19.0 for npm publication tests (launcher runtime supports Node 22+)
+### From a reviewed source checkout
+
+```bash
+git clone https://github.com/revazi/career-core.git
+cd career-core
+cargo install --path crates/career-cli --locked
+career --version
+```
+
+For reproducible use, check out an exact reviewed commit or release tag.
+
+## Supported npm targets for `0.1.1`
+
+The protected release candidate contains one launcher and eight native implementations:
+
+| Operating system | Architecture | Runtime |
+|---|---|---|
+| macOS | ARM64 | native Mach-O |
+| macOS | x86-64 | native Mach-O |
+| GNU/Linux | x86-64 | glibc `2.35` or newer |
+| GNU/Linux | ARM64 | glibc `2.35` or newer |
+| musl Linux | x86-64 | native musl |
+| musl Linux | ARM64 | native musl |
+| Windows | x86-64 | native MSVC PE32+ |
+| Windows | ARM64 | native MSVC PE32+ |
+
+A target is supported only after its final public package executes on the exact native OS and architecture. Unknown OS, architecture, libc, package metadata, provenance, executable format, or binary bytes fail closed. Emulation and cross-compilation are not support evidence.
+
+See [`docs/distribution.md`](docs/distribution.md) and [`docs/contracts/npm-cli-distribution-v2.md`](docs/contracts/npm-cli-distribution-v2.md) for the exact policy.
+
+## Discover the machine interface
+
+The installed binary embeds its operation catalog and Draft 2020-12 JSON Schemas:
+
+```bash
+career capabilities --format json-compact
+career operations --format json-compact
+career schema list --format json-compact
+career schema export --id career.job_match_input.v1
+career schema bundle --id career.job_match_input.v1 --format json-compact
+```
+
+Call only capabilities whose status is `available`. `career.operation_catalog.v1` declares exact command paths, transports, schemas, input ceilings, and output limits.
+
+Machine-output rules:
+
+- JSON is the default.
+- `json-pretty` explicitly selects pretty JSON.
+- `json-compact` emits one JSON document on one line.
+- `text` is human-only.
+- Successful machine output is fully serialized and checked before writing.
+- Complete successful machine output is limited to 33,554,432 bytes, including its trailing newline.
+- Diagnostics go to stderr and do not repeat source documents.
+
+See [`docs/cli.md`](docs/cli.md), [`docs/agent-usage.md`](docs/agent-usage.md), and [`docs/contracts/managed-adapter-v1.md`](docs/contracts/managed-adapter-v1.md).
+
+## Minimal examples
+
+Evaluate recognized resume sections:
+
+```bash
+career resume evaluate \
+  --input fixtures/resume/phase1/complete-sections.input.json
+```
+
+Run full deterministic resume analysis:
+
+```bash
+career resume analyze \
+  --input fixtures/resume/phase3/complete-analysis.input.json
+```
+
+Normalize a job description and match a resume to a job:
+
+```bash
+career job normalize \
+  --input fixtures/job/phase4a/complete-normalization.input.json
+
+career job match \
+  --input fixtures/job/phase4b/complete-match.input.json
+```
+
+Use `--input -` for stdin where supported. Invalid user input returns a versioned typed error and a nonzero exit status; it must not panic.
+
+## Integration with pi-career
+
+The Pi integration is maintained separately in [`revazi/pi-career`](https://github.com/revazi/pi-career). Career Core does not ship a Pi package or modify that repository.
+
+After `0.1.1` public acceptance, pi-career should address only:
+
+```text
+package: @revazi/career@0.1.1
+bin: career
+```
+
+It must not name or resolve internal platform packages. The exact consumer transition and removal gates are documented in [`docs/pi-career-npm-handoff.md`](docs/pi-career-npm-handoff.md).
+
+## Library and adapter boundaries
+
+Repository layout:
+
+```text
+src/                         pure career-core Rust library
+crates/career-cli/           filesystem/stdin/CLI adapter
+crates/career-swift/         narrow UniFFI JSON facade
+swift/CareerCoreSwift/       local, unpublished Swift wrapper
+npm/                         private npm source templates
+schemas/                     versioned public JSON Schemas
+fixtures/                    synthetic reviewed contract fixtures
+docs/contracts/              scoring, matching, and distribution policies
+```
+
+The root library has no network, filesystem, database, UI, telemetry, provider, prompt, or model behavior. Adapters depend inward on the core; the core never depends on an adapter.
+
+The Swift facade is local and unpublished. It is not the SwiftUI product, persistence layer, or an App Store package. See [`docs/swift-bindings.md`](docs/swift-bindings.md).
 
 ## Build and verify
 
 ```bash
+scripts/verify-installed-cli.sh
 node --test npm/tests/launcher.test.js
 scripts/test-npm-cli-packages.sh
 scripts/test-npm-publication.sh
@@ -63,304 +192,23 @@ cargo test --workspace --all-features
 cargo build --workspace --all-features --locked
 ```
 
-GitHub Actions is manual-only. After local verification, dispatch the hosted workflow once for a final reviewed head when Linux/macOS confirmation is required; pull requests and pushes do not start it automatically.
+The complete required command ladder is in [`AGENTS.md`](AGENTS.md). Release publication has additional clean-source, annotated-tag, native-runner, candidate-integrity, npm provenance, and public-acceptance gates in [`docs/releasing.md`](docs/releasing.md).
 
-Install the local CLI from a reviewed checkout:
-
-```bash
-cargo install --path crates/career-cli --locked
-career capabilities --format json-compact
-career operations --format json-compact
-```
-
-Run the exact npm package after its protected release completes:
-
-```bash
-npx --yes --package=@revazi/career@0.1.0 career --version
-```
-
-The currently approved package-manager consumer surface remains exact public `@revazi/career@0.1.0`, bin `career`; native optional packages are internal implementation details. Proposed source version `0.1.1` remains release-blocked while its native matrix is proven. Source templates remain `private: true`, and only a later protected reviewed candidate/workflow may publish external tarballs. No crate, GitHub Release binary, Homebrew formula, or other channel is included. See [`docs/distribution.md`](docs/distribution.md), [`docs/contracts/npm-cli-distribution-v1.md`](docs/contracts/npm-cli-distribution-v1.md), [`docs/contracts/npm-cli-distribution-v2.md`](docs/contracts/npm-cli-distribution-v2.md), and [`docs/releasing.md`](docs/releasing.md).
-
-The optional native Pi integration and its bundled skill are maintained separately in [`pi-career`](https://github.com/revazi/pi-career). This repository is not a Pi package; [`docs/pi-career-npm-handoff.md`](docs/pi-career-npm-handoff.md) is only a future transition contract.
-
-## Coding-agent discovery
-
-Run the CLI from the repository:
-
-```bash
-cargo run --quiet -p career-cli -- capabilities
-```
-
-JSON is the default output:
-
-```json
-{
-  "schema_version": "career.capabilities.v1",
-  "core_version": "0.1.1",
-  "deterministic": true,
-  "performs_network_requests": false,
-  "capabilities": [
-    {
-      "id": "core.capabilities",
-      "status": "available",
-      "summary": "Discover versioned functionality exposed by this build."
-    },
-    {
-      "id": "resume.evaluate",
-      "status": "available",
-      "summary": "Evaluate recognized resume section coverage with explainable deterministic checks."
-    },
-    {
-      "id": "resume.analyze",
-      "status": "available",
-      "summary": "Analyze resume readiness with 18 explainable deterministic checks and confidence-aware evidence."
-    },
-    {
-      "id": "resume.normalize",
-      "status": "available",
-      "summary": "Normalize bounded resume text into source-grounded deterministic facts and confidence."
-    },
-    {
-      "id": "resume.enrich",
-      "status": "available",
-      "summary": "Validate and conservatively merge an explicit source-grounded external proposal without network access."
-    },
-    {
-      "id": "resume.analysis-suggestions.review",
-      "status": "available",
-      "summary": "Review bounded external suggestions against a freshly rerun deterministic analysis without changing it."
-    },
-    {
-      "id": "resume.analysis-replacements.review",
-      "status": "available",
-      "summary": "Review bounded exact external replacements against a freshly rerun deterministic analysis without changing it."
-    },
-    {
-      "id": "resume.variant.review",
-      "status": "available",
-      "summary": "Review bounded evidence-linked external resume changes without certifying generated prose."
-    },
-    {
-      "id": "resume.variant.materialize",
-      "status": "available",
-      "summary": "Revalidate and deterministically materialize only explicitly selected assisted resume changes."
-    },
-    {
-      "id": "job.normalize",
-      "status": "available",
-      "summary": "Normalize bounded job-description text into source-grounded deterministic facts and confidence."
-    },
-    {
-      "id": "job.match",
-      "status": "available",
-      "summary": "Match deterministic resume and job baselines with conservative equivalence and confidence-aware evidence."
-    }
-  ]
-}
-```
-
-Callers must only invoke entries whose `status` is `available`.
-
-For concise human output:
-
-```bash
-cargo run --quiet -p career-cli -- capabilities --format text
-```
-
-Discover exact callable routes and Draft 2020-12 contracts from the installed binary without network or source-checkout lookup:
-
-```bash
-career operations --format json-compact
-career schema list --format json-compact
-career schema export --id career.job_match_input.v1
-career schema bundle --id career.job_match_input.v1 --format json-compact
-```
-
-`career.operation_catalog.v1` maps each available capability exactly once and also catalogs the operation/schema bootstrap commands with null capability IDs. It declares exact CLI paths, transports, input/output schemas, input ceilings, and the 33,554,432-byte (32 MiB) complete successful machine-output ceiling. Bundles recursively rewrite only embedded sibling references into root-local pointers; unknown or remote refs fail closed. Existing capability, operation-result, and unbundled schema-export bytes remain unchanged.
-
-`--format json` remains canonical pretty output. `json-pretty` selects it explicitly, `json-compact` emits one JSON document on one line, and `text` is for human display. Machine JSON is fully serialized and bound-checked before stdout is written. See [`docs/cli.md`](docs/cli.md) and [`docs/contracts/managed-adapter-v1.md`](docs/contracts/managed-adapter-v1.md).
-
-Coding agents should invoke the installed CLI directly and preserve its evidence, uncertainty, baseline, and assisted-authority boundaries. Shell-safe generic subprocess guidance is documented in [`docs/agent-usage.md`](docs/agent-usage.md).
-
-## Evaluate resume section coverage
-
-Provide versioned JSON containing text already extracted by the caller:
-
-```json
-{
-  "schema_version": "career.resume_input.v1",
-  "text": "SUMMARY\nBackend engineer.\nEXPERIENCE\nBuilt reliable services.\nEDUCATION\nExample University\nSKILLS\nRust, SQL",
-  "metadata": {
-    "document_id": "optional-caller-id"
-  }
-}
-```
-
-Evaluate a file:
-
-```bash
-cargo run --quiet -p career-cli -- \
-  resume evaluate --input fixtures/resume/phase1/complete-sections.input.json
-```
-
-Or pipe JSON through stdin:
-
-```bash
-cat fixtures/resume/phase1/complete-sections.input.json | \
-  cargo run --quiet -p career-cli -- resume evaluate --input -
-```
-
-Add `--format text` for concise human output. JSON results use `career.resume_evaluation.v1`; invalid input produces `career.error.v1` on stderr with a nonzero exit code.
-
-Phase 1 scores only whether four recognized core headers have following content. It does **not** claim to measure complete resume quality or ATS compatibility. See [`docs/contracts/resume-evaluation-v1.md`](docs/contracts/resume-evaluation-v1.md) for limits, aliases, scoring, evidence, warnings, and provenance.
-
-## Analyze resume readiness
-
-Run the full deterministic scoring policy without changing the Phase 1 contract:
-
-```bash
-cargo run --quiet -p career-cli -- \
-  resume analyze --input fixtures/resume/phase3/complete-analysis.input.json
-```
-
-`career.resume_analysis.v1` reports 18 bounded checks across ATS-readability signals, content strength, experience impact, skills coverage, presentation, and completeness. It includes raw and confidence-adjusted scores, source-grounded evidence, provisional findings, deterministic improvement actions, and explicit limitations.
-
-This is a general text-based readiness analysis. It does not reproduce proprietary ATS rankings, inspect visual document layout, or guarantee hiring outcomes. Scores always consume the deterministic normalization baseline; assisted fields cannot alter them. See [`docs/contracts/resume-analysis-v1.md`](docs/contracts/resume-analysis-v1.md) for the complete policy and `deterministic_v2` compatibility matrix.
-
-## Review external analysis suggestions
-
-Review up to three model/provider-written suggestions beside, never inside, a freshly rerun deterministic analysis:
-
-```bash
-cargo run --quiet -p career-cli -- \
-  resume analysis-suggestions-review \
-  --input fixtures/resume/phase7/complete-analysis-suggestion-review.input.json
-```
-
-The core accepts only source-targeted suggestions bound to one current failed canonical improvement action. It preserves the exact `career.resume_analysis.v1` baseline under `baseline_analysis`, copies the action's confirmed/provisional status, and returns core-assigned identifiers plus bounded discard codes. Suggestions are assisted/non-authoritative; exact target/evidence occurrence neither verifies generated claims nor certifies a rewrite. This operation does not create, select, mutate, export, or materialize a candidate resume. See [`docs/contracts/resume-analysis-suggestions-v1.md`](docs/contracts/resume-analysis-suggestions-v1.md).
-
-## Review exact analysis replacements
-
-Review up to three source-targeted exact replacements when a host needs a truthful before/proposed-after diff beside the unchanged analysis baseline:
-
-```bash
-cargo run --quiet -p career-cli -- \
-  resume analysis-replacements-review \
-  --input fixtures/resume/phase7/complete-analysis-replacement-review.input.json
-```
-
-This separate contract returns canonical `source_target` and `proposed_replacement` values with the current failed action's core-owned priority, area, and status. It does not reinterpret v1 advisory `suggestion` text, create a candidate resume, or add selection/materialization. Exact occurrence is structural grounding only, never factual or rewrite certification. See [`docs/contracts/resume-analysis-replacements-v1.md`](docs/contracts/resume-analysis-replacements-v1.md).
-
-## Normalize resumes
-
-Normalize caller-extracted text deterministically:
-
-```bash
-cargo run --quiet -p career-cli -- \
-  resume normalize --input fixtures/resume/phase2/complete-normalization.input.json
-```
-
-The result includes source-grounded contact, summary, experience, education, skills, projects, and certifications; parser confidence; field statuses; warnings; and optional external-enrichment eligibility.
-
-If an opted-in agent or application obtains an exact external proposal, validate and merge it without a provider call:
-
-```bash
-cargo run --quiet -p career-cli -- \
-  resume enrich --input fixtures/resume/phase2/messy-unlabeled.enrichment-input.json
-```
-
-The enrichment result preserves the complete deterministic `baseline` and exposes accepted values only in `assisted_document`. Assisted fields never replace deterministic confidence or authoritative scoring input. See [`docs/contracts/resume-normalization-v1.md`](docs/contracts/resume-normalization-v1.md) for contracts, limits, grounding rules, host orchestration, provenance, and intentional Django differences.
-
-## Review and materialize assisted resume variants
-
-Review at most 50 evidence-linked external changes without a provider call:
-
-```bash
-cargo run --quiet -p career-cli -- \
-  resume variant-review --input fixtures/resume/phase7/complete-variant-review.input.json
-```
-
-After a user selects canonical change identifiers, revalidate the complete proposal and materialize only that subset:
-
-```bash
-cargo run --quiet -p career-cli -- \
-  resume variant-materialize --input fixtures/resume/phase7/selected-variant-materialization.input.json
-```
-
-The core validates exact line targets, exact evidence occurrence, bounds, ordering, overlap, and selected identifiers. It does not certify generated wording as factually entailed. Output preserves the exact baseline, labels the candidate assisted/non-authoritative, and cannot enter deterministic analysis or matching. See [`docs/contracts/resume-variant-v1.md`](docs/contracts/resume-variant-v1.md) for the full policy.
-
-## Normalize job descriptions
-
-Normalize caller-supplied vacancy text without fetching a URL:
-
-```bash
-cargo run --quiet -p career-cli -- \
-  job normalize --input fixtures/job/phase4a/complete-normalization.input.json
-```
-
-`career.job_normalization.v1` returns source-grounded required/preferred skills and qualifications, responsibilities, seniority, experience, education, and certification signals; six-signal parse confidence; field statuses; matched/unmatched metadata; and bounded warnings.
-
-A field reported as `not_detected` is not confirmed absent. Low-confidence output must remain provisional. See [`docs/contracts/job-normalization-v1.md`](docs/contracts/job-normalization-v1.md) for exact aliases, classification rules, limits, confidence, provenance, and intentional reference differences.
-
-## Match a resume to a job
-
-Match original resume and job-description inputs through independently reproduced deterministic normalization baselines:
-
-```bash
-cargo run --quiet -p career-cli -- \
-  job match --input fixtures/job/phase4b/complete-match.input.json
-```
-
-`career.job_match.v1` reports six bounded categories, raw and confidence-adjusted scores, exact or reviewed same-technology skill matches, source/derived evidence, confirmed strengths, partial/likely/unverified gaps, and a deterministically gated recommendation.
-
-Low/unknown normalization bounds every category to 50–75, suppresses broad inferred gaps, and makes guidance provisional. Related technologies such as Kubernetes/Docker, PostgreSQL/MySQL, React/Angular, AWS/Azure, and Django/Flask remain non-equivalent. Matching never consumes assisted resume fields, invokes a provider, fetches a URL, or predicts a hiring outcome. See [`docs/contracts/job-match-v1.md`](docs/contracts/job-match-v1.md) for the full scoring, equivalence, confidence, evidence, recommendation, bounds, and reference-parity policy.
-
-## Swift binding boundary
-
-Build the local Apple XCFramework and run exact Rust/Swift parity tests:
-
-```bash
-rustup target add aarch64-apple-ios aarch64-apple-ios-sim
-scripts/build-swift-xcframework.sh
-scripts/verify-swift.sh
-```
-
-`CareerCoreSwift` exposes the stable operations as versioned JSON-in/JSON-out functions with typed Swift errors. The XCFramework contains Apple Silicon macOS, iOS-device, and Apple Silicon iOS-simulator slices; artifacts remain ignored and unpublished. This package is a binding boundary, not the SwiftUI product or persistence layer. See [`docs/swift-bindings.md`](docs/swift-bindings.md) and [`swift/CareerCoreSwift/README.md`](swift/CareerCoreSwift/README.md).
-
-## Reference implementation
-
-The sibling Django repository at `../resume-ai` is a read-only behavioral reference during the port. It contains mature deterministic normalization, scoring, confidence, matching, fixtures, and regression tests. `career-core` must not import it, execute it at runtime, or claim parity until Rust golden tests prove the behavior.
-
-See [`.agents/reference-map.md`](.agents/reference-map.md) for the bounded reference map.
-
-## Roadmap
-
-The detailed, gated roadmap lives in [`.agents/phases.md`](.agents/phases.md). Its phase order is:
-
-0. repository foundation and agent discovery
-1. versioned contracts and a minimal resume-evaluation vertical slice
-2. deterministic resume normalization and provider-neutral assisted validation
-3. explainable resume scoring parity and general ATS-readiness analysis
-4. job-description normalization, followed by conservative matching
-5. hardened CLI and coding-agent distribution
-6. Swift bindings for a later SwiftUI application
-7. evidence-linked assisted resume review
-8. managed-adapter discovery support for the approved external consumer, while harness-specific runtime packages remain separately owned
-9. exact `@revazi/career` npm launcher/native packaging and protected publication completion
+Source templates remain `private: true`. Generated public manifests, native binaries, provenance records, and tarballs are staged outside the checkout. No Rust crate, Homebrew formula, independent native signature, notarized binary, or custom GitHub Release asset is part of `v0.1.1`.
 
 ## Security and privacy
 
-The core is designed to process sensitive career documents locally. It must not add telemetry, remote fetching, hidden model calls, or payload logging. The npm launcher also performs no network request: it fails closed on target/libc/package/provenance/binary inconsistencies and preserves native process bytes. npm/npx acquisition is a separate registry action; publication uses protected OIDC/provenance controls. External enrichment remains explicit and host-controlled. See [`SECURITY.md`](SECURITY.md) and [`.agents/architecture.md`](.agents/architecture.md).
+Career documents may contain sensitive information. Keep inputs local unless the user explicitly approves external processing. External proposals are untrusted data and remain separate from deterministic baselines.
 
-## Contributing
+Report vulnerabilities privately as described in [`SECURITY.md`](SECURITY.md). Do not include real resumes, job descriptions, credentials, or other sensitive payloads in public issues.
 
-See [`CONTRIBUTING.md`](CONTRIBUTING.md). Coding agents must also follow [`AGENTS.md`](AGENTS.md).
+## Maintenance, contributing, and license
 
-## License
+The primary maintainer is [Revaz Zakalashvili](https://github.com/revazi). Ownership and support policy are in [`MAINTAINERS.md`](MAINTAINERS.md); contribution guidance is in [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
-Project-authored source is dual-licensed under `MIT OR Apache-2.0` at your option.
+Project-authored source is available under either license, at your option:
 
-- Apache License, Version 2.0 ([`LICENSE-APACHE`](LICENSE-APACHE))
-- MIT License ([`LICENSE-MIT`](LICENSE-MIT))
+- [`MIT`](LICENSE-MIT)
+- [`Apache-2.0`](LICENSE-APACHE)
 
-The optional Swift adapter uses pinned MPL-2.0 UniFFI components documented in [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
+Third-party notices, including the adapter-only MPL-2.0 UniFFI components, are recorded in [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
