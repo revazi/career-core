@@ -907,6 +907,8 @@ ordered = [
     "x86_64-apple-darwin",
     "x86_64-unknown-linux-gnu",
     "aarch64-unknown-linux-gnu",
+    "x86_64-unknown-linux-musl",
+    "aarch64-unknown-linux-musl",
 ]
 positions = [text.index(value) for value in ordered]
 if positions != sorted(positions):
@@ -919,6 +921,13 @@ for value in (
     "container: ubuntu:22.04",
     "diffutils",
     'safe.directory "$GITHUB_WORKSPACE"',
+    "node:22.19.0-alpine3.22@sha256:d2166de198f26e17e5a442f537754dd616ab069c47cc57b889310a717e0abbf9",
+    "docker run --rm --interactive",
+    "musl libc ($EXPECTED_MACHINE)",
+    "Version 1.2.5",
+    "expected_linkage: static-pie",
+    "expected_linkage: static",
+    "chmod 0644 /output/evidence.json",
     "scripts/inspect-npm-native-binary.py",
     'test "$(node --version)" = "v22.19.0"',
     "--evidence-kind exact_native_ci",
@@ -932,6 +941,8 @@ for forbidden in (
     "macos-latest",
     "ubuntu-latest",
     "continue-on-error:",
+    "qemu",
+    "--platform",
     "actions/upload-artifact",
     "npm publish",
     "cargo publish",
@@ -958,6 +969,10 @@ for value in (
     '"x86_64-apple-darwin": "macos-15-intel"',
     '"x86_64-unknown-linux-gnu": "ubuntu-22.04"',
     '"aarch64-unknown-linux-gnu": "ubuntu-24.04-arm+ubuntu:22.04"',
+    '"x86_64-unknown-linux-musl"',
+    '"aarch64-unknown-linux-musl"',
+    "inspect_linux_musl",
+    '"musl 1.2.5"',
     "MAX_COMMAND_OUTPUT_BYTES",
     "MAX_EVIDENCE_BYTES",
     "O_NOFOLLOW",
@@ -969,11 +984,27 @@ for value in (
 for forbidden in ("requests", "urllib", "http.client", "qemu", "--platform"):
     if forbidden in inspection.lower():
         raise SystemExit(f"native inspection script contains forbidden mechanism: {forbidden}")
+expected_dynamic_symbol_line = (
+    '  dynamic_symbols="$(LC_ALL=C readelf --dyn-syms --wide '
+    '"$platform_stage/career")"'
+)
+if preparation.splitlines().count(expected_dynamic_symbol_line) != 1:
+    raise SystemExit("musl candidate dynamic-symbol inspection line is not exact")
 for value in (
     "20-revazi-career-darwin-x64-0.1.1.tgz",
     "40-revazi-career-linux-arm64-gnu-0.1.1.tgz",
+    "50-revazi-career-linux-x64-musl-0.1.1.tgz",
+    "60-revazi-career-linux-arm64-musl-0.1.1.tgz",
     "x86_64-apple-darwin)",
     "aarch64-unknown-linux-gnu)",
+    "x86_64-unknown-linux-musl)",
+    "aarch64-unknown-linux-musl)",
+    'readelf --file-header --wide "$platform_stage/career"',
+    "Type:[[:space:]]+DYN",
+    "Type:[[:space:]]+EXEC",
+    "Flags: NOW PIE",
+    "x86-64 musl candidate is not one reviewed static PIE",
+    "AArch64 musl candidate is not one reviewed static executable",
 ):
     if value not in preparation:
         raise SystemExit(f"native publication preparation is missing target policy text: {value}")

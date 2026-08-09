@@ -117,3 +117,137 @@ jobs:
           for forbidden in "$publish_command" "$upload_action" "$release_command"; do
             test -z "$(grep -F "$forbidden" .github/workflows/npm-cli-packages.yml || true)"
           done
+
+  prepare-musl:
+    name: Private native package (${{ matrix.platform_key }})
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-22.04
+            runner_arch: X64
+            machine: x86_64
+            node_arch: x64
+            expected_linkage: static-pie
+            platform_key: linux-x64-musl
+            target: x86_64-unknown-linux-musl
+            runner_image: ubuntu-22.04+node:22.19.0-alpine3.22+sha256:d2166de198f26e17e5a442f537754dd616ab069c47cc57b889310a717e0abbf9
+          - runner: ubuntu-24.04-arm
+            runner_arch: ARM64
+            machine: aarch64
+            node_arch: arm64
+            expected_linkage: static
+            platform_key: linux-arm64-musl
+            target: aarch64-unknown-linux-musl
+            runner_image: ubuntu-24.04-arm+node:22.19.0-alpine3.22+sha256:d2166de198f26e17e5a442f537754dd616ab069c47cc57b889310a717e0abbf9
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Verify native Docker host architecture
+        env:
+          EXPECTED_MACHINE: ${{ matrix.machine }}
+          EXPECTED_RUNNER_ARCH: ${{ matrix.runner_arch }}
+        run: |
+          test "$RUNNER_OS" = "Linux"
+          test "$RUNNER_ARCH" = "$EXPECTED_RUNNER_ARCH"
+          test "$(uname -m)" = "$EXPECTED_MACHINE"
+          test "$(docker info --format '{{.Architecture}}')" = "$EXPECTED_MACHINE"
+
+      - name: Build, package, execute, and inspect in exact native musl
+        env:
+          EXPECTED_LINKAGE: ${{ matrix.expected_linkage }}
+          EXPECTED_MACHINE: ${{ matrix.machine }}
+          EXPECTED_NODE_ARCH: ${{ matrix.node_arch }}
+          EXPECTED_TARGET: ${{ matrix.target }}
+          PLATFORM_KEY: ${{ matrix.platform_key }}
+          RUNNER_IMAGE: ${{ matrix.runner_image }}
+          SOURCE_SHA: ${{ github.sha }}
+          MUSL_CONTAINER: node:22.19.0-alpine3.22@sha256:d2166de198f26e17e5a442f537754dd616ab069c47cc57b889310a717e0abbf9
+        run: |
+          output_dir="$RUNNER_TEMP/career-npm-${PLATFORM_KEY}"
+          mkdir -p "$output_dir"
+          test -z "$(find "$output_dir" -mindepth 1 -print -quit)"
+          docker run --rm --interactive \
+            --env EXPECTED_LINKAGE \
+            --env EXPECTED_MACHINE \
+            --env EXPECTED_NODE_ARCH \
+            --env EXPECTED_TARGET \
+            --env PLATFORM_KEY \
+            --env RUNNER_IMAGE \
+            --env SOURCE_SHA \
+            --mount "type=bind,src=$GITHUB_WORKSPACE,dst=/workspace,readonly" \
+            --mount "type=bind,src=$output_dir,dst=/output" \
+            --workdir /workspace \
+            "$MUSL_CONTAINER" \
+            /bin/sh -s <<'MUSL'
+          set -eu
+          apk add --no-cache bash binutils build-base curl diffutils git python3 tar
+          git config --global --add safe.directory /workspace
+          test "$(git -C /workspace rev-parse HEAD)" = "$SOURCE_SHA"
+          test -z "$(git -C /workspace status --porcelain --untracked-files=normal)"
+          test "$(uname -s)" = "Linux"
+          test "$(uname -m)" = "$EXPECTED_MACHINE"
+          test "$(node --version)" = "v22.19.0"
+          test "$(node -p 'process.arch')" = "$EXPECTED_NODE_ARCH"
+          musl_output="$(/lib/ld-musl-${EXPECTED_MACHINE}.so.1 2>&1 || true)"
+          printf '%s\n' "$musl_output" | grep -Fxq "musl libc ($EXPECTED_MACHINE)"
+          printf '%s\n' "$musl_output" | grep -Fxq "Version 1.2.5"
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs |
+            sh -s -- -y --profile minimal --default-toolchain 1.97.1
+          . "$HOME/.cargo/env"
+          test "$(rustc -vV | awk '/^host: / { print $2 }')" = "$EXPECTED_TARGET"
+          rustc --version | grep -q '^rustc 1\.97\.1 '
+          cargo --version | grep -q '^cargo 1\.97\.1 '
+          export CARGO_TARGET_DIR=/tmp/career-target
+          export LC_ALL=C
+          node --test npm/tests/launcher.test.js
+          scripts/test-npm-cli-packages.sh
+          scripts/prepare-npm-cli-packages.sh \
+            --output-dir /output/prepared \
+            --expected-target "$EXPECTED_TARGET"
+          scripts/inspect-npm-native-binary.py \
+            --repository-root /workspace \
+            --binary "/output/prepared/stage/$PLATFORM_KEY/career" \
+            --target "$EXPECTED_TARGET" \
+            --source-sha "$SOURCE_SHA" \
+            --runner-image "$RUNNER_IMAGE" \
+            --evidence-kind exact_native_ci \
+            --output /output/evidence.json
+          python3 - /output/evidence.json <<'PY'
+          import json
+          import os
+          import pathlib
+          value = json.loads(pathlib.Path("/output/evidence.json").read_bytes())
+          assert value["evidence_kind"] == "exact_native_ci"
+          assert value["target"]["libc_family"] == "musl"
+          assert value["linkage"] == {
+              "dynamic_imports": [],
+              "highest_glibc_symbol_version": None,
+              "interpreter": None,
+              "linkage": os.environ["EXPECTED_LINKAGE"],
+              "runtime_libc": "musl 1.2.5",
+          }
+          PY
+          chmod 0644 /output/evidence.json
+          test "$(find /output/prepared/tarballs -maxdepth 1 -type f -name '*.tgz' | wc -l | tr -d ' ')" = "2"
+          test -z "$(find /output -type f \( -name '*.sig' -o -name '*.pem' -o -name '*.key' \) -print -quit)"
+          MUSL
+
+      - name: Confirm bounded external evidence and no upload
+        env:
+          PLATFORM_KEY: ${{ matrix.platform_key }}
+        run: |
+          evidence="$RUNNER_TEMP/career-npm-${PLATFORM_KEY}/evidence.json"
+          python3 -m json.tool "$evidence" >/dev/null
+          grep -Fq '"evidence_kind": "exact_native_ci"' "$evidence"
+          test "$(wc -c <"$evidence" | tr -d ' ')" -le 65536
+          publish_command="npm pub""lish"
+          upload_action="actions/upload""-artifact"
+          release_command="gh rel""ease"
+          for forbidden in "$publish_command" "$upload_action" "$release_command"; do
+            test -z "$(grep -F "$forbidden" .github/workflows/npm-cli-packages.yml || true)"
+          done

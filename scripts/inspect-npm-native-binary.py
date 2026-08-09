@@ -27,12 +27,21 @@ SUPPORTED_TARGETS = {
     "x86_64-apple-darwin": ("Darwin", "x86_64"),
     "x86_64-unknown-linux-gnu": ("Linux", "x86_64"),
     "aarch64-unknown-linux-gnu": ("Linux", "aarch64"),
+    "x86_64-unknown-linux-musl": ("Linux", "x86_64"),
+    "aarch64-unknown-linux-musl": ("Linux", "aarch64"),
 }
+MUSL_IMAGE_DIGEST = "d2166de198f26e17e5a442f537754dd616ab069c47cc57b889310a717e0abbf9"
 EXACT_RUNNER_IMAGES = {
     "aarch64-apple-darwin": "macos-14",
     "x86_64-apple-darwin": "macos-15-intel",
     "x86_64-unknown-linux-gnu": "ubuntu-22.04",
     "aarch64-unknown-linux-gnu": "ubuntu-24.04-arm+ubuntu:22.04",
+    "x86_64-unknown-linux-musl": (
+        f"ubuntu-22.04+node:22.19.0-alpine3.22+sha256:{MUSL_IMAGE_DIGEST}"
+    ),
+    "aarch64-unknown-linux-musl": (
+        f"ubuntu-24.04-arm+node:22.19.0-alpine3.22+sha256:{MUSL_IMAGE_DIGEST}"
+    ),
 }
 
 
@@ -132,7 +141,9 @@ def limit_command_output_file_size() -> None:
     )
 
 
-def run_bounded(command: list[str], label: str) -> str:
+def run_bounded_outputs(
+    command: list[str], label: str, allowed_returncodes: set[int]
+) -> tuple[str, str]:
     try:
         with tempfile.TemporaryFile() as stdout, tempfile.TemporaryFile() as stderr:
             result = subprocess.run(
@@ -148,15 +159,22 @@ def run_bounded(command: list[str], label: str) -> str:
             if stdout_size + stderr_size > MAX_COMMAND_OUTPUT_BYTES:
                 fail(f"{label} output exceeds its reviewed bound")
             stdout.seek(0)
-            output = stdout.read(MAX_COMMAND_OUTPUT_BYTES + 1)
+            stderr.seek(0)
+            stdout_bytes = stdout.read(MAX_COMMAND_OUTPUT_BYTES + 1)
+            stderr_bytes = stderr.read(MAX_COMMAND_OUTPUT_BYTES + 1)
     except (OSError, subprocess.TimeoutExpired) as error:
         raise InspectionError(f"{label} could not run") from error
-    if result.returncode != 0:
+    if result.returncode not in allowed_returncodes:
         fail(f"{label} failed")
     try:
-        return output.decode("utf-8")
+        return stdout_bytes.decode("utf-8"), stderr_bytes.decode("utf-8")
     except UnicodeError as error:
         raise InspectionError(f"{label} output is not UTF-8") from error
+
+
+def run_bounded(command: list[str], label: str) -> str:
+    stdout, _ = run_bounded_outputs(command, label, {0})
+    return stdout
 
 
 def verify_header(binary: bytes, target: dict[str, Any]) -> None:
@@ -207,7 +225,7 @@ def inspect_darwin(binary_path: pathlib.Path, target: dict[str, Any]) -> dict[st
     }
 
 
-def inspect_linux(binary_path: pathlib.Path, target: dict[str, Any]) -> dict[str, Any]:
+def inspect_linux_gnu(binary_path: pathlib.Path, target: dict[str, Any]) -> dict[str, Any]:
     program_headers = run_bounded(
         ["readelf", "--program-headers", "--wide", str(binary_path)],
         "ELF program-header inspection",
@@ -248,6 +266,74 @@ def inspect_linux(binary_path: pathlib.Path, target: dict[str, Any]) -> dict[str
         "highest_glibc_symbol_version": highest,
         "runtime_libc": runtime_libc,
     }
+
+
+def inspect_linux_musl(binary_path: pathlib.Path, target: dict[str, Any]) -> dict[str, Any]:
+    program_headers = run_bounded(
+        ["readelf", "--program-headers", "--wide", str(binary_path)],
+        "musl ELF program-header inspection",
+    )
+    if re.findall(r"Requesting program interpreter: ([^\]]+)", program_headers):
+        fail("static musl ELF must not contain a program interpreter")
+    dynamic = run_bounded(
+        ["readelf", "--dynamic", "--wide", str(binary_path)],
+        "musl ELF import inspection",
+    )
+    if re.findall(r"Shared library: \[([^\]]+)\]", dynamic):
+        fail("musl ELF contains an unexpected dynamic import")
+    symbols = run_bounded(
+        ["readelf", "--dyn-syms", "--wide", str(binary_path)],
+        "musl ELF symbol inspection",
+    )
+    if re.search(r"GLIBC_[0-9]", symbols):
+        fail("musl ELF contains an unexpected imported GLIBC symbol")
+    header = run_bounded(
+        ["readelf", "--file-header", "--wide", str(binary_path)],
+        "musl ELF type inspection",
+    )
+    if target["binary_architecture"] == "x86_64":
+        valid_type = re.search(
+            r"^\s*Type:\s+DYN \(Position-Independent Executable file\)\s*$",
+            header,
+            re.MULTILINE,
+        )
+        if valid_type is None or "Flags: NOW PIE" not in dynamic:
+            fail("x86-64 musl ELF is not one reviewed static PIE")
+        linkage_kind = "static-pie"
+    else:
+        valid_type = re.search(
+            r"^\s*Type:\s+EXEC \(Executable file\)\s*$", header, re.MULTILINE
+        )
+        if valid_type is None or "There is no dynamic section in this file." not in dynamic:
+            fail("AArch64 musl ELF is not one reviewed static executable")
+        linkage_kind = "static"
+    loader_arch = "aarch64" if target["binary_architecture"] == "aarch64" else "x86_64"
+    loader = f"/lib/ld-musl-{loader_arch}.so.1"
+    _, loader_stderr = run_bounded_outputs(
+        [loader], "musl runtime inspection", {1}
+    )
+    match = re.search(
+        rf"^musl libc \({loader_arch}\)\nVersion ([0-9]+(?:\.[0-9]+){{1,3}})\n",
+        loader_stderr,
+        re.MULTILINE,
+    )
+    if match is None:
+        fail("musl runtime evidence is malformed or architecture-mismatched")
+    return {
+        "linkage": linkage_kind,
+        "interpreter": None,
+        "dynamic_imports": [],
+        "highest_glibc_symbol_version": None,
+        "runtime_libc": f"musl {match.group(1)}",
+    }
+
+
+def inspect_linux(binary_path: pathlib.Path, target: dict[str, Any]) -> dict[str, Any]:
+    if target["libc_family"] == "glibc":
+        return inspect_linux_gnu(binary_path, target)
+    if target["libc_family"] == "musl":
+        return inspect_linux_musl(binary_path, target)
+    fail("Linux inspection target has no reviewed libc family")
 
 
 def require_source_state(
@@ -321,6 +407,8 @@ def main() -> int:
                 fail("exact native CI evidence runner image does not match the reviewed target")
             if target["libc_family"] == "glibc" and linkage["runtime_libc"] != "glibc 2.35":
                 fail("exact GNU CI evidence requires Ubuntu 22.04 glibc 2.35 userland")
+            if target["libc_family"] == "musl" and linkage["runtime_libc"] != "musl 1.2.5":
+                fail("exact musl CI evidence requires Alpine 3.22 musl 1.2.5 userland")
         evidence = {
             "schema_version": "career.npm_native_inspection.v1",
             "evidence_kind": args.evidence_kind,

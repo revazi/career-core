@@ -89,6 +89,18 @@ case "$expected_target" in
     expected_runner_arch="ARM64"
     final_name="40-revazi-career-linux-arm64-gnu-0.1.1.tgz"
     ;;
+  x86_64-unknown-linux-musl)
+    platform_key="linux-x64-musl"
+    expected_runner_os="Linux"
+    expected_runner_arch="X64"
+    final_name="50-revazi-career-linux-x64-musl-0.1.1.tgz"
+    ;;
+  aarch64-unknown-linux-musl)
+    platform_key="linux-arm64-musl"
+    expected_runner_os="Linux"
+    expected_runner_arch="ARM64"
+    final_name="60-revazi-career-linux-arm64-musl-0.1.1.tgz"
+    ;;
   *) fail "expected target is not an approved native publication target" ;;
 esac
 [[ "$runner_os" == "$expected_runner_os" ]] || fail "runner OS does not match the approved native target"
@@ -129,6 +141,34 @@ if [[ "$platform_key" == "linux-x64-gnu" || "$platform_key" == "linux-arm64-gnu"
   [[ -n "$maximum_required" ]] || fail "Linux candidate has no inspectable GLIBC requirement"
   highest="$(printf '%s\n%s\n' "$maximum_required" "2.35" | sort -V | tail -n1)"
   [[ "$highest" == "2.35" ]] || fail "Linux candidate requires GLIBC_$maximum_required above the supported 2.35 floor"
+fi
+if [[ "$platform_key" == "linux-x64-musl" || "$platform_key" == "linux-arm64-musl" ]]; then
+  command -v readelf >/dev/null 2>&1 || fail "musl candidate requires readelf"
+  case "$platform_key" in
+    linux-x64-musl) musl_arch="x86_64" ;;
+    linux-arm64-musl) musl_arch="aarch64" ;;
+  esac
+  musl_loader="/lib/ld-musl-$musl_arch.so.1"
+  [[ -e "$musl_loader" ]] || fail "musl candidate requires its architecture-bound runtime loader"
+  musl_output="$("$musl_loader" 2>&1 || true)"
+  grep -Fxq "musl libc ($musl_arch)" <<<"$musl_output" || fail "musl candidate runtime architecture is invalid"
+  grep -Fxq "Version 1.2.5" <<<"$musl_output" || fail "musl publication candidate must build on exact musl 1.2.5"
+  elf_header="$(LC_ALL=C readelf --file-header --wide "$platform_stage/career")"
+  program_headers="$(LC_ALL=C readelf --program-headers --wide "$platform_stage/career")"
+  [[ "$program_headers" != *"Requesting program interpreter:"* ]] || fail "musl candidate has an unexpected ELF interpreter"
+  dynamic_section="$(LC_ALL=C readelf --dynamic --wide "$platform_stage/career")"
+  [[ "$dynamic_section" != *"Shared library:"* ]] || fail "musl candidate has an unexpected dynamic import"
+  if [[ "$platform_key" == "linux-x64-musl" ]]; then
+    grep -Eq '^[[:space:]]*Type:[[:space:]]+DYN \(Position-Independent Executable file\)[[:space:]]*$' <<<"$elf_header" || \
+      fail "x86-64 musl candidate is not one reviewed static PIE"
+    [[ "$dynamic_section" == *"Flags: NOW PIE"* ]] || fail "x86-64 musl candidate lacks reviewed static PIE flags"
+  else
+    grep -Eq '^[[:space:]]*Type:[[:space:]]+EXEC \(Executable file\)[[:space:]]*$' <<<"$elf_header" || \
+      fail "AArch64 musl candidate is not one reviewed static executable"
+    [[ "$dynamic_section" == *"There is no dynamic section in this file."* ]] || fail "AArch64 musl candidate has an unexpected dynamic section"
+  fi
+  dynamic_symbols="$(LC_ALL=C readelf --dyn-syms --wide "$platform_stage/career")"
+  [[ "$dynamic_symbols" != *"GLIBC_"* ]] || fail "musl candidate has an unexpected imported GLIBC symbol"
 fi
 "$script_dir/npm-publication-candidate.py" public-manifest \
   "$repository_root/npm/platforms/$platform_key/package.json" \
