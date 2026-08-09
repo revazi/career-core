@@ -2,7 +2,7 @@
 
 ## Active phase
 
-**Phase 9 — npm CLI publication completion is authorized and under local implementation/review. Phases 0–8 remain complete.**
+**Phase 9 — npm CLI distribution and `v0.1.0` publication are complete. Phases 0–8 remain complete. The only remaining distribution code change is the separately reviewed `pi-career` consumer migration.**
 
 ## Phase 9 authorized scope
 
@@ -25,11 +25,11 @@ Implementation now includes:
 - registry-free synthetic Git and fake-npm adversarial tests, plus exact post-bootstrap `npm trust`/token-deletion governance
 - retained transitional `pi-career` artifacts and an exact public-package-only consumer handoff
 
-Maintainer discovery on 2026-08-09 observed npm `E404` for all three names and npm `whoami` `E401`: name availability was observed, while `@revazi` ownership remains unproven until successful authentication. The repository then had no Actions secrets, variables, or environments.
+The parent maintainer proved `@revazi` control through authenticated publication, configured protected `npm-production`, completed temporary-token bootstrap, removed the GitHub secret, reported revoking the npm bootstrap token, and configured the exact trusted publishers for all three packages. Exact public registry integrity and SLSA provenance are available for `@revazi/career@0.1.0` and both internal native packages.
 
 Hosted PR-head CI run `31284082728` exposed a real Linux cancellation race: the inherited native stdout pipe could report readiness before the launcher returned from `spawn()` and installed signal handlers, allowing default launcher termination and an orphan native process holding the pipe open. The local follow-up at committed base `3fc8cdc73e677c8bd80327b5423602fea27d7d46` installs handlers before spawn, queues a signal received before child assignment, and removes handlers on synchronous launch failure. A deterministic ordering regression and Linux `/proc` caught-signal readiness gate precede cancellation; cleanup polls for process absence with a bound rather than relying on a fixed sleep.
 
-Publication-completion local verification passed on Apple Silicon macOS on 2026-08-09; the Linux cancellation follow-up is awaiting a new numbered independent review:
+Prepublication local verification passed on Apple Silicon macOS on 2026-08-09, and the Linux cancellation follow-up subsequently passed independent review and hosted CI:
 
 - Node 22.19 passed 46 launcher/selection/glibc-floor/manifest/provenance/toolchain/runner/binary/argv/stdio/exit/signal/metadata/public-boundary test entries
 - Linux amd64 under Docker/QEMU with exact Node 22.19.0 and Rust 1.97.1 passed all 46 entries and 50/50 focused cancellation iterations; macOS passed 100/100 focused cancellation iterations
@@ -43,7 +43,7 @@ Publication-completion local verification passed on Apple Silicon macOS on 2026-
 - exact clean Phase 8 base parity passed for capabilities, operation catalog, schema catalog, all 26 exports, all 26 bundles, and all ten input operations
 - shell/Python/Node/JSON/YAML syntax, relative Markdown links, action/package/workflow/generated-payload/credential guards, `git diff --check`, and Fallow audit/all/changed/security passed with zero findings
 
-No hosted workflow was dispatched, so exact rustc/Cargo 1.97.1 native builds, npm bootstrap/OIDC publication, public registry provenance/acquisition smokes, trust setup, merge/tag, and the dated no-asset GitHub Release remain parent-maintainer gates after review. One unauthenticated public metadata lookup recorded npm 11.15.0 `dist.integrity` for the documented trust-only exception; no package-name/ownership query, npm authentication/publication, commit, push, merge, tag, workflow dispatch, environment/secret change, release, signature, upload, or `pi-career` edit occurred in the implementation session.
+PR `#22` squash-merged as `478e9b15f489c3785dc470af8eb83a7fed9e75e8`; merged-main CI `31285098017` and private two-platform preparation run `31285098073` passed. Annotated tag `v0.1.0` resolves to that commit. Bootstrap/public acceptance run `31286374878` passed after safe idempotent recovery from npm's observed 3–5 minute first-package registry propagation; exact Darwin, Linux, then launcher bytes and SLSA provenance were preserved. No-token OIDC steady-state/public acceptance run `31287506624` then passed on `macos-14` and `ubuntu-22.04`. The `NPM_TOKEN` GitHub secret is absent, and the asset-free GitHub Release is public at `https://github.com/revazi/career-core/releases/tag/v0.1.0`. A bounded follow-up replaces the 50-second checks with one combined ten-minute integrity/provenance readiness window per package and raises the protected publish-job ceiling to 40 minutes, with delayed/never-visible integrity and provenance fake-registry regressions. No crate, custom asset, signature, notarization, or `pi-career` source edit occurred.
 
 ## Completed Phase 8 status
 

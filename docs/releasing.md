@@ -119,6 +119,8 @@ Package-level trusted publishers cannot be configured before each package exists
 
 Bootstrap accepts only an absent package name or exact already-published `name@0.1.0` with matching candidate integrity and valid npm SLSA provenance. This permits safe rerun after interruption. A name with no exact reviewed version, conflicting integrity, or missing/malformed registry provenance blocks publication. Native packages always finish before the launcher.
 
+A successful `npm publish` response is not treated as complete until exact public integrity and valid SLSA provenance become visible. Each package gets one combined bounded readiness loop of 61 attempts at ten-second intervals (at most ten minutes of sleeps shared by integrity and provenance); the protected publish job allows 40 minutes for all three sequential packages plus setup and bounded transient retries. This bound reflects the 3–5 minute propagation observed during the `v0.1.0` bootstrap while still failing closed on absence, conflict, malformed provenance, or timeout.
+
 Immediately after successful bootstrap, delete the GitHub environment secret and revoke/delete the granular token in npm. For example, after confirming the workflow result:
 
 ```bash

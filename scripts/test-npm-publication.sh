@@ -486,12 +486,21 @@ if args and args[0] == "view":
         record = packages.get(name, {}).get(version)
         if isinstance(record, dict):
             selected = json.loads(os.environ.get("FAKE_NPM_BEHAVIOR", "{}")).get(name)
-            if field == "dist.attestations" and selected == "attestation_delayed_once":
+            if field == "dist.integrity" and selected in {"integrity_delayed_six", "integrity_never"}:
+                attempts = json.loads(attempt_path.read_text()) if attempt_path.exists() else {}
+                key = f"integrity:{name}"
+                attempts[key] = attempts.get(key, 0) + 1
+                attempt_path.write_text(json.dumps(attempts))
+                if selected == "integrity_never" or attempts[key] <= 6:
+                    print("npm ERR! code E404", file=sys.stderr)
+                    raise SystemExit(1)
+            attestation_delays = {"attestation_delayed_once": 1, "attestation_delayed_six": 6}
+            if field == "dist.attestations" and selected in {*attestation_delays, "attestation_never"}:
                 attempts = json.loads(attempt_path.read_text()) if attempt_path.exists() else {}
                 key = f"attestation:{name}"
                 attempts[key] = attempts.get(key, 0) + 1
                 attempt_path.write_text(json.dumps(attempts))
-                if attempts[key] == 1:
+                if selected == "attestation_never" or attempts[key] <= attestation_delays[selected]:
                     print("npm ERR! code E404", file=sys.stderr)
                     raise SystemExit(1)
             value = record.get("integrity" if field == "dist.integrity" else "attestations")
@@ -619,6 +628,43 @@ import json, pathlib, sys
 attempts = json.loads(pathlib.Path(sys.argv[1]).read_text())
 assert attempts["attestation:@revazi/career-darwin-arm64"] >= 2
 PY
+run_driver integrity-eventual bootstrap absent \
+  '{"@revazi/career-darwin-arm64":"integrity_delayed_six"}' token
+python3 - "$driver_root/integrity-eventual/attempts.json" <<'PY'
+import json, pathlib, sys
+attempts = json.loads(pathlib.Path(sys.argv[1]).read_text())
+assert attempts["integrity:@revazi/career-darwin-arm64"] >= 7
+PY
+if run_driver integrity-never bootstrap absent \
+  '{"@revazi/career-darwin-arm64":"integrity_never"}' token \
+  >"$driver_root/integrity-never.stdout" 2>"$driver_root/integrity-never.stderr"; then
+  fail "publication driver accepted registry integrity that never became visible"
+fi
+python3 - "$driver_root/integrity-never/attempts.json" "$driver_root/integrity-never/npm.log" <<'PY'
+import json, pathlib, sys
+attempts = json.loads(pathlib.Path(sys.argv[1]).read_text())
+published = [line.split("\t", 1)[1] for line in pathlib.Path(sys.argv[2]).read_text().splitlines() if line.startswith("publish\t")]
+assert attempts["integrity:@revazi/career-darwin-arm64"] == 61
+assert published == ["@revazi/career-darwin-arm64"]
+PY
+run_driver provenance-eventual bootstrap exact \
+  '{"@revazi/career-darwin-arm64":"attestation_delayed_six"}' token
+python3 - "$driver_root/provenance-eventual/attempts.json" <<'PY'
+import json, pathlib, sys
+attempts = json.loads(pathlib.Path(sys.argv[1]).read_text())
+assert attempts["attestation:@revazi/career-darwin-arm64"] >= 7
+PY
+if run_driver provenance-never bootstrap exact \
+  '{"@revazi/career-darwin-arm64":"attestation_never"}' token \
+  >"$driver_root/provenance-never.stdout" 2>"$driver_root/provenance-never.stderr"; then
+  fail "publication driver accepted registry provenance that never became visible"
+fi
+python3 - "$driver_root/provenance-never/attempts.json" "$driver_root/provenance-never/npm.log" <<'PY'
+import json, pathlib, sys
+attempts = json.loads(pathlib.Path(sys.argv[1]).read_text())
+assert attempts["attestation:@revazi/career-darwin-arm64"] == 61
+assert not any(line.startswith("publish\t") for line in pathlib.Path(sys.argv[2]).read_text().splitlines())
+PY
 for scenario in missing-attestation malformed-attestation; do
   if run_driver "$scenario" bootstrap "$scenario" '{}' token \
     >"$driver_root/$scenario.stdout" 2>"$driver_root/$scenario.stderr"; then
@@ -692,6 +738,8 @@ required = [
     "npx --yes --package=@revazi/career@0.1.0 career --version", "dist.attestations",
     "actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f",
     "actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3",
+    "timeout-minutes: 40", "registry_visibility_attempts=61",
+    "require_registry_package_ready",
     "10-revazi-career-darwin-arm64-0.1.0.tgz",
     "20-revazi-career-linux-x64-gnu-0.1.0.tgz",
     "30-revazi-career-0.1.0.tgz",
@@ -705,6 +753,9 @@ for value in (
 ):
     if value not in driver:
         raise SystemExit(f"publication driver is missing required policy text: {value}")
+for stale_function in ("require_registry_integrity()", "require_registry_provenance()"):
+    if stale_function in driver:
+        raise SystemExit(f"publication driver has separate visibility windows: {stale_function}")
 for forbidden in (
     "pull_request:", "schedule:", "release:", "cargo publish", "gh release",
     "NPM_TOKEN ||", "registry-url:", "ubuntu-latest", "rustup update stable",
@@ -742,7 +793,7 @@ grep -Fq 'exact npm CLI 11.15.0' "$repository_root/docs/releasing.md"
 grep -Fq 'publication and public acceptance remain pinned to npm 11.6.2' "$repository_root/docs/releasing.md"
 grep -Fq 'sha512-+k0tk7lRnpMUPnC7kTuU/yrV/mnFoPhJQ75VfLtZ6fwbzOVXaPsTE/Il9Pn1DHi482byMyqkHv/XsQ76mNjXLw==' "$repository_root/docs/releasing.md"
 ! grep -Fq '11.15.0 or newer' "$repository_root/docs/releasing.md"
-grep -Fq 'npm `whoami` `E401`' "$repository_root/.agents/current-phase.md"
+grep -Fq 'No-token OIDC steady-state/public acceptance run `31287506624`' "$repository_root/.agents/current-phase.md"
 ! grep -Eq '@revazi/career-(darwin|linux)' "$repository_root/npm/career/README.md"
 
 printf 'npm publication source, candidate, adversarial, parity, npx-equivalent, fake-registry, and workflow dry-run tests passed.\n'
