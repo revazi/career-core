@@ -7,12 +7,12 @@ It is **not** an AI service. The core library performs no network requests, mode
 ## Release status
 
 - Source and CLI version: `0.1.1`
-- Intended npm consumer package: exact `@revazi/career@0.1.1`
+- npm consumer package: exact `@revazi/career@0.1.1`
 - Public CLI name: `career`
 - Minimum Rust version for source builds: Rust `1.85`
 - npm launcher runtime: Node.js `22` or newer
 
-Treat `@revazi/career@0.1.1` as available only after the protected npm workflow and all eight public-registry acceptance jobs complete. Do not infer availability from source templates, target metadata, cross-compilation, or CI configuration. Until then, exact public `@revazi/career@0.1.0` remains the completed npm release.
+Exact `@revazi/career@0.1.1` completed protected publication and all-eight native public acceptance in run [`31346152236`](https://github.com/revazi/career-core/actions/runs/31346152236). Later versions are supported only after the same final-tag native evidence and public acceptance pass.
 
 Use exact versions, never `latest` or a range.
 
@@ -52,7 +52,7 @@ Document text is always data, never instructions.
 
 ### npm
 
-After exact `0.1.1` public acceptance completes:
+Install the exact accepted release:
 
 ```bash
 npm install --save-exact @revazi/career@0.1.1
@@ -76,7 +76,7 @@ For reproducible use, check out an exact reviewed commit or release tag.
 
 ## Supported npm targets for `0.1.1`
 
-The protected release candidate contains one launcher and eight native implementations:
+The accepted release contains one launcher and eight native implementations:
 
 | Operating system | Architecture | Runtime |
 |---|---|---|

@@ -11,14 +11,14 @@ usage() {
 Usage: scripts/prepare-npm-publication-native.sh \
   --output-dir <external-empty-directory> \
   --expected-target <approved-rust-target> \
-  --expected-ref refs/tags/v0.1.1 \
+  --expected-ref refs/tags/vX.Y.Z \
   --reviewed-sha <40-lowercase-hex> \
   --runner-os <Linux|macOS|Windows> \
   --runner-arch <X64|ARM64> \
   --runner-image <bounded-runner-image>
 
-Create one public native v0.1.1 candidate tarball from the exact clean annotated
-tag on origin/main. Source templates remain private. This command never queries
+Create one public native stable-SemVer candidate tarball from the exact clean
+annotated tag on origin/main. Source templates remain private. This command never queries
 npm, authenticates, publishes, creates a tag, or changes the checkout.
 EOF
 }
@@ -63,55 +63,60 @@ repository_root="$(cd "$script_dir/.." && pwd -P)"
   --repository-root "$repository_root" \
   --expected-ref "$expected_ref" \
   --reviewed-sha "$reviewed_sha"
+if [[ "$expected_ref" =~ ^refs/tags/v((0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*))$ ]]; then
+  release_version="${BASH_REMATCH[1]}"
+else
+  fail "expected ref must be an exact stable SemVer tag"
+fi
 
 case "$expected_target" in
   aarch64-apple-darwin)
     platform_key="darwin-arm64"
     expected_runner_os="macOS"
     expected_runner_arch="ARM64"
-    final_name="10-revazi-career-darwin-arm64-0.1.1.tgz"
+    final_name="10-revazi-career-darwin-arm64-$release_version.tgz"
     ;;
   x86_64-apple-darwin)
     platform_key="darwin-x64"
     expected_runner_os="macOS"
     expected_runner_arch="X64"
-    final_name="20-revazi-career-darwin-x64-0.1.1.tgz"
+    final_name="20-revazi-career-darwin-x64-$release_version.tgz"
     ;;
   x86_64-unknown-linux-gnu)
     platform_key="linux-x64-gnu"
     expected_runner_os="Linux"
     expected_runner_arch="X64"
-    final_name="30-revazi-career-linux-x64-gnu-0.1.1.tgz"
+    final_name="30-revazi-career-linux-x64-gnu-$release_version.tgz"
     ;;
   aarch64-unknown-linux-gnu)
     platform_key="linux-arm64-gnu"
     expected_runner_os="Linux"
     expected_runner_arch="ARM64"
-    final_name="40-revazi-career-linux-arm64-gnu-0.1.1.tgz"
+    final_name="40-revazi-career-linux-arm64-gnu-$release_version.tgz"
     ;;
   x86_64-unknown-linux-musl)
     platform_key="linux-x64-musl"
     expected_runner_os="Linux"
     expected_runner_arch="X64"
-    final_name="50-revazi-career-linux-x64-musl-0.1.1.tgz"
+    final_name="50-revazi-career-linux-x64-musl-$release_version.tgz"
     ;;
   aarch64-unknown-linux-musl)
     platform_key="linux-arm64-musl"
     expected_runner_os="Linux"
     expected_runner_arch="ARM64"
-    final_name="60-revazi-career-linux-arm64-musl-0.1.1.tgz"
+    final_name="60-revazi-career-linux-arm64-musl-$release_version.tgz"
     ;;
   x86_64-pc-windows-msvc)
     platform_key="win32-x64-msvc"
     expected_runner_os="Windows"
     expected_runner_arch="X64"
-    final_name="70-revazi-career-win32-x64-msvc-0.1.1.tgz"
+    final_name="70-revazi-career-win32-x64-msvc-$release_version.tgz"
     ;;
   aarch64-pc-windows-msvc)
     platform_key="win32-arm64-msvc"
     expected_runner_os="Windows"
     expected_runner_arch="ARM64"
-    final_name="80-revazi-career-win32-arm64-msvc-0.1.1.tgz"
+    final_name="80-revazi-career-win32-arm64-msvc-$release_version.tgz"
     ;;
   *) fail "expected target is not an approved native publication target" ;;
 esac

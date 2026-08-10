@@ -6,36 +6,33 @@ fail() {
   exit 1
 }
 
-mode=""
 candidate_dir=""
 reviewed_sha=""
+release_version=""
 while (($# > 0)); do
   case "$1" in
-    --mode) (($# >= 2)) || fail "--mode requires a value"; mode="$2"; shift 2 ;;
     --candidate-dir) (($# >= 2)) || fail "--candidate-dir requires a value"; candidate_dir="$2"; shift 2 ;;
     --reviewed-sha) (($# >= 2)) || fail "--reviewed-sha requires a value"; reviewed_sha="$2"; shift 2 ;;
+    --version) (($# >= 2)) || fail "--version requires a value"; release_version="$2"; shift 2 ;;
     --help|-h)
-      printf 'Usage: %s --mode <bootstrap|oidc> --candidate-dir <directory> --reviewed-sha <sha>\n' "$0"
+      printf 'Usage: %s --candidate-dir <directory> --reviewed-sha <sha> --version <X.Y.Z>\n' "$0"
       exit 0
       ;;
     *) fail "unknown argument: $1" ;;
   esac
 done
 
-[[ "$mode" == "bootstrap" || "$mode" == "oidc" ]] || fail "mode must be bootstrap or oidc"
 [[ -d "$candidate_dir" ]] || fail "candidate directory is missing"
 [[ "$reviewed_sha" =~ ^[0-9a-f]{40}$ ]] || fail "reviewed SHA is invalid"
+[[ "$release_version" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]] || \
+  fail "version must be an exact stable SemVer"
 for command in node npm python3; do
   command -v "$command" >/dev/null 2>&1 || fail "required command is unavailable: $command"
 done
 [[ "$(node --version)" == "v22.19.0" ]] || fail "publication requires exact Node v22.19.0"
 [[ "$(npm --version)" == "11.6.2" ]] || fail "publication requires exact npm 11.6.2"
-if [[ "$mode" == "bootstrap" ]]; then
-  [[ -n "${NODE_AUTH_TOKEN:-}" ]] || fail "bootstrap requires the temporary granular NPM_TOKEN"
-else
-  [[ -z "${NODE_AUTH_TOKEN:-}" ]] || fail "OIDC mode forbids token authentication"
-  unset NODE_AUTH_TOKEN
-fi
+[[ -z "${NODE_AUTH_TOKEN:-}" ]] || fail "OIDC publication forbids token authentication"
+unset NODE_AUTH_TOKEN
 
 candidate_dir="$(cd "$candidate_dir" && pwd -P)"
 temporary_root="$(mktemp -d "${RUNNER_TEMP:-${TMPDIR:-/tmp}}/career-npm-publish.XXXXXX")"
@@ -43,17 +40,11 @@ trap 'rm -rf "$temporary_root"' EXIT
 plan="$temporary_root/publish-plan.tsv"
 userconfig="$temporary_root/npmrc"
 umask 077
-if [[ "$mode" == "bootstrap" ]]; then
-  printf '%s\n' \
-    'registry=https://registry.npmjs.org/' \
-    '//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}' >"$userconfig"
-else
-  printf '%s\n' 'registry=https://registry.npmjs.org/' >"$userconfig"
-fi
+printf '%s\n' 'registry=https://registry.npmjs.org/' >"$userconfig"
 chmod 0600 "$userconfig"
 export NPM_CONFIG_USERCONFIG="$userconfig"
 
-python3 - "$candidate_dir" "$reviewed_sha" "$plan" <<'PY'
+python3 - "$candidate_dir" "$reviewed_sha" "$plan" "$release_version" <<'PY'
 import base64
 import gzip
 import hashlib
@@ -144,16 +135,19 @@ def read_tarball(data, limits):
 root = pathlib.Path(sys.argv[1])
 sha = sys.argv[2]
 plan = pathlib.Path(sys.argv[3])
+version = sys.argv[4]
+tag = f"v{version}"
+ref = f"refs/tags/{tag}"
 expected = [
-    (10, "internal_native", "@revazi/career-darwin-arm64", "10-revazi-career-darwin-arm64-0.1.1.tgz"),
-    (20, "internal_native", "@revazi/career-darwin-x64", "20-revazi-career-darwin-x64-0.1.1.tgz"),
-    (30, "internal_native", "@revazi/career-linux-x64-gnu", "30-revazi-career-linux-x64-gnu-0.1.1.tgz"),
-    (40, "internal_native", "@revazi/career-linux-arm64-gnu", "40-revazi-career-linux-arm64-gnu-0.1.1.tgz"),
-    (50, "internal_native", "@revazi/career-linux-x64-musl", "50-revazi-career-linux-x64-musl-0.1.1.tgz"),
-    (60, "internal_native", "@revazi/career-linux-arm64-musl", "60-revazi-career-linux-arm64-musl-0.1.1.tgz"),
-    (70, "internal_native", "@revazi/career-win32-x64-msvc", "70-revazi-career-win32-x64-msvc-0.1.1.tgz"),
-    (80, "internal_native", "@revazi/career-win32-arm64-msvc", "80-revazi-career-win32-arm64-msvc-0.1.1.tgz"),
-    (90, "user_facing_launcher", "@revazi/career", "90-revazi-career-0.1.1.tgz"),
+    (10, "internal_native", "@revazi/career-darwin-arm64", f"10-revazi-career-darwin-arm64-{version}.tgz"),
+    (20, "internal_native", "@revazi/career-darwin-x64", f"20-revazi-career-darwin-x64-{version}.tgz"),
+    (30, "internal_native", "@revazi/career-linux-x64-gnu", f"30-revazi-career-linux-x64-gnu-{version}.tgz"),
+    (40, "internal_native", "@revazi/career-linux-arm64-gnu", f"40-revazi-career-linux-arm64-gnu-{version}.tgz"),
+    (50, "internal_native", "@revazi/career-linux-x64-musl", f"50-revazi-career-linux-x64-musl-{version}.tgz"),
+    (60, "internal_native", "@revazi/career-linux-arm64-musl", f"60-revazi-career-linux-arm64-musl-{version}.tgz"),
+    (70, "internal_native", "@revazi/career-win32-x64-msvc", f"70-revazi-career-win32-x64-msvc-{version}.tgz"),
+    (80, "internal_native", "@revazi/career-win32-arm64-msvc", f"80-revazi-career-win32-arm64-msvc-{version}.tgz"),
+    (90, "user_facing_launcher", "@revazi/career", f"90-revazi-career-{version}.tgz"),
 ]
 expected_entries = {item[3] for item in expected} | {"publication-manifest.json"}
 entries = []
@@ -179,14 +173,14 @@ if manifest["schema_version"] != "career.npm_publication_candidate.v1":
 if manifest["source"] != {
     "repository": "https://github.com/revazi/career-core",
     "git_sha": sha,
-    "git_ref": "refs/tags/v0.1.1",
-    "git_tag": "v0.1.1",
+    "git_ref": ref,
+    "git_tag": tag,
     "git_dirty": False,
     "publication_candidate": True,
 }:
     raise SystemExit("publication manifest source binding mismatch")
 if manifest["release"] != {
-    "version": "0.1.1",
+    "version": version,
     "node_version": "v22.19.0",
     "npm_version": "11.6.2",
     "access": "public",
@@ -208,7 +202,7 @@ for row, (order, role, name, filename) in zip(rows, expected):
         "order": order,
         "role": role,
         "name": name,
-        "version": "0.1.1",
+        "version": version,
         "file": filename,
         "sha256": hashlib.sha256(data).hexdigest(),
         "integrity": integrity,
@@ -271,7 +265,7 @@ for row, (order, role, name, filename) in zip(rows, expected):
     else:
         expected_modes = {entry: 0o644 for entry in expected_names}
         expected_modes["package/bin/career.js"] = 0o755
-        expected_optional = {package_name: "0.1.1" for package_name in platform_names}
+        expected_optional = {package_name: version for package_name in platform_names}
         optional = package.get("optionalDependencies")
         if optional != expected_optional or list(optional) != list(expected_optional):
             raise SystemExit("packed launcher optional dependency order mismatch")
@@ -281,11 +275,11 @@ for row, (order, role, name, filename) in zip(rows, expected):
         raise SystemExit("packed package property set mismatch")
     if modes != expected_modes:
         raise SystemExit("packed package file/mode allowlist mismatch")
-    if package.get("name") != name or package.get("version") != "0.1.1":
+    if package.get("name") != name or package.get("version") != version:
         raise SystemExit("packed package identity/version mismatch")
     if package.get("publishConfig") != {"access": "public", "provenance": True}:
         raise SystemExit("packed package publishability mismatch")
-    lines.append(f"{order}\t{name}\t0.1.1\t{path}\t{integrity}")
+    lines.append(f"{order}\t{name}\t{version}\t{path}\t{integrity}")
 plan.write_text("\n".join(lines) + "\n", encoding="utf-8")
 PY
 
@@ -347,21 +341,6 @@ matching_or_absent_version() {
   fi
 }
 
-historical_v010_integrity() {
-  case "$1" in
-    @revazi/career-darwin-arm64)
-      printf '%s\n' 'sha512-2h+TLqrZx+UfSb7pYxhZjZLxImAaUjERgHvlGZ/OJDe2rxFrOvBbvwFHA4iiyeU6Qkd+XeOhqKcBUYPvLC9lWQ=='
-      ;;
-    @revazi/career-linux-x64-gnu)
-      printf '%s\n' 'sha512-e/EwBLqAWJyOy9/q1+BK/5dCuC6c554sWBfDKMvevWhQM+ymD9qniTWKhExEpFXrCHlpAUpdHw9z5uWx2FvMuA=='
-      ;;
-    @revazi/career)
-      printf '%s\n' 'sha512-pyH821D9QsWTxbMXYit35+Yl8EdIiaaqpjUh8+CyJc2urE48de6Gh4POLUL4EnP0zJZe4efxtHVfDMyD5kJivg=='
-      ;;
-    *) return 4 ;;
-  esac
-}
-
 registry_provenance_ready() {
   local name="$1" version="$2" raw status
   if raw="$(lookup "$name@$version" dist.attestations)"; then
@@ -400,6 +379,8 @@ require_registry_package_ready() {
       missing="integrity"
     fi
     if ((attempt < registry_visibility_attempts)); then
+      printf 'Waiting for %s@%s registry %s visibility (attempt %d/%d).\n' \
+        "$name" "$version" "$missing" "$attempt" "$registry_visibility_attempts"
       sleep "$registry_visibility_sleep_seconds"
       attempt=$((attempt + 1))
       continue
@@ -409,47 +390,6 @@ require_registry_package_ready() {
     fi
     fail "$name@$version is missing valid npm registry SLSA provenance attestations"
   done
-}
-
-require_historical_v010_package() {
-  local name="$1" expected status
-  if ! expected="$(historical_v010_integrity "$name")"; then
-    fail "existing package name has no reviewed historical release: $name"
-  fi
-  if matching_or_absent_version "$name" "0.1.0" "$expected"; then
-    if ! registry_provenance_ready "$name" "0.1.0"; then
-      fail "$name@0.1.0 is missing valid reviewed npm registry SLSA provenance"
-    fi
-    return 0
-  else
-    status=$?
-    [[ "$status" -eq 4 ]] && fail "$name is missing its exact reviewed historical 0.1.0 release"
-    return "$status"
-  fi
-}
-
-preflight_bootstrap_package() {
-  local name="$1" version="$2" expected="$3" status
-  if name_exists "$name"; then
-    if matching_or_absent_version "$name" "$version" "$expected"; then
-      require_registry_package_ready "$name" "$version" "$expected"
-      return 0
-    else
-      status=$?
-      [[ "$status" -eq 4 ]] || return "$status"
-    fi
-    require_historical_v010_package "$name"
-    return 0
-  else
-    status=$?
-    if [[ "$status" -eq 4 ]]; then
-      if historical_v010_integrity "$name" >/dev/null; then
-        fail "reviewed historical package name is unexpectedly absent: $name"
-      fi
-      return 0
-    fi
-    return "$status"
-  fi
 }
 
 preflight_oidc_package() {
@@ -471,12 +411,51 @@ preflight_oidc_package() {
 }
 
 while IFS=$'\t' read -r _order name version _file integrity; do
-  if [[ "$mode" == "bootstrap" ]]; then
-    preflight_bootstrap_package "$name" "$version" "$integrity"
-  else
-    preflight_oidc_package "$name" "$version" "$integrity"
-  fi
+  preflight_oidc_package "$name" "$version" "$integrity"
 done <"$plan"
+
+run_bounded_npm_publish() {
+  local file="$1" output="$2"
+  python3 - "$file" "$output" "$registry" <<'PY'
+import os
+import pathlib
+import signal
+import subprocess
+import sys
+import time
+
+tarball = sys.argv[1]
+output = pathlib.Path(sys.argv[2])
+registry = sys.argv[3]
+maximum_output = 1_048_576
+deadline = time.monotonic() + 300
+with output.open("wb") as handle:
+    process = subprocess.Popen(
+        [
+            "npm", "publish", tarball, "--access", "public", "--provenance",
+            "--ignore-scripts", f"--registry={registry}",
+        ],
+        stdin=subprocess.DEVNULL,
+        stdout=handle,
+        stderr=subprocess.STDOUT,
+        start_new_session=True,
+    )
+    while process.poll() is None:
+        handle.flush()
+        if output.stat().st_size > maximum_output or time.monotonic() >= deadline:
+            os.killpg(process.pid, signal.SIGTERM)
+            try:
+                process.wait(timeout=15)
+            except subprocess.TimeoutExpired:
+                os.killpg(process.pid, signal.SIGKILL)
+                process.wait()
+            raise SystemExit(124)
+        time.sleep(0.1)
+if output.stat().st_size > maximum_output:
+    raise SystemExit(124)
+raise SystemExit(process.returncode)
+PY
+}
 
 publish_one() {
   local name="$1" version="$2" file="$3" expected="$4"
@@ -491,11 +470,8 @@ publish_one() {
   fi
   while ((attempt <= 3)); do
     output="$temporary_root/npm-publish-$attempt.log"
-    if npm publish "$file" \
-      --access public \
-      --provenance \
-      --ignore-scripts \
-      --registry="$registry" >"$output" 2>&1; then
+    printf 'Publishing %s@%s in reviewed order (attempt %d/3).\n' "$name" "$version" "$attempt"
+    if run_bounded_npm_publish "$file" "$output"; then
       cat "$output"
       require_registry_package_ready "$name" "$version" "$expected"
       return 0
@@ -551,4 +527,5 @@ while IFS=$'\t' read -r order name version file integrity; do
 done <"$plan"
 [[ "$index" -eq 9 ]] || fail "publish plan must contain exactly nine rows"
 
-printf 'npm publication mode %s completed in native-before-launcher order.\n' "$mode"
+printf 'npm OIDC publication completed for v%s in native-before-launcher order.\n' \
+  "$release_version"

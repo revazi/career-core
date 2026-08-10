@@ -8,6 +8,7 @@ import json
 import os
 import pathlib
 import platform
+import re
 import shutil
 import sys
 
@@ -16,7 +17,6 @@ sys.dont_write_bytecode = True
 from npm_windows_process import BoundedProcessError, run_bounded  # noqa: E402
 
 MAX_OUTPUT_BYTES = 32 * 1024 * 1024
-VERSION = "0.1.1"
 TARGETS = {
     "aarch64-apple-darwin": (
         "Darwin",
@@ -148,12 +148,19 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--consumer-dir", required=True, type=pathlib.Path)
     parser.add_argument("--repository-root", required=True, type=pathlib.Path)
     parser.add_argument("--expected-target", required=True, choices=sorted(TARGETS))
+    parser.add_argument("--expected-version", required=True)
     return parser.parse_args()
 
 
 def main() -> int:
     args = parse_args()
     try:
+        if re.fullmatch(
+            r"(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)",
+            args.expected_version,
+        ) is None:
+            fail("expected version is not an exact stable SemVer")
+        release_version = args.expected_version
         expected_system, expected_machine, package_name, executable = TARGETS[
             args.expected_target
         ]
@@ -190,25 +197,26 @@ def main() -> int:
         provenance = json.loads((native_root / "provenance.json").read_bytes())
         if (
             launcher_manifest.get("name") != "@revazi/career"
-            or launcher_manifest.get("version") != VERSION
+            or launcher_manifest.get("version") != release_version
         ):
             fail("public launcher identity/version mismatch")
         if (
             native_manifest.get("name") != package_name
-            or native_manifest.get("version") != VERSION
+            or native_manifest.get("version") != release_version
         ):
             fail("public native identity/version mismatch")
         if (
-            provenance.get("source", {}).get("git_ref") != "refs/tags/v0.1.1"
+            provenance.get("source", {}).get("git_ref")
+            != f"refs/tags/v{release_version}"
             or provenance.get("source", {}).get("publication_candidate") is not True
         ):
-            fail("public native provenance is not bound to the v0.1.1 candidate")
+            fail("public native provenance is not bound to the exact release tag")
         node = command_path("node")
         launcher = launcher_root / "bin/career.js"
         native = native_root / executable
         version = compare("version", ["--version"], native, node, launcher)
-        if version.strip() != b"career 0.1.1":
-            fail("public CLI version is not exact 0.1.1")
+        if version.strip() != f"career {release_version}".encode("ascii"):
+            fail("public CLI version does not match the exact release")
         compare(
             "capabilities",
             ["capabilities"],
@@ -286,7 +294,7 @@ def main() -> int:
                 "public npm bin shim",
                 cwd=consumer,
             )
-        if shim.strip() != b"career 0.1.1":
+        if shim.strip() != f"career {release_version}".encode("ascii"):
             fail("public npm bin shim version mismatch")
         print(f"Exact public npm acceptance passed for {args.expected_target}.")
         return 0

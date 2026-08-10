@@ -11,7 +11,7 @@ usage() {
 Usage: scripts/assemble-npm-publication-candidate.sh \
   --output-dir <external-empty-directory> \
   --native-dir <directory-containing-eight-exact-native-tarballs> \
-  --expected-ref refs/tags/v0.1.1 \
+  --expected-ref refs/tags/vX.Y.Z \
   --reviewed-sha <40-lowercase-hex>
 
 Validate all eight exact native candidates, pack the public @revazi/career
@@ -51,6 +51,11 @@ repository_root="$(cd "$script_dir/.." && pwd -P)"
   --repository-root "$repository_root" \
   --expected-ref "$expected_ref" \
   --reviewed-sha "$reviewed_sha"
+if [[ "$expected_ref" =~ ^refs/tags/v((0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*))$ ]]; then
+  release_version="${BASH_REMATCH[1]}"
+else
+  fail "expected ref must be an exact stable SemVer tag"
+fi
 
 native_dir="$(cd "$native_dir" && pwd -P)"
 platform_keys=(
@@ -64,14 +69,14 @@ platform_keys=(
   win32-arm64-msvc
 )
 native_files=(
-  10-revazi-career-darwin-arm64-0.1.1.tgz
-  20-revazi-career-darwin-x64-0.1.1.tgz
-  30-revazi-career-linux-x64-gnu-0.1.1.tgz
-  40-revazi-career-linux-arm64-gnu-0.1.1.tgz
-  50-revazi-career-linux-x64-musl-0.1.1.tgz
-  60-revazi-career-linux-arm64-musl-0.1.1.tgz
-  70-revazi-career-win32-x64-msvc-0.1.1.tgz
-  80-revazi-career-win32-arm64-msvc-0.1.1.tgz
+  "10-revazi-career-darwin-arm64-$release_version.tgz"
+  "20-revazi-career-darwin-x64-$release_version.tgz"
+  "30-revazi-career-linux-x64-gnu-$release_version.tgz"
+  "40-revazi-career-linux-arm64-gnu-$release_version.tgz"
+  "50-revazi-career-linux-x64-musl-$release_version.tgz"
+  "60-revazi-career-linux-arm64-musl-$release_version.tgz"
+  "70-revazi-career-win32-x64-msvc-$release_version.tgz"
+  "80-revazi-career-win32-arm64-msvc-$release_version.tgz"
 )
 python3 - "$native_dir" "${native_files[@]}" <<'PY'
 import pathlib
@@ -152,7 +157,7 @@ print(value[0]["filename"])
 PY
 )"
 [[ -f "$output_dir/work/$packed_name" ]] || fail "npm pack launcher tarball is missing"
-mv "$output_dir/work/$packed_name" "$output_dir/90-revazi-career-0.1.1.tgz"
+mv "$output_dir/work/$packed_name" "$output_dir/90-revazi-career-$release_version.tgz"
 rm -rf "$output_dir/work"
 
 "$script_dir/npm-publication-candidate.py" write-manifest "$output_dir" --source-sha "$reviewed_sha"
@@ -161,5 +166,5 @@ rm -rf "$output_dir/work"
   --repository-root "$repository_root"
 [[ "$(find "$output_dir" -mindepth 1 -maxdepth 1 -type f | wc -l | tr -d ' ')" == "10" ]] || \
   fail "assembled publication candidate output allowlist mismatch"
-printf 'Assembled ordered public npm candidate for v0.1.1 at %s; no publication performed.\n' \
-  "$reviewed_sha"
+printf 'Assembled ordered public npm candidate for v%s at %s; no publication performed.\n' \
+  "$release_version" "$reviewed_sha"

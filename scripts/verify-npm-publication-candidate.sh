@@ -33,6 +33,9 @@ done
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 repository_root="$(cd "$script_dir/.." && pwd -P)"
 candidate_dir="$(cd "$candidate_dir" && pwd -P)"
+release_version="$(node -e 'process.stdout.write(require(process.argv[1]).version)' "$repository_root/npm/career/package.json")"
+[[ "$release_version" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]] || \
+  fail "source launcher version is not an exact stable SemVer"
 "$script_dir/npm-publication-candidate.py" verify "$candidate_dir" \
   --source-sha "$reviewed_sha" \
   --repository-root "$repository_root"
@@ -40,17 +43,17 @@ candidate_dir="$(cd "$candidate_dir" && pwd -P)"
 case "$(uname -s):$(uname -m):$expected_target" in
   Darwin:arm64:aarch64-apple-darwin|Darwin:aarch64:aarch64-apple-darwin)
     package_name="@revazi/career-darwin-arm64"
-    native_tarball="$candidate_dir/10-revazi-career-darwin-arm64-0.1.1.tgz"
+    native_tarball="$candidate_dir/10-revazi-career-darwin-arm64-$release_version.tgz"
     ;;
   Linux:x86_64:x86_64-unknown-linux-gnu|Linux:amd64:x86_64-unknown-linux-gnu)
     package_name="@revazi/career-linux-x64-gnu"
-    native_tarball="$candidate_dir/30-revazi-career-linux-x64-gnu-0.1.1.tgz"
+    native_tarball="$candidate_dir/30-revazi-career-linux-x64-gnu-$release_version.tgz"
     getconf GNU_LIBC_VERSION 2>/dev/null | grep -Eq '^glibc [0-9]+\.[0-9]+' || \
       fail "candidate Linux execution requires confirmed glibc"
     ;;
   *) fail "expected target does not match an approved native host" ;;
 esac
-launcher_tarball="$candidate_dir/90-revazi-career-0.1.1.tgz"
+launcher_tarball="$candidate_dir/90-revazi-career-$release_version.tgz"
 
 temporary_root="$(mktemp -d "${TMPDIR:-/tmp}/career-npm-publication-verify.XXXXXX")"
 trap 'rm -rf "$temporary_root"' EXIT
