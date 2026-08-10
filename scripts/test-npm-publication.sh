@@ -991,6 +991,11 @@ if text.count("secrets.NPM_TOKEN") != 1:
     raise SystemExit("bootstrap token must appear in exactly one explicit workflow step")
 if text.index("Configure exact release Rust for publication policy") > text.index("Run registry-free publication and adversarial tests"):
     raise SystemExit("publication tests run before exact Rust 1.97.1 setup")
+native_unix = text.split("\n  native-unix:\n", 1)[1].split("\n  native-musl:\n", 1)[0]
+if "    defaults:\n      run:\n        shell: bash\n" not in native_unix:
+    raise SystemExit("native Unix publication job does not force Bash for container steps")
+if "shell: sh" in native_unix:
+    raise SystemExit("native Unix publication job overrides a step back to sh")
 for line in text.splitlines():
     stripped = line.strip()
     if stripped.startswith("uses: actions/"):
