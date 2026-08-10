@@ -15,15 +15,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Add preparation-only native Windows x64/ARM64 package execution and bounded PE32+/machine/system-import evidence without a Unix mode claim.
 - Add the protected exact nine-package `v0.1.1` workflow with native final-source rebuilds, launcher-last assembly, integrity/SLSA provenance gates, and public acceptance on all eight target classes.
 - Add an exact `@revazi/career@0.1.1` pi-career consumer handoff and a cross-platform public-package parity verifier.
+- Add stable OIDC-only `npm-release.yml` for later annotated stable-SemVer tags, with dynamically derived versions, filenames, provenance, publication plans, and all-eight public acceptance.
 
 ### Changed
 
 - Advance Cargo, npm source templates, `career --version`, and version-bearing synthetic contract fixtures to patch version `0.1.1`; v1 operation and schema semantics remain unchanged.
 - Rewrite the public README to lead with verified scope, exact installation, limitations, supported target policy, discovery, and integration boundaries.
+- Record completed `v0.1.1` publication run `31346152236`; keep version-specific workflows as immutable historical evidence and bind routine trusted publishing to the stable workflow.
 
 ### Fixed
 
 - Allow one combined bounded npm registry integrity/provenance readiness window of up to ten minutes per sequential package, preventing successful publication from failing after the former 50-second visibility window.
+- Force Bash in the native GNU ARM64 publication container and add visible bounded registry-wait progress plus a five-minute bound for each future npm publish subprocess.
 
 ## [0.1.0] - 2026-08-09
 

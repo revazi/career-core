@@ -1,6 +1,6 @@
 # Installation and distribution
 
-`career` is local-first software. The project does not provide a remote execution service or an installer that pipes network content into a shell. Exact `@revazi/career@0.1.0` remains the completed public npm release. The `0.1.1` source prepares a protected nine-package candidate for eight native targets; it becomes supported only after publication and all eight public-registry acceptance jobs pass.
+`career` is local-first software. The project does not provide a remote execution service or an installer that pipes network content into a shell. Exact `@revazi/career@0.1.1` is the completed public npm release for eight native targets after protected run `31346152236` passed publication and all eight public-registry acceptance jobs.
 
 ## Run from a source checkout
 
@@ -44,20 +44,20 @@ The script uses a temporary Cargo root, executes capability/operation/schema dis
 
 ## npm package
 
-The only user-facing npm package for the new candidate is exact `@revazi/career@0.1.1`, exposing bin `career`:
+The only user-facing npm package is exact `@revazi/career@0.1.1`, exposing bin `career`:
 
 ```bash
 npx --yes --package=@revazi/career@0.1.1 career --version
 npx --yes --package=@revazi/career@0.1.1 career capabilities --format json-compact
 ```
 
-Use these commands only after the protected release and public acceptance complete. Until then use completed public `0.1.0`. Always use an exact version, never `latest` or a range. npm/npx acquisition may contact npm; launcher runtime remains offline. Native platform packages are internal lockstep optional dependencies. Users and consumers must not install, invoke, or pin them directly.
+Always use an exact reviewed version, never `latest` or a range. npm/npx acquisition may contact npm; launcher runtime remains offline. Native platform packages are internal lockstep optional dependencies. Users and consumers must not install, invoke, or pin them directly.
 
 ### `0.1.1` native matrix
 
 Source version `0.1.1` contains one reviewed ordered catalog and private templates for Darwin ARM64/x64, GNU Linux x64/ARM64, musl Linux x64/ARM64, and MSVC Windows x64/ARM64. The launcher positively distinguishes glibc, musl, and unknown libc; unknown never falls back to musl. It validates exact package/version/target/provenance, regular non-symlink files, target-specific Unix or Windows invariants, bounded size, Mach-O/ELF/PE architecture, and SHA-256 before direct execution.
 
-These targets remain release candidates until public acceptance. Synthetic fixtures prove policy only. Cross-compilation, emulation, package metadata, and skipped jobs are not release evidence. Exact native preparation run `31332323220` proved the merged pre-candidate source on all eight target OS/architecture pairs. The protected workflow must recompile, execute, inspect, package, and publish every final-tag binary, then reacquire and execute every public package on the same eight native target classes.
+Protected `v0.1.1` run `31346152236` recompiled, executed, inspected, packaged, published, reacquired, and executed all eight final-tag native packages on their exact target classes. Synthetic fixtures still prove policy only; cross-compilation, emulation, package metadata, and skipped jobs are not support evidence for later releases.
 
 GNU builds use native Ubuntu 22.04 userland and reject imports above the glibc 2.35 floor. Musl builds use immutable Node 22.19.0 Alpine 3.22 on architecture-matched runners and require exact musl 1.2.5 plus the observed target-specific static form: x64 ELF `DYN` static PIE with `NOW PIE` flags or AArch64 ELF `EXEC`, both without an interpreter or shared-library imports. Windows builds use native `windows-2025` x64 and `windows-11-arm` ARM64, exact process/toolchain architecture agreement, `career.exe` regular non-symlink semantics without a Unix mode claim, and bounded PE32+/machine/reviewed-system-DLL import evidence. See [`contracts/npm-cli-distribution-v2.md`](contracts/npm-cli-distribution-v2.md).
 
@@ -69,7 +69,7 @@ trap 'rm -rf "$package_dir"' EXIT
 scripts/prepare-npm-cli-packages.sh --output-dir "$package_dir"
 ```
 
-`--allow-dirty` is local-test-only and records a private dirty non-candidate. The `0.1.1` candidate scripts require exact clean annotated source binding, the reviewed `origin/main` SHA, Node 22.19.0/npm 11.6.2, rustc/Cargo 1.97.1, exact native runners, and external empty outputs. The protected workflow supplies exactly eight ordered native tarballs, assembles the launcher ninth and last, and publishes only after `npm-production` approval. Candidate commands themselves do not query or publish to npm.
+`--allow-dirty` is local-test-only and records a private dirty non-candidate. Stable candidate scripts derive the release version from exact annotated `vX.Y.Z` source, require the reviewed `origin/main` SHA, Node 22.19.0/npm 11.6.2, rustc/Cargo 1.97.1, exact native runners, and external empty outputs. `npm-release.yml` supplies exactly eight ordered native tarballs, assembles the launcher ninth and last, and publishes through OIDC only after `npm-production` approval. Candidate commands themselves do not query or publish to npm.
 
 Run registry-free package/candidate/publish-driver verification with local reviewed Node 22.19.0 and npm 10.9.3 or publication npm 11.6.2:
 
@@ -79,7 +79,7 @@ scripts/test-npm-cli-packages.sh
 scripts/test-npm-publication.sh
 ```
 
-The package-contained SHA-256 is consistency evidence only. npm tarball integrity and npm SLSA registry provenance are separate acquisition evidence. No independent native-binary signature exists. After npm and all eight public acceptance jobs pass, the parent maintainer creates the dated `v0.1.1` GitHub Release with no custom assets. See [`contracts/npm-cli-distribution-v2.md`](contracts/npm-cli-distribution-v2.md) and [`releasing.md`](releasing.md).
+The package-contained SHA-256 is consistency evidence only. npm tarball integrity and npm SLSA registry provenance are separate acquisition evidence. No independent native-binary signature exists. Future releases use stable OIDC-only `npm-release.yml`; version-specific workflows remain historical. See [`contracts/npm-cli-distribution-v2.md`](contracts/npm-cli-distribution-v2.md) and [`releasing.md`](releasing.md).
 
 ## External integrations
 
@@ -153,7 +153,7 @@ Checksums detect accidental corruption and substitution relative to the release 
 
 ## Package managers
 
-After successful public acceptance, exact `@revazi/career@0.1.1` is the sole approved package-manager consumer surface. Its protected workflow publishes no crate, Homebrew formula, GitHub Release asset, signature, or other channel. Every other package-manager channel requires separate maintenance, ownership, security, and publication approval.
+Exact accepted `@revazi/career@0.1.1` is the sole approved package-manager consumer surface. Protected npm workflows publish no crate, Homebrew formula, GitHub Release asset, signature, or other channel. Every other package-manager channel requires separate maintenance, ownership, security, and publication approval.
 
 Maintainers preparing an approved release must follow [`releasing.md`](releasing.md).
 

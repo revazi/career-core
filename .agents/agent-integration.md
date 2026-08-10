@@ -56,9 +56,9 @@ Schema bundles retain the requested embedded root and recursively place dependen
 
 ## npm launcher contract
 
-The Node 22+ `@revazi/career@0.1.1` candidate exposes the same `career` bin for eight exact native targets. It resolves only its package-local optional implementation, positively identifies Linux libc, requires glibc 2.35 or newer for GNU packages, verifies strict versioned provenance and binary type/file-invariant/size/target/SHA-256 consistency, and preserves argv/stdin/stdout/stderr/exit/signal behavior. It has no PATH fallback, runtime download, lifecycle script, provider/network behavior, telemetry, or bypass. Package-contained SHA-256 is not a signature.
+The accepted Node 22+ `@revazi/career@0.1.1` release exposes the same `career` bin for eight exact native targets. It resolves only its package-local optional implementation, positively identifies Linux libc, requires glibc 2.35 or newer for GNU packages, verifies strict versioned provenance and binary type/file-invariant/size/target/SHA-256 consistency, and preserves argv/stdin/stdout/stderr/exit/signal behavior. It has no PATH fallback, runtime download, lifecycle script, provider/network behavior, telemetry, or bypass. Package-contained SHA-256 is not a signature.
 
-Agents and pi-career may use `0.1.1` only after the protected workflow publishes all nine packages and all eight no-secret public-registry acceptance jobs pass. Until then exact public `0.1.0` remains the completed consumer pin. Catalog data, private templates, cross-compilation, emulation, and skipped jobs are never support evidence.
+Agents and pi-career may use exact `0.1.1`; protected run `31346152236` published all nine packages and passed all eight no-secret public-registry acceptance jobs. Catalog data, private templates, cross-compilation, emulation, and skipped jobs are never support evidence for a later version.
 
 After that gate, agents and managed consumers address only:
 
@@ -208,7 +208,7 @@ Low/unknown normalization or truncation bounds all category scores to 50–75, m
 2. local CLI install via `cargo install --path crates/career-cli --locked`
 3. private external npm staging/testing through `scripts/prepare-npm-cli-packages.sh`
 4. exact clean/tagged npm candidate verification through `scripts/test-npm-publication.sh`
-5. protected `@revazi/career@0.1.1` publication only through `npm-publish-v0.1.1.yml`, followed by all eight public-registry acceptance jobs
+5. future protected npm publication only through stable OIDC-only `npm-release.yml` from an annotated stable-SemVer tag, followed by all eight public-registry acceptance jobs
 6. pi-career migration only after its separate handoff gates
 7. every other package-manager or binary channel only after separate approval
 

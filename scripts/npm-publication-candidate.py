@@ -20,9 +20,9 @@ import sys
 import tarfile
 from typing import Any, Optional
 
-VERSION = "0.1.1"
-TAG = "v0.1.1"
-REF = "refs/tags/v0.1.1"
+VERSION: str
+TAG: str
+REF: str
 REPOSITORY = "https://github.com/revazi/career-core"
 NODE_VERSION = "v22.19.0"
 NPM_VERSION = "11.6.2"
@@ -50,9 +50,9 @@ LAUNCHER_NAME = "@revazi/career"
 TARGET_CATALOG_SHA256 = (
     "9e56a3ca9b68799b0ff4bd52bbd2e71c2839d05a70398c5942062cb6e68032e2"
 )
-TARGET_CATALOG_PATH = (
-    pathlib.Path(__file__).resolve().parent.parent / "npm/career/targets.json"
-)
+REPOSITORY_ROOT = pathlib.Path(__file__).resolve().parent.parent
+TARGET_CATALOG_PATH = REPOSITORY_ROOT / "npm/career/targets.json"
+SOURCE_LAUNCHER_MANIFEST = REPOSITORY_ROOT / "npm/career/package.json"
 
 
 class CandidateError(ValueError):
@@ -111,6 +111,21 @@ def load_object(
     if not isinstance(value, dict):
         fail(f"invalid JSON object: {path.name}")
     return value
+
+
+def load_release_version() -> str:
+    manifest = load_object(SOURCE_LAUNCHER_MANIFEST, MAX_MANIFEST_BYTES)
+    version = manifest.get("version")
+    if not isinstance(version, str) or re.fullmatch(
+        r"(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)", version
+    ) is None:
+        raise RuntimeError("source launcher version is not an exact stable SemVer")
+    return version
+
+
+VERSION = load_release_version()
+TAG = f"v{VERSION}"
+REF = f"refs/tags/{TAG}"
 
 
 def load_target_catalog() -> dict[str, dict[str, Any]]:

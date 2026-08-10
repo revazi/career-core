@@ -4,7 +4,7 @@ This is the exact consumer transition contract. It is not permission to edit, pu
 
 ## Consumer boundary
 
-After all `v0.1.1` publication and public-acceptance gates pass, pi-career may address only:
+Protected `v0.1.1` publication and all-eight public acceptance passed in run `31346152236`; pi-career may address only:
 
 - package: exact `@revazi/career@0.1.1`
 - bin: `career`
@@ -69,7 +69,7 @@ Do not remove pi-career's transitional runtime until all conditions are true:
 2. exact public `@revazi/career@0.1.1` and all eight internal packages expose the reviewed npm integrity and SLSA provenance;
 3. no-secret public-registry acceptance passed on native macOS ARM64/x64, GNU Linux ARM64/x64, musl Linux ARM64/x64, and Windows MSVC ARM64/x64;
 4. the temporary bootstrap token and GitHub environment secret were deleted and the npm token was revoked;
-5. package-level GitHub trusted publishers for all nine packages point to repository `revazi/career-core`, workflow `npm-publish-v0.1.1.yml`, environment `npm-production`, and publish permission, verified with `npm trust list`;
+5. package-level GitHub trusted publishers for all nine packages point to repository `revazi/career-core`, stable workflow `npm-release.yml`, environment `npm-production`, and publish permission, verified with `npm trust list`;
 6. a no-token OIDC rerun completed idempotently with exact integrity/provenance;
 7. a separate pi-career change tests configured/PATH/package-local/exact-npx order, explicit npx network consent, cancellation, diagnostics, and exact version pinning without naming internal packages; and
 8. a reviewed pi-career release no longer needs tracked transitional runtime archives.
