@@ -4,6 +4,18 @@ set -euo pipefail
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 repository_root="$(cd "$script_dir/.." && pwd -P)"
 prepare_script="$script_dir/prepare-pi-career-runtime-artifact.sh"
+runtime_workflow="$repository_root/.github/workflows/pi-career-runtime-artifacts.yml"
+expected_upload_action="actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1"
+
+[[ -f "$runtime_workflow" ]]
+[[ "$(grep -Fc "$expected_upload_action" "$runtime_workflow")" == "1" ]] || {
+  printf 'runtime artifact workflow does not use the reviewed upload action\n' >&2
+  exit 1
+}
+[[ "$(grep -Ec 'uses: actions/upload-artifact@[0-9a-f]{40} # v[0-9]+\.[0-9]+\.[0-9]+$' "$runtime_workflow")" == "1" ]] || {
+  printf 'runtime artifact workflow upload action is not exactly SHA-pinned\n' >&2
+  exit 1
+}
 
 case "$(uname -s):$(uname -m)" in
   Darwin:arm64|Darwin:aarch64)
