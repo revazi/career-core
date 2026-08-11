@@ -925,7 +925,7 @@ required = [
     "scripts/verify-npm-public-package.py",
     "public-acceptance-unix:", "public-acceptance-musl:",
     "public-acceptance-windows:", "npm-publication-candidate-${{ needs.source.outputs.release_version }}",
-    "actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f",
+    "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a",
     "actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c",
     "timeout-minutes: 110", "Publish with OIDC trusted publishing only",
     "--version \"$RELEASE_VERSION\"", "--expected-version",
@@ -947,7 +947,7 @@ for stale_function in ("require_registry_integrity()", "require_registry_provena
 for forbidden in (
     "pull_request:", "schedule:", "release:", "cargo publish", "gh release",
     "bootstrap", "secrets.", "NPM_TOKEN", "registry-url:", "ubuntu-latest",
-    "rustup update stable", "0.1.1", "v0.1.1", "043fb46d1a93c77aae656e7c1c64a875d1fc6a0a",
+    "rustup update stable", "0.1.1", "v0.1.1", "bbbca2ddaa5d8feaa63e36b76fdaad77386f024f",
     "70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3",
 ):
     if forbidden in stable:
