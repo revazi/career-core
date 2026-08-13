@@ -61,20 +61,17 @@ pi-career must preserve:
 
 npm registry integrity/provenance, package-contained SHA-256 consistency, and independent binary signatures are distinct. Career Core requires exact npm integrity and SLSA registry provenance, uses package-contained hashes only for consistency, and records independent native signatures as absent.
 
-## Transitional bundled-runtime removal gate
+## Consumer release gate
 
-Do not remove pi-career's transitional runtime until all conditions are true:
+Before a pi-career release changes its pinned Career package coordinate or managed launcher contract:
 
-1. the protected Career Core `v0.1.1` workflow completed successfully from the exact annotated tag and reviewed `origin/main` SHA;
-2. exact public `@revazi/career@0.1.1` and its historical internal packages exposed the reviewed npm integrity and SLSA provenance at the time of the completed migration gate;
-3. historical no-secret public-registry acceptance passed on eight target classes; this is retained evidence, not an active native-Windows support promise;
-4. the temporary bootstrap token and GitHub environment secret were deleted and the npm token was revoked;
-5. package-level GitHub trusted publishers for all seven active packages point to repository `revazi/career-core`, stable workflow `npm-release.yml`, environment `npm-production`, and publish permission, verified with `npm trust list`;
-6. a no-token OIDC rerun completed idempotently with exact integrity/provenance;
-7. a separate pi-career change tests configured/PATH/package-local/exact-npx order, explicit npx network consent, cancellation, diagnostics, and exact version pinning without naming internal packages; and
-8. a reviewed pi-career release no longer needs tracked transitional runtime archives.
+1. exact public `@revazi/career@X.Y.Z` and all six Darwin/Linux internal packages expose the reviewed npm integrity and SLSA provenance;
+2. package-level GitHub trusted publishers for all seven packages point to repository `revazi/career-core`, workflow `npm-release.yml`, environment `npm-production`, and publish permission, verified with `npm trust list`;
+3. no-token OIDC publication completes with exact integrity/provenance and public acceptance on all six target classes;
+4. a separate pi-career change tests configured/PATH/package-local/exact-npx order, explicit network behavior, cancellation, diagnostics, and exact version pinning without naming internal packages; and
+5. the pi-career release passes its full package, audit, compatibility, installation, and offline gates.
 
-Until every condition passes, Career Core retains the transitional artifact mechanism. Those archives are maintainer handoff inputs, not public installation or release assets.
+Career Core's transitional artifact mechanism remains a maintainer-only compatibility tool until separately removed; those archives are not public installation or release assets.
 
 ## Remaining external work
 

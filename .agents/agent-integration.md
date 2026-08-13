@@ -58,7 +58,7 @@ Schema bundles retain the requested embedded root and recursively place dependen
 
 The accepted Node 22+ `@revazi/career@0.1.1` launcher exposes the same `career` bin for six active macOS/Linux target classes. It resolves only its package-local optional implementation, positively identifies Linux libc, requires glibc 2.35 or newer for GNU packages, verifies strict versioned provenance and binary type/file-invariant/size/target/SHA-256 consistency, and preserves argv/stdin/stdout/stderr/exit/signal behavior. It has no PATH fallback, runtime download, lifecycle script, provider/network behavior, telemetry, or bypass. Package-contained SHA-256 is not a signature.
 
-Agents and pi-career may use exact `0.1.1` on macOS and Linux. The root crate rejects native Windows compilation; Windows hosts must build and run under WSL, where Rust and Node target Linux and Node reports `process.platform === "linux"`. Protected run `31346152236` historically published nine packages and passed eight native acceptance jobs, including now-retired Windows artifacts. Catalog data, private templates, cross-compilation, emulation, skipped jobs, and that historical Windows evidence are never support evidence for a later version.
+Agents and pi-career may use exact `0.1.1` on macOS and Linux. The root crate rejects native Windows compilation; Windows hosts must build and run under WSL, where Rust and Node target Linux and Node reports `process.platform === "linux"`. Catalog data, private templates, cross-compilation, emulation, and skipped jobs are never support evidence for a release.
 
 After that gate, agents and managed consumers address only:
 

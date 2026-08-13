@@ -1,6 +1,6 @@
 # Installation and distribution
 
-`career` is local-first software. The project does not provide a remote execution service or an installer that pipes network content into a shell. Protected run `31346152236` remains immutable historical evidence that `@revazi/career@0.1.1` published eight native packages. Active source and future distribution support only six macOS/Linux target classes; native Windows is retired.
+`career` is local-first software. The project does not provide a remote execution service or an installer that pipes network content into a shell. Source and distribution support only six macOS/Linux target classes; native Windows is unsupported.
 
 ## Run from a source checkout
 
@@ -59,7 +59,7 @@ Active source contains one reviewed ordered catalog and private templates for Da
 
 GNU builds use native Ubuntu 22.04 userland and reject imports above the glibc 2.35 floor. Musl builds use immutable Node 22.19.0 Alpine 3.22 on architecture-matched runners and require exact musl 1.2.5 plus the observed target-specific static form: x64 ELF `DYN` static PIE with `NOW PIE` flags or AArch64 ELF `EXEC`, both without an interpreter or shared-library imports. Synthetic fixtures prove policy only; cross-compilation, emulation, package metadata, and skipped jobs are not support evidence for a release.
 
-Native Windows is unsupported: the root crate rejects `target_os = "windows"` at compile time, and active npm source has no Windows package template, target, `career.exe` route, PE policy, runner, or public-acceptance job. Windows users must build and run Career Core and pi-career through WSL; Rust and Node target Linux there, and Node reports `process.platform === "linux"`, so normal Linux architecture/libc selection and verification apply. The old `v0.1.1` Windows artifacts and all-eight acceptance remain historical release evidence only. See [`contracts/npm-cli-distribution-v2.md`](contracts/npm-cli-distribution-v2.md).
+Native Windows is unsupported: the root crate rejects `target_os = "windows"` at compile time, and npm source has no Windows package template, target, executable route, binary policy, runner, or public-acceptance job. Windows users must build and run Career Core and pi-career through WSL; Rust and Node target Linux there, and Node reports `process.platform === "linux"`, so normal Linux architecture/libc selection and verification apply. See [`contracts/npm-cli-distribution-v2.md`](contracts/npm-cli-distribution-v2.md).
 
 Checked-in templates remain `private: true` even after release. Private current-host tests are prepared outside the checkout with:
 
@@ -79,7 +79,7 @@ scripts/test-npm-cli-packages.sh
 scripts/test-npm-publication.sh
 ```
 
-The package-contained SHA-256 is consistency evidence only. npm tarball integrity and npm SLSA registry provenance are separate acquisition evidence. No independent native-binary signature exists. Future releases use stable OIDC-only `npm-release.yml`; version-specific workflows remain historical. See [`contracts/npm-cli-distribution-v2.md`](contracts/npm-cli-distribution-v2.md) and [`releasing.md`](releasing.md).
+The package-contained SHA-256 is consistency evidence only. npm tarball integrity and npm SLSA registry provenance are separate acquisition evidence. No independent native-binary signature exists. Future releases use stable OIDC-only `npm-release.yml`. See [`contracts/npm-cli-distribution-v2.md`](contracts/npm-cli-distribution-v2.md) and [`releasing.md`](releasing.md).
 
 ## External integrations
 

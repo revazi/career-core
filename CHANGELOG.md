@@ -8,22 +8,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
-- Prepare an explicit reviewed eight-target npm catalog and private lockstep `0.1.1` launcher/native templates without claiming support before exact native package execution.
-- Generalize the npm launcher to fail-closed glibc/musl detection, Mach-O/ELF/PE architecture checks, and explicit Unix/Windows file invariants using internal npm metadata/provenance v2.
-- Add preparation-only exact native Darwin ARM64/x64 and GNU Linux x64/ARM64 packaged-binary execution plus bounded linkage/import inspection evidence; this does not yet claim new platform support.
-- Add digest-pinned exact native Alpine 3.22/musl 1.2.5 x64/ARM64 packaged-binary execution and static ELF/no-interpreter/no-import evidence; this remains release-blocked and unpublished.
-- Add preparation-only native Windows x64/ARM64 package execution and bounded PE32+/machine/system-import evidence without a Unix mode claim.
-- Add the protected exact nine-package `v0.1.1` workflow with native final-source rebuilds, launcher-last assembly, integrity/SLSA provenance gates, and public acceptance on all eight target classes.
-- Add an exact `@revazi/career@0.1.1` pi-career consumer handoff and a cross-platform public-package parity verifier.
-- Add stable OIDC-only `npm-release.yml` for later annotated stable-SemVer tags, with dynamically derived versions, filenames, provenance, publication plans, and all-eight public acceptance.
+- Add exact native Darwin ARM64/x64 and GNU Linux x64/ARM64 packaged-binary execution plus bounded linkage/import inspection evidence.
+- Add digest-pinned exact native Alpine 3.22/musl 1.2.5 x64/ARM64 packaged-binary execution and static ELF/no-interpreter/no-import evidence.
+- Add an exact `@revazi/career@0.1.1` pi-career consumer handoff and a public-package parity verifier.
+- Add stable OIDC-only `npm-release.yml` for later annotated stable-SemVer tags, with dynamically derived versions, filenames, provenance, publication plans, and all-six public acceptance.
 
 ### Changed
 
-- Remove native Windows from active Career Core source and future npm distribution: the root crate rejects native Windows compilation so the library, CLI, and adapters use WSL on Windows hosts; the launcher declares macOS/Linux-only installation, and the catalog and stable workflows contain six native packages plus launcher. macOS, Linux, and existing Apple iOS/Swift targets are unchanged.
-- Preserve `v0.1.1` Windows publication/workflow records as immutable historical evidence rather than active support.
+- Remove native Windows from Career Core source and npm distribution: the root crate rejects native Windows compilation so the library, CLI, and adapters use WSL on Windows hosts; the launcher declares macOS/Linux-only installation, and the catalog and workflows contain six native packages plus launcher. macOS, Linux, and existing Apple iOS/Swift targets are unchanged.
+- Remove the obsolete native-Windows package, workflow, test, and evidence records from the current tree.
 - Advance Cargo, npm source templates, `career --version`, and version-bearing synthetic contract fixtures to patch version `0.1.1`; v1 operation and schema semantics remain unchanged.
 - Rewrite the public README to lead with verified scope, exact installation, limitations, supported target policy, discovery, and integration boundaries.
-- Record completed `v0.1.1` publication run `31346152236`; keep version-specific workflows as immutable historical evidence and bind routine trusted publishing to the stable workflow.
+- Bind routine trusted publishing to the stable workflow.
 
 ### Fixed
 

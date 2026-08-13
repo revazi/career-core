@@ -1,6 +1,6 @@
 # Release preparation checklist
 
-This checklist defines the reviewed release process. Public `v0.1.0` and `v0.1.1` release workflows remain immutable historical evidence. Future npm versions use one stable OIDC-only workflow. Implementation agents must not create tags or GitHub Releases, dispatch publication, authenticate/query/publish npm, or use release credentials. Those actions belong to the parent maintainer after exact-head review and CI.
+This checklist defines the reviewed release process. npm versions use one stable OIDC-only workflow. Implementation agents must not create tags or GitHub Releases, dispatch publication, authenticate/query/publish npm, or use release credentials. Those actions belong to the parent maintainer after exact-head review and CI.
 
 The current release maintenance owner is [Revaz Zakalashvili](https://github.com/revazi). Ownership and governance are documented in [`../MAINTAINERS.md`](../MAINTAINERS.md).
 
@@ -13,7 +13,7 @@ The current release maintenance owner is [Revaz Zakalashvili](https://github.com
 - obtain explicit approval to create and upload release artifacts
 - for npm, review exact lockstep `@revazi/career@X.Y.Z` plus all six active internal packages, public access, stable-workflow trusted-publisher ownership, and the explicit absent independent-binary-signature policy
 
-Completed `v0.1.1` publication historically established nine package names, including two now-retired Windows packages. Future publication is OIDC-only through the stable workflow and uses only the six Darwin/Linux native packages plus launcher; no bootstrap credential is part of routine release policy. No platform is supported merely because it compiles.
+Publication is OIDC-only through the stable workflow and uses only the six Darwin/Linux native packages plus launcher; no bootstrap credential is part of release policy. No platform is supported merely because it compiles.
 
 ## 2. Verify a clean source tree
 
@@ -60,7 +60,7 @@ cp "target/$target/release/career" "dist/$artifact/career"
 cp LICENSE-MIT LICENSE-APACHE README.md THIRD_PARTY_NOTICES.md "dist/$artifact/"
 ```
 
-Native release targets are macOS and Linux only and use executable `career` with exact mode `0755`. The root crate rejects native Windows compilation; Windows users must build and run the Linux target through WSL. Do not build or distribute a native `career.exe`. Do not cross-compile an artifact and label it supported without native execution.
+Native release targets are macOS and Linux only and use executable `career` with exact mode `0755`. The root crate rejects native Windows compilation; Windows users must build and run the Linux target through WSL. Do not build or distribute a native-Windows executable. Do not cross-compile an artifact and label it supported without native execution.
 
 Before packaging, run the built binary directly:
 
@@ -87,9 +87,7 @@ Record the runner image, Rust version, target triple, source commit, and exact c
 
 ### npm publication candidate and protected workflow
 
-Exact `@revazi/career@0.1.1` and its eight internal native packages completed the historical all-eight protected publication run `31346152236`. The release-specific `npm-publish.yml` and `npm-publish-v0.1.1.yml` workflows are immutable historical evidence only. Do not copy, edit, or dispatch them for a later version; their Windows records do not describe active support.
-
-Routine npm releases use only `.github/workflows/npm-release.yml`. It derives `X.Y.Z` from the selected annotated `vX.Y.Z` tag; stable SemVer without a prerelease/build suffix is required. The source gate requires a clean exact fetched `origin/main`, the explicit reviewed SHA, an annotated tag resolving to that SHA, and exact lockstep versions in root/workspace Cargo metadata, `Cargo.lock`, the launcher, all six active native templates, and launcher optional dependencies. Filenames, candidate metadata, provenance refs, package acquisition, and acceptance expectations derive from that version rather than a workflow constant.
+npm releases use only `.github/workflows/npm-release.yml`. It derives `X.Y.Z` from the selected annotated `vX.Y.Z` tag; stable SemVer without a prerelease/build suffix is required. The source gate requires a clean exact fetched `origin/main`, the explicit reviewed SHA, an annotated tag resolving to that SHA, and exact lockstep versions in root/workspace Cargo metadata, `Cargo.lock`, the launcher, all six active native templates, and launcher optional dependencies. Filenames, candidate metadata, provenance refs, package acquisition, and acceptance expectations derive from that version rather than a workflow constant.
 
 The stable workflow repeats all final-source evidence on exact native hosts: macOS ARM64/x64, GNU Linux ARM64/x64, and digest-pinned Alpine 3.22/musl 1.2.5 x64/ARM64. It assembles six native packages in catalog order and the public launcher seventh. Every package is byte/integrity/provenance checked, and every public package is reacquired and executed on its exact native target class. Skipped, cross-compiled, emulated, synthetic, or metadata-only evidence blocks release support. Native Windows runners, package names, and acceptance jobs are not part of the active workflow; use WSL as Linux on Windows hosts.
 

@@ -994,7 +994,6 @@ PY
 
 python3 - \
   "$repository_root/.github/workflows/npm-publish.yml" \
-  "$repository_root/.github/workflows/npm-publish-v0.1.1.yml" \
   "$repository_root/.github/workflows/npm-release.yml" \
   "$publication_driver" <<'PY'
 import hashlib
@@ -1002,13 +1001,10 @@ import pathlib
 import sys
 
 historical_v010 = pathlib.Path(sys.argv[1]).read_bytes()
-historical_v011 = pathlib.Path(sys.argv[2]).read_bytes()
-stable = pathlib.Path(sys.argv[3]).read_text(encoding="utf-8")
-driver = pathlib.Path(sys.argv[4]).read_text(encoding="utf-8")
+stable = pathlib.Path(sys.argv[2]).read_text(encoding="utf-8")
+driver = pathlib.Path(sys.argv[3]).read_text(encoding="utf-8")
 if hashlib.sha256(historical_v010).hexdigest() != "4b085e8a71a527ccf800ca218dab053febe95ad8fcdb3edbbd86c231ccf55414":
     raise SystemExit("historical v0.1.0 publication workflow bytes changed")
-if hashlib.sha256(historical_v011).hexdigest() != "bd3bc507516d0133ef7840750580714b0f3288d2ecdc167fce73cf7d7a1582fe":
-    raise SystemExit("historical v0.1.1 publication workflow bytes changed")
 required = [
     "name: Publish npm release", "workflow_dispatch:", "reviewed_sha:",
     "github.ref_name", "release_version", "npm-production",
@@ -1054,13 +1050,12 @@ if stable.index("Configure exact release Rust for publication policy") > stable.
 native_unix = stable.split("\n  native-unix:\n", 1)[1].split("\n  native-musl:\n", 1)[0]
 if "    defaults:\n      run:\n        shell: bash\n" not in native_unix or "shell: sh" in native_unix:
     raise SystemExit("native Unix publication job does not force Bash safely")
-for workflow in (stable, historical_v011.decode("utf-8")):
-    for line in workflow.splitlines():
-        stripped = line.strip()
-        if stripped.startswith("uses: actions/"):
-            ref = stripped.rsplit("@", 1)[-1].split()[0]
-            if len(ref) != 40 or any(character not in "0123456789abcdef" for character in ref):
-                raise SystemExit(f"GitHub-owned action is not pinned by immutable SHA: {stripped}")
+for line in stable.splitlines():
+    stripped = line.strip()
+    if stripped.startswith("uses: actions/"):
+        ref = stripped.rsplit("@", 1)[-1].split()[0]
+        if len(ref) != 40 or any(character not in "0123456789abcdef" for character in ref):
+            raise SystemExit(f"GitHub-owned action is not pinned by immutable SHA: {stripped}")
 if driver.index('"@revazi/career-darwin-arm64"') > driver.index('"@revazi/career"'):
     raise SystemExit("publication driver does not encode native-before-launcher ordering")
 if "0.1.1.tgz" in driver or "v0.1.1\"" in driver:
@@ -1265,7 +1260,6 @@ grep -Fq 'exact npm CLI 11.15.0' "$repository_root/docs/releasing.md"
 grep -Fq 'publication and public acceptance remain pinned to npm 11.6.2' "$repository_root/docs/releasing.md"
 grep -Fq 'sha512-+k0tk7lRnpMUPnC7kTuU/yrV/mnFoPhJQ75VfLtZ6fwbzOVXaPsTE/Il9Pn1DHi482byMyqkHv/XsQ76mNjXLw==' "$repository_root/docs/releasing.md"
 ! grep -Fq '11.15.0 or newer' "$repository_root/docs/releasing.md"
-grep -Fq 'Protected bootstrap/public-acceptance run `31346152236`' "$repository_root/.agents/current-phase.md"
 ! grep -Eq '@revazi/career-(darwin|linux|win32)' "$repository_root/npm/career/README.md"
 
 printf 'npm publication source, candidate, adversarial, parity, npx-equivalent, fake-registry, and workflow dry-run tests passed.\n'

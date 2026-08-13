@@ -414,19 +414,11 @@ Publish the unchanged native `career` CLI through one exact user-facing npm pack
 - actual completion requires both public-registry matrix smokes acquiring only exact `@revazi/career@0.1.0` and verifying the correct internal native implementation plus deterministic parity
 - complete Rust/MSRV/Swift/managed-adapter/transitional-artifact/npm/parity/Fallow verification and independent review pass with no existing contract-byte change
 
-### Phase 9 extension — completed `v0.1.1` eight-target npm matrix
+### Phase 9 extension — completed `v0.1.1` macOS/Linux npm matrix
 
-Authorized as five strictly ordered reviewed sub-gates:
+The extension adds one ordered six-target catalog, lockstep private templates, internal npm metadata/provenance v2, strict launcher/libc/binary/file verification, synthetic adversarial tests, native Darwin x64 and GNU Linux ARM64 execution while retaining Darwin ARM64 and GNU Linux x64, and native x64/ARM64 musl execution with linkage inspection and GNU/musl substitution rejection.
 
-1. exact ordered target catalog, eight private lockstep templates, internal npm metadata/provenance v2, strict launcher/libc/binary/file verification, synthetic adversarial tests, and `0.1.1` version metadata;
-2. native Darwin x64 and GNU Linux ARM64 package execution while reproving the existing Darwin ARM64 and GNU Linux x64 final bytes;
-3. native x64/ARM64 musl package execution, linkage inspection, and GNU/musl substitution rejection;
-4. native Windows x64/ARM64 package execution with `career.exe`, PE32+ machine verification, Windows paths/stdio/argv/exit behavior, and explicit non-Unix file invariants; and
-5. exact nine-package `v0.1.1` protected candidate plus final documentation and consumer handoff.
-
-No sub-gate may claim a platform from catalog data, package metadata, cross-compilation, emulation, or a skipped native run. The final packaged binary must execute on the exact native OS and architecture. If a native runner is unavailable, that target and release remain blocked. Existing public `0.1.0` packages, tag, workflow evidence, and v1 operation/schema contracts remain immutable.
-
-The first sub-gate generalized registry-free candidate fixtures with synthetic non-host tarballs, but those fixtures prove fail-closed package policy only. They are explicitly not candidate execution evidence. Protected `v0.1.1` run `31346152236` subsequently passed publication and exact public acceptance on all eight native target classes.
+No gate may claim a platform from catalog data, package metadata, cross-compilation, emulation, or a skipped native run. The final packaged binary must execute on the exact native OS and architecture. If a native runner is unavailable, that target and release remain blocked. Synthetic non-host tarballs prove fail-closed package policy only and are not candidate execution evidence.
 
 ### Phase 9 maintenance — stable npm release workflow
 
@@ -439,7 +431,7 @@ Scope:
 - protected `v*` tag/ruleset plus required `npm-production` approval
 - six-native-before-launcher ordering, bounded idempotent recovery, integrity/SLSA provenance, and all-six native acceptance
 - macOS/Linux-only active source and future distribution; the root crate rejects native Windows compilation, and WSL is the Windows-host route because Rust and Node target Linux there
-- immutable historical `v0.1.0` and eight-target `v0.1.1` workflows/evidence, including superseded Windows records
+- no native-Windows historical workflow or evidence retained in the current tree; the unrelated macOS/Linux-only `v0.1.0` record remains
 
 Out of scope:
 

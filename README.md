@@ -12,7 +12,7 @@ It is **not** an AI service. The core library performs no network requests, mode
 - Minimum Rust version for source builds: Rust `1.85`
 - npm launcher runtime: Node.js `22` or newer
 
-Exact `@revazi/career@0.1.1` completed a historical eight-target publication run [`31346152236`](https://github.com/revazi/career-core/actions/runs/31346152236). Native Windows support is now retired: `career-core`, its CLI, adapters, active npm source, and future releases do not build or run natively on Windows. Windows users must build and run Career Core and pi-career through WSL, where the target and runtime are Linux and the Linux package policy applies. macOS, Linux, and existing Apple iOS/Swift build targets remain supported according to their documented evidence.
+Career Core, its CLI, adapters, npm source, and releases support macOS and Linux only and do not build or run natively on Windows. Windows users must build and run Career Core and pi-career through WSL, where the target and runtime are Linux and the Linux package policy applies. Existing Apple iOS/Swift build targets remain supported.
 
 Use exact versions, never `latest` or a range.
 
@@ -87,7 +87,7 @@ Active source and future releases contain one launcher and six native implementa
 | musl Linux | x86-64 | native musl |
 | musl Linux | ARM64 | native musl |
 
-A target is supported only after its final public package executes on the exact native OS and architecture. Unknown OS, architecture, libc, package metadata, provenance, executable format, or binary bytes fail closed. Emulation and cross-compilation are not support evidence. WSL is supported as Linux; native Windows is rejected by the root Rust crate at compile time and no `career.exe` launcher route exists in active source.
+A target is supported only after its final public package executes on the exact native OS and architecture. Unknown OS, architecture, libc, package metadata, provenance, executable format, or binary bytes fail closed. Emulation and cross-compilation are not support evidence. WSL is supported as Linux; native Windows is rejected by the root Rust crate at compile time and has no launcher route in source.
 
 See [`docs/distribution.md`](docs/distribution.md) and [`docs/contracts/npm-cli-distribution-v2.md`](docs/contracts/npm-cli-distribution-v2.md) for the exact policy.
 
