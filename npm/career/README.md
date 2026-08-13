@@ -10,7 +10,7 @@ npx --yes --package=@revazi/career@0.1.1 career --version
 
 Use an exact version rather than `latest`. npm/npx may access the npm registry to acquire the package; after installation, the launcher and native `career` CLI perform no network requests or telemetry.
 
-`0.1.1` provides exact accepted native implementations for ARM64 and x64 macOS, GNU and musl Linux, and MSVC Windows; protected publication and all eight public-registry acceptance jobs passed. Catalog metadata, cross-compilation, and skipped jobs are not support evidence. Unknown platforms, architectures, libc families, and GNU libc older than 2.35 fail closed.
+Active source supports ARM64 and x64 macOS plus GNU and musl Linux. Native Windows is unsupported: the root crate rejects native Windows compilation. Windows users must build and run Career Core and pi-career through WSL, where Rust and Node target Linux and Node reports `process.platform === "linux"`. Catalog metadata, cross-compilation, and skipped jobs are not support evidence. Unknown platforms, architectures, libc families, and GNU libc older than 2.35 fail closed.
 
 Platform-specific optional packages are internal implementation details. Do not install, invoke, or pin them directly.
 

@@ -145,9 +145,7 @@ expected = [
     (40, "internal_native", "@revazi/career-linux-arm64-gnu", f"40-revazi-career-linux-arm64-gnu-{version}.tgz"),
     (50, "internal_native", "@revazi/career-linux-x64-musl", f"50-revazi-career-linux-x64-musl-{version}.tgz"),
     (60, "internal_native", "@revazi/career-linux-arm64-musl", f"60-revazi-career-linux-arm64-musl-{version}.tgz"),
-    (70, "internal_native", "@revazi/career-win32-x64-msvc", f"70-revazi-career-win32-x64-msvc-{version}.tgz"),
-    (80, "internal_native", "@revazi/career-win32-arm64-msvc", f"80-revazi-career-win32-arm64-msvc-{version}.tgz"),
-    (90, "user_facing_launcher", "@revazi/career", f"90-revazi-career-{version}.tgz"),
+    (70, "user_facing_launcher", "@revazi/career", f"70-revazi-career-{version}.tgz"),
 ]
 expected_entries = {item[3] for item in expected} | {"publication-manifest.json"}
 entries = []
@@ -213,8 +211,8 @@ for row, (order, role, name, filename) in zip(rows, expected):
         keys = common | {"os", "cpu", "exports", "career_native"}
         if "-linux-" in name:
             keys.add("libc")
-        executable = "career.exe" if "-win32-" in name else "career"
-        executable_mode = 0o644 if executable.endswith(".exe") else 0o755
+        executable = "career"
+        executable_mode = 0o755
         expected_names = {
             "package/package.json", f"package/{executable}", "package/provenance.json",
             "package/LICENSE-MIT", "package/LICENSE-APACHE", "package/THIRD_PARTY_NOTICES.md",
@@ -225,7 +223,7 @@ for row, (order, role, name, filename) in zip(rows, expected):
         limits[f"package/{executable}"] = MAX_BINARY_BYTES
     else:
         keys = common | {
-            "author", "homepage", "bugs", "keywords", "engines", "bin",
+            "author", "homepage", "bugs", "keywords", "engines", "os", "bin",
             "optionalDependencies", "career_launcher",
         }
         expected_names = {
@@ -271,6 +269,8 @@ for row, (order, role, name, filename) in zip(rows, expected):
             raise SystemExit("packed launcher optional dependency order mismatch")
         if package.get("career_launcher", {}).get("platform_packages") != platform_names:
             raise SystemExit("packed launcher platform package order mismatch")
+        if package.get("os") != ["darwin", "linux"]:
+            raise SystemExit("packed launcher OS boundary mismatch")
     if set(package) != keys:
         raise SystemExit("packed package property set mismatch")
     if modes != expected_modes:
@@ -508,24 +508,22 @@ while IFS=$'\t' read -r order name version file integrity; do
     "@revazi/career-linux-arm64-gnu"
     "@revazi/career-linux-x64-musl"
     "@revazi/career-linux-arm64-musl"
-    "@revazi/career-win32-x64-msvc"
-    "@revazi/career-win32-arm64-msvc"
     "@revazi/career"
   )
-  expected_orders=(10 20 30 40 50 60 70 80 90)
+  expected_orders=(10 20 30 40 50 60 70)
   [[ "$name" == "${expected_names[$index]}" && "$order" == "${expected_orders[$index]}" ]] || \
     fail "publish plan order mismatch"
   if [[ "$name" == "@revazi/career" ]]; then
     while IFS=$'\t' read -r native_order native_name native_version _native_file native_integrity; do
-      [[ "$native_order" == "90" ]] && continue
+      [[ "$native_name" == "@revazi/career" ]] && continue
       require_registry_package_ready "$native_name" "$native_version" "$native_integrity" || \
-        fail "launcher publication is blocked until all eight native packages exactly match"
+        fail "launcher publication is blocked until all six native packages exactly match"
     done <"$plan"
   fi
   publish_one "$name" "$version" "$file" "$integrity"
   index=$((index + 1))
 done <"$plan"
-[[ "$index" -eq 9 ]] || fail "publish plan must contain exactly nine rows"
+[[ "$index" -eq 7 ]] || fail "publish plan must contain exactly seven rows"
 
 printf 'npm OIDC publication completed for v%s in native-before-launcher order.\n' \
   "$release_version"

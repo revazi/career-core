@@ -16,7 +16,7 @@ import sys
 import tempfile
 from typing import Any
 
-CATALOG_SHA256 = "9e56a3ca9b68799b0ff4bd52bbd2e71c2839d05a70398c5942062cb6e68032e2"
+CATALOG_SHA256 = "cca4b925848a781ab3329b27e2f9a1f8ffdb8721d9a70c00ca2afdecd4028bd9"
 MAX_BINARY_BYTES = 16 * 1024 * 1024
 MAX_CATALOG_BYTES = 64 * 1024
 MAX_COMMAND_OUTPUT_BYTES = 8 * 1024 * 1024
@@ -28,8 +28,6 @@ SUPPORTED_TARGETS = {
     "aarch64-unknown-linux-gnu": ("Linux", "aarch64"),
     "x86_64-unknown-linux-musl": ("Linux", "x86_64"),
     "aarch64-unknown-linux-musl": ("Linux", "aarch64"),
-    "x86_64-pc-windows-msvc": ("Windows", "x86_64"),
-    "aarch64-pc-windows-msvc": ("Windows", "arm64"),
 }
 MUSL_IMAGE_DIGEST = "d2166de198f26e17e5a442f537754dd616ab069c47cc57b889310a717e0abbf9"
 EXACT_RUNNER_IMAGES = {
@@ -43,37 +41,6 @@ EXACT_RUNNER_IMAGES = {
     "aarch64-unknown-linux-musl": (
         f"ubuntu-24.04-arm+node:22.19.0-alpine3.22+sha256:{MUSL_IMAGE_DIGEST}"
     ),
-    "x86_64-pc-windows-msvc": "windows-2025",
-    "aarch64-pc-windows-msvc": "windows-11-arm",
-}
-WINDOWS_SYSTEM_IMPORTS = {
-    "advapi32.dll",
-    "api-ms-win-core-synch-l1-2-0.dll",
-    "api-ms-win-crt-heap-l1-1-0.dll",
-    "api-ms-win-crt-locale-l1-1-0.dll",
-    "api-ms-win-crt-math-l1-1-0.dll",
-    "api-ms-win-crt-runtime-l1-1-0.dll",
-    "api-ms-win-crt-stdio-l1-1-0.dll",
-    "bcrypt.dll",
-    "bcryptprimitives.dll",
-    "crypt32.dll",
-    "iphlpapi.dll",
-    "kernel32.dll",
-    "msvcrt.dll",
-    "normaliz.dll",
-    "ntdll.dll",
-    "ole32.dll",
-    "oleaut32.dll",
-    "rpcrt4.dll",
-    "secur32.dll",
-    "shell32.dll",
-    "user32.dll",
-    "ucrtbase.dll",
-    "userenv.dll",
-    "version.dll",
-    "vcruntime140.dll",
-    "winmm.dll",
-    "ws2_32.dll",
 }
 
 
@@ -86,8 +53,6 @@ def fail(message: str) -> None:
 
 
 def same_file(left: os.stat_result, right: os.stat_result) -> bool:
-    if os.name == "nt":
-        return left.st_size == right.st_size
     return (left.st_dev, left.st_ino, left.st_size, left.st_mode, left.st_mtime_ns) == (
         right.st_dev,
         right.st_ino,
@@ -101,7 +66,7 @@ def bounded_regular_bytes(path: pathlib.Path, maximum: int, label: str) -> bytes
     before = path.lstat()
     if not stat.S_ISREG(before.st_mode) or not 1 <= before.st_size <= maximum:
         fail(f"{label} must be one bounded regular non-symlink file")
-    flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_BINARY", 0)
+    flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0)
     descriptor = os.open(path, flags)
     try:
         opened = os.fstat(descriptor)
@@ -153,7 +118,7 @@ def load_catalog(repository_root: pathlib.Path) -> tuple[dict[str, Any], bytes]:
         or set(document) != {"schema_version", "targets"}
         or document.get("schema_version") != "career.npm_target_catalog.v1"
         or not isinstance(document.get("targets"), list)
-        or len(document["targets"]) != 8
+        or len(document["targets"]) != 6
     ):
         fail("target catalog shape is invalid")
     return document, data
@@ -207,8 +172,7 @@ def run_bounded_outputs(
                 "stderr": stderr,
                 "timeout": 60,
             }
-            if os.name != "nt":
-                command_options["preexec_fn"] = limit_command_output_file_size
+            command_options["preexec_fn"] = limit_command_output_file_size
             result = subprocess.run(command, **command_options)
             stdout_size = os.fstat(stdout.fileno()).st_size
             stderr_size = os.fstat(stderr.fileno()).st_size
@@ -251,21 +215,7 @@ def verify_header(binary: bytes, target: dict[str, Any]) -> None:
             and int.from_bytes(binary[18:20], "little") == expected_machine
         )
     else:
-        pe_offset = (
-            int.from_bytes(binary[0x3C:0x40], "little") if len(binary) >= 64 else 0
-        )
-        expected_machine = 0xAA64 if architecture == "aarch64" else 0x8664
-        valid = (
-            binary_format.startswith("pe32+-")
-            and binary[:2] == b"MZ"
-            and 64 <= pe_offset
-            and pe_offset + 26 <= len(binary)
-            and binary[pe_offset : pe_offset + 4] == b"PE\0\0"
-            and int.from_bytes(binary[pe_offset + 4 : pe_offset + 6], "little")
-            == expected_machine
-            and int.from_bytes(binary[pe_offset + 24 : pe_offset + 26], "little")
-            == 0x020B
-        )
+        valid = False
     if not valid:
         fail("native executable header does not match the reviewed target")
 
@@ -423,157 +373,6 @@ def inspect_linux(binary_path: pathlib.Path, target: dict[str, Any]) -> dict[str
     fail("Linux inspection target has no reviewed libc family")
 
 
-def pe_integer(binary: bytes, offset: int, width: int, label: str) -> int:
-    if offset < 0 or offset + width > len(binary):
-        fail(f"PE {label} is outside the bounded executable")
-    return int.from_bytes(binary[offset : offset + width], "little")
-
-
-def overlapping_ranges(values: list[tuple[int, int]]) -> bool:
-    ordered = sorted((start, end) for start, end in values if end > start)
-    return any(left[1] > right[0] for left, right in zip(ordered, ordered[1:]))
-
-
-def pe_layout(binary: bytes) -> tuple[int, int, list[tuple[int, int, int, int]]]:
-    pe_offset = pe_integer(binary, 0x3C, 4, "header offset")
-    if pe_offset < 64 or binary[pe_offset : pe_offset + 4] != b"PE\0\0":
-        fail("PE signature is invalid")
-    section_count = pe_integer(binary, pe_offset + 6, 2, "section count")
-    optional_size = pe_integer(binary, pe_offset + 20, 2, "optional-header size")
-    characteristics = pe_integer(binary, pe_offset + 22, 2, "characteristics")
-    optional_offset = pe_offset + 24
-    if not 1 <= section_count <= 96 or optional_size < 128:
-        fail("PE section or optional-header bounds are invalid")
-    if pe_integer(binary, optional_offset, 2, "optional-header magic") != 0x020B:
-        fail("PE executable is not PE32+")
-    if characteristics & 0x0002 == 0:
-        fail("PE file is not marked as an executable image")
-    section_offset = optional_offset + optional_size
-    section_table_end = section_offset + section_count * 40
-    if section_table_end > len(binary):
-        fail("PE section table exceeds the bounded executable")
-    size_of_headers = pe_integer(binary, optional_offset + 60, 4, "header size")
-    if not section_table_end <= size_of_headers <= len(binary):
-        fail("PE header size does not contain the section table")
-    sections = []
-    virtual_ranges = []
-    file_ranges = []
-    for index in range(section_count):
-        offset = section_offset + index * 40
-        virtual_address = pe_integer(binary, offset + 12, 4, "section virtual address")
-        virtual_size = pe_integer(binary, offset + 8, 4, "section virtual size")
-        file_offset = pe_integer(binary, offset + 20, 4, "section file offset")
-        file_size = pe_integer(binary, offset + 16, 4, "section file size")
-        virtual_span = max(virtual_size, file_size)
-        if virtual_span > 0:
-            virtual_end = virtual_address + virtual_span
-            if virtual_end > 2**32:
-                fail("PE section virtual range overflows")
-            virtual_ranges.append((virtual_address, virtual_end))
-        if file_size > 0:
-            file_end = file_offset + file_size
-            if file_offset < size_of_headers or file_end > len(binary):
-                fail("PE section file range is outside bounded section data")
-            file_ranges.append((file_offset, file_end))
-        sections.append((virtual_address, virtual_size, file_offset, file_size))
-    if overlapping_ranges(virtual_ranges) or overlapping_ranges(file_ranges):
-        fail("PE section ranges overlap")
-    return optional_offset, size_of_headers, sections
-
-
-def pe_rva_span(
-    binary: bytes,
-    rva: int,
-    length: int,
-    size_of_headers: int,
-    sections: list[tuple[int, int, int, int]],
-) -> tuple[int, int]:
-    if length < 1 or rva + length > 2**32:
-        fail("PE import range length or RVA is invalid")
-    if rva < size_of_headers:
-        if rva + length > size_of_headers:
-            fail("PE import range crosses the bounded header region")
-        return rva, size_of_headers - rva
-    for virtual_address, virtual_size, file_offset, file_size in sections:
-        mapped_size = min(virtual_size or file_size, file_size)
-        if virtual_address <= rva and rva + length <= virtual_address + mapped_size:
-            delta = rva - virtual_address
-            offset = file_offset + delta
-            if offset + length > len(binary):
-                break
-            return offset, mapped_size - delta
-    fail("PE import range does not map wholly within bounded file data")
-
-
-def pe_ascii_name(binary: bytes, offset: int, available: int) -> str:
-    maximum = min(len(binary), offset + available, offset + 261)
-    end = binary.find(b"\0", offset, maximum)
-    if end < 0 or end == offset:
-        fail("PE import name is missing or exceeds its mapped bound")
-    try:
-        value = binary[offset:end].decode("ascii").lower()
-    except UnicodeError as error:
-        raise InspectionError("PE import name is not ASCII") from error
-    if re.fullmatch(r"[a-z0-9._-]{1,260}\.dll", value) is None:
-        fail("PE import name is not one bounded DLL basename")
-    return value
-
-
-def approved_windows_import(value: str) -> bool:
-    return value in WINDOWS_SYSTEM_IMPORTS
-
-
-def inspect_windows(binary: bytes) -> dict[str, Any]:
-    optional_offset, size_of_headers, sections = pe_layout(binary)
-    directory_count = pe_integer(
-        binary, optional_offset + 108, 4, "data-directory count"
-    )
-    if directory_count < 2:
-        fail("PE executable has no import directory")
-    import_rva = pe_integer(binary, optional_offset + 120, 4, "import-directory RVA")
-    import_size = pe_integer(binary, optional_offset + 124, 4, "import-directory size")
-    if import_rva == 0 or not 20 <= import_size <= 1024 * 1024:
-        fail("PE import directory is missing or outside its reviewed bound")
-    import_offset, _ = pe_rva_span(
-        binary, import_rva, import_size, size_of_headers, sections
-    )
-    imports = []
-    terminated = False
-    descriptor_limit = min(129, import_size // 20)
-    for index in range(descriptor_limit):
-        descriptor = import_offset + index * 20
-        values = [
-            pe_integer(binary, descriptor + offset, 4, "import descriptor")
-            for offset in range(0, 20, 4)
-        ]
-        if values == [0, 0, 0, 0, 0]:
-            terminated = True
-            break
-        name_rva = values[3]
-        name_offset, name_available = pe_rva_span(
-            binary, name_rva, 1, size_of_headers, sections
-        )
-        imports.append(pe_ascii_name(binary, name_offset, name_available))
-    unique_imports = sorted(set(imports))
-    if not terminated or not 1 <= len(unique_imports) <= 128:
-        fail("PE dynamic import count or termination is outside its reviewed bound")
-    unapproved = [
-        value for value in unique_imports if not approved_windows_import(value)
-    ]
-    if unapproved:
-        fail(
-            "PE executable imports a non-reviewed Windows system DLL: "
-            + ",".join(unapproved[:16])
-        )
-    return {
-        "linkage": "dynamic",
-        "interpreter": None,
-        "dynamic_imports": unique_imports,
-        "highest_glibc_symbol_version": None,
-        "runtime_libc": None,
-    }
-
-
 def require_source_state(
     repository_root: pathlib.Path, source_sha: str, evidence_kind: str
 ) -> None:
@@ -642,10 +441,8 @@ def main() -> int:
         binary = bounded_regular_bytes(
             binary_path, target["maximum_binary_size_bytes"], "native executable"
         )
-        if system != "Windows" and stat.S_IMODE(binary_path.lstat().st_mode) != 0o755:
+        if stat.S_IMODE(binary_path.lstat().st_mode) != 0o755:
             fail("native executable mode is not exactly 0755")
-        if system == "Windows" and target["executable"] != "career.exe":
-            fail("Windows native executable name is not exact")
         verify_header(binary, target)
         verify_unchanged_bytes(
             binary_path,
@@ -666,10 +463,8 @@ def main() -> int:
         )
         if system == "Darwin":
             linkage = inspect_darwin(binary_path, target)
-        elif system == "Linux":
-            linkage = inspect_linux(binary_path, target)
         else:
-            linkage = inspect_windows(binary)
+            linkage = inspect_linux(binary_path, target)
         verify_unchanged_bytes(
             binary_path,
             binary,

@@ -58,7 +58,7 @@ Phase 9 adds one generic npm consumer surface for the same CLI:
 npx --yes --package=@revazi/career@0.1.1 career <args>
 ```
 
-Use exact accepted `0.1.1`; protected publication and all-eight public acceptance passed in run `31346152236`. Never use `latest` or a range. npx acquisition may use the network and remains caller-owned; launcher/native runtime is network-free, package-local, and fail-closed. Native optional packages are internal implementation details and must never appear in consumer installation or invocation logic. See [`contracts/npm-cli-distribution-v2.md`](contracts/npm-cli-distribution-v2.md).
+Use exact `0.1.1`; never use `latest` or a range. Active distribution supports macOS and Linux only. The root crate rejects native Windows compilation. On a Windows host, build and run Career Core or pi-career through WSL, where Rust and Node target Linux and Node reports `process.platform === "linux"`. npx acquisition may use the network and remains caller-owned; launcher/native runtime is network-free, package-local, and fail-closed. Native optional packages are internal implementation details and must never appear in consumer installation or invocation logic. Historical run `31346152236` included retired Windows artifacts and is not a future support matrix. See [`contracts/npm-cli-distribution-v2.md`](contracts/npm-cli-distribution-v2.md).
 
 All harnesses may invoke the installed `career` CLI directly using the safe process rules in this document.
 

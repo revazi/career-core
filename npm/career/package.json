@@ -23,6 +23,10 @@
   "engines": {
     "node": ">=22"
   },
+  "os": [
+    "darwin",
+    "linux"
+  ],
   "bin": {
     "career": "bin/career.js"
   },
@@ -40,9 +44,7 @@
     "@revazi/career-linux-x64-gnu": "0.1.1",
     "@revazi/career-linux-arm64-gnu": "0.1.1",
     "@revazi/career-linux-x64-musl": "0.1.1",
-    "@revazi/career-linux-arm64-musl": "0.1.1",
-    "@revazi/career-win32-x64-msvc": "0.1.1",
-    "@revazi/career-win32-arm64-msvc": "0.1.1"
+    "@revazi/career-linux-arm64-musl": "0.1.1"
   },
   "career_launcher": {
     "schema_version": "career.npm_launcher.v2",
@@ -54,9 +56,7 @@
       "@revazi/career-linux-x64-gnu",
       "@revazi/career-linux-arm64-gnu",
       "@revazi/career-linux-x64-musl",
-      "@revazi/career-linux-arm64-musl",
-      "@revazi/career-win32-x64-msvc",
-      "@revazi/career-win32-arm64-msvc"
+      "@revazi/career-linux-arm64-musl"
     ]
   }
 }

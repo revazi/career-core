@@ -76,7 +76,7 @@ function cleanupCancellationProcesses(child, pidFile) {
 
 before(() => {
   const buildRoot = makeTemporaryRoot("career-npm-helper-");
-  helperBinary = path.join(buildRoot, process.platform === "win32" ? "career.exe" : "career");
+  helperBinary = path.join(buildRoot, "career");
   const result = spawnSync(
     "rustc",
     ["--edition=2024", "-C", "opt-level=0", HELPER_SOURCE, "-o", helperBinary],
@@ -109,10 +109,6 @@ function differentRustTarget(target) {
   return different.rust_target;
 }
 
-function hostCanRepresentFileInvariant(target) {
-  return process.platform !== "win32" || target.file_invariant === "windows_regular_non_symlink_exe";
-}
-
 function readJson(filePath) {
   return JSON.parse(fs.readFileSync(filePath, "utf8"));
 }
@@ -134,11 +130,7 @@ function syntheticBinary(target) {
     Buffer.from([0x7f, 0x45, 0x4c, 0x46, 2, 1]).copy(binary);
     binary.writeUInt16LE(target.binary_architecture === "aarch64" ? 0xb7 : 0x3e, 18);
   } else {
-    binary.writeUInt16LE(0x5a4d, 0);
-    binary.writeUInt32LE(0x80, 0x3c);
-    binary.writeUInt32LE(0x00004550, 0x80);
-    binary.writeUInt16LE(target.binary_architecture === "aarch64" ? 0xaa64 : 0x8664, 0x84);
-    binary.writeUInt16LE(0x020b, 0x98);
+    throw new Error(`Unsupported synthetic binary format: ${target.binary_format}`);
   }
   binary[binary.length - 1] = 1;
   return binary;
@@ -293,7 +285,7 @@ function runInstalledLauncher(tree, args, options = {}) {
   });
 }
 
-test("selects all eight exact catalog targets and rejects unknown hosts and libc", () => {
+test("selects all six exact catalog targets and rejects unknown hosts and libc", () => {
   const cases = [
     ["darwin", "arm64", null, "darwin-arm64"],
     ["darwin", "x64", null, "darwin-x64"],
@@ -301,8 +293,6 @@ test("selects all eight exact catalog targets and rejects unknown hosts and libc
     ["linux", "arm64", { family: "glibc", version: "2.35" }, "linux-arm64-gnu"],
     ["linux", "x64", { family: "musl", version: null }, "linux-x64-musl"],
     ["linux", "arm64", { family: "musl", version: null }, "linux-arm64-musl"],
-    ["win32", "x64", null, "win32-x64-msvc"],
-    ["win32", "arm64", null, "win32-arm64-msvc"],
   ];
   for (const [platform, arch, libcRuntime, key] of cases) {
     assert.equal(launcher.selectTarget(platform, arch, libcRuntime, CATALOG).platform_key, key);
@@ -323,10 +313,16 @@ test("selects all eight exact catalog targets and rejects unknown hosts and libc
     () => launcher.selectTarget("linux", "ppc64", { family: "glibc", version: "2.35" }, CATALOG),
     "CAREER_NPM_UNSUPPORTED_PLATFORM",
   );
-  expectCode(
-    () => launcher.selectTarget("freebsd", "x64", null, CATALOG),
-    "CAREER_NPM_UNSUPPORTED_PLATFORM",
-  );
+  for (const [platform, arch] of [
+    ["win32", "x64"],
+    ["win32", "arm64"],
+    ["freebsd", "x64"],
+  ]) {
+    expectCode(
+      () => launcher.selectTarget(platform, arch, null, CATALOG),
+      "CAREER_NPM_UNSUPPORTED_PLATFORM",
+    );
+  }
 });
 
 test("Linux libc detection requires positive bounded architecture-matched evidence", () => {
@@ -368,7 +364,7 @@ test("Linux libc detection requires positive bounded architecture-matched eviden
 });
 
 test("resolves and verifies every exact synthetic target package", () => {
-  for (const target of CATALOG.targets.filter(hostCanRepresentFileInvariant)) {
+  for (const target of CATALOG.targets) {
     const tree = makeInstalledTree(target, true);
     const result = resolveTree(tree);
     assert.equal(result.binaryPath, tree.binaryPath);
@@ -465,7 +461,7 @@ test("rejects launcher package-set, order, version, and lifecycle drift", async 
   await t.test("missing optional dependency", () => {
     const tree = makeInstalledTree();
     mutateJson(tree.launcherManifestPath, (manifest) => {
-      delete manifest.optionalDependencies["@revazi/career-win32-arm64-msvc"];
+      delete manifest.optionalDependencies["@revazi/career-linux-arm64-musl"];
     });
     expectCode(() => resolveTree(tree), "CAREER_NPM_LAUNCHER_MANIFEST_INVALID");
   });
@@ -495,7 +491,7 @@ test("rejects launcher package-set, order, version, and lifecycle drift", async 
   await t.test("duplicated platform package list", () => {
     const tree = makeInstalledTree();
     mutateJson(tree.launcherManifestPath, (manifest) => {
-      manifest.career_launcher.platform_packages[7] = manifest.career_launcher.platform_packages[0];
+      manifest.career_launcher.platform_packages[5] = manifest.career_launcher.platform_packages[0];
     });
     expectCode(() => resolveTree(tree), "CAREER_NPM_LAUNCHER_MANIFEST_INVALID");
   });
@@ -667,20 +663,10 @@ test("rejects unsafe binary file types and exact mode drift", async (t) => {
     fs.mkdirSync(tree.binaryPath);
     expectCode(() => resolveTree(tree), "CAREER_NPM_BINARY_TYPE_INVALID");
   });
-  await t.test("Unix mode", { skip: process.platform === "win32" }, () => {
+  await t.test("Unix mode", () => {
     const tree = makeInstalledTree();
     fs.chmodSync(tree.binaryPath, 0o700);
     expectCode(() => resolveTree(tree), "CAREER_NPM_BINARY_MODE_MISMATCH");
-  });
-  await t.test("Windows file invariant metadata", () => {
-    const tree = makeInstalledTree(
-      CATALOG.targets.find((target) => target.platform_key === "win32-x64-msvc"),
-      true,
-    );
-    mutateJson(tree.platformManifestPath, (manifest) => {
-      manifest.career_native.file_invariant = "unix_regular_non_symlink_mode_0755";
-    });
-    expectCode(() => resolveTree(tree), "CAREER_NPM_TARGET_MISMATCH");
   });
 });
 
@@ -714,10 +700,10 @@ test("rejects binary size, SHA-256, and native format mismatches", async (t) => 
     expectCode(() => resolveTree(tree), "CAREER_NPM_BINARY_TYPE_MISMATCH");
   });
   await t.test("native architecture", () => {
-    const target = CATALOG.targets.find((value) => value.platform_key === "win32-x64-msvc");
+    const target = CATALOG.targets.find((value) => value.platform_key === "darwin-arm64");
     const tree = makeInstalledTree(target, true);
     const binary = fs.readFileSync(tree.binaryPath);
-    binary.writeUInt16LE(0xaa64, 0x84);
+    binary.writeUInt32LE(0x01000007, 4);
     fs.writeFileSync(tree.binaryPath, binary);
     refreshProvenanceExecutable(tree);
     expectCode(() => resolveTree(tree), "CAREER_NPM_BINARY_TYPE_MISMATCH");
@@ -776,7 +762,7 @@ test("installs cancellation handlers before spawning the native process", async 
 
 test(
   "propagates cancellation to the child and terminates with the same signal",
-  { timeout: 10_000, skip: process.platform === "win32" },
+  { timeout: 10_000 },
   async (t) => {
   const tree = makeInstalledTree();
   const pidFile = path.join(tree.root, "helper.pid");
@@ -824,7 +810,7 @@ test("reports launch failures with one stable bounded error code", async () => {
   );
 });
 
-test("all eight package templates are private, exact, lifecycle-free, and lockstep", () => {
+test("all six package templates are private, exact, lifecycle-free, and lockstep", () => {
   const launcherManifest = readJson(LAUNCHER_MANIFEST_SOURCE);
   const platformManifests = CATALOG.targets.map((target) =>
     readJson(path.join(ROOT, "platforms", target.platform_key, "package.json")),
@@ -842,6 +828,15 @@ test("all eight package templates are private, exact, lifecycle-free, and lockst
   assert.deepEqual(launcherManifest.career_launcher.platform_packages, CATALOG.platformPackages);
   assert.deepEqual(launcherManifest.bin, { career: "bin/career.js" });
   assert.deepEqual(launcherManifest.engines, { node: ">=22" });
+  assert.deepEqual(launcherManifest.os, ["darwin", "linux"]);
+  assert.deepEqual(CATALOG.targets.map((target) => target.node_platform), [
+    "darwin",
+    "darwin",
+    "linux",
+    "linux",
+    "linux",
+    "linux",
+  ]);
   assert.equal(launcherManifest.author, "Revaz Zakalashvili");
   assert.equal(launcherManifest.homepage, "https://github.com/revazi/career-core#readme");
   assert.deepEqual(launcherManifest.bugs, { url: "https://github.com/revazi/career-core/issues" });
@@ -923,4 +918,5 @@ test("launcher source has no network, dependency fallback, PATH lookup, or verif
   assert.match(source, /shell:\s*false/u);
   assert.match(source, /stdio:\s*["']inherit["']/u);
   assert.doesNotMatch(source, /SKIP|BYPASS|telemetry|provider|download/u);
+  assert.doesNotMatch(source, /career\.exe|pe32\+|windows_regular_non_symlink_exe/u);
 });

@@ -435,10 +435,11 @@ Scope:
 - one stable `npm-release.yml` for later annotated stable-SemVer `vX.Y.Z` tags
 - exact tag/main/reviewed-SHA and Cargo/npm lockstep version verification
 - dynamically versioned candidate filenames, manifests, provenance, publication, and public acceptance
-- OIDC-only trusted publishing for the nine already-created package names
+- OIDC-only trusted publishing for the active six native package names plus launcher
 - protected `v*` tag/ruleset plus required `npm-production` approval
-- native-before-launcher ordering, bounded idempotent recovery, integrity/SLSA provenance, and all-eight native acceptance unchanged
-- immutable historical `v0.1.0` and `v0.1.1` workflows/evidence
+- six-native-before-launcher ordering, bounded idempotent recovery, integrity/SLSA provenance, and all-six native acceptance
+- macOS/Linux-only active source and future distribution; the root crate rejects native Windows compilation, and WSL is the Windows-host route because Rust and Node target Linux there
+- immutable historical `v0.1.0` and eight-target `v0.1.1` workflows/evidence, including superseded Windows records
 
 Out of scope:
 
@@ -449,7 +450,7 @@ Acceptance:
 - workflow and generic candidate scripts contain no release-version constant
 - a future synthetic stable version passes source/tag/lockstep policy while prerelease, lightweight, moved, dirty, non-main, mismatched, or conflicting states fail
 - fake-registry OIDC tests prove all-package existence, exact idempotence/partial recovery, conflict/auth/transient behavior, visible bounded readiness, and launcher-last ordering without npm contact
-- pinned actions, minimum permissions, exact native runners, private templates, and all existing deterministic Core contracts remain unchanged
+- pinned actions, minimum permissions, exact macOS/Linux native runners, private templates, and all existing deterministic Core contracts remain unchanged
 
 ### Other candidate work (not approved)
 

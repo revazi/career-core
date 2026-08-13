@@ -89,7 +89,7 @@ RUSTUP_TOOLCHAIN=stable scripts/verify-swift.sh
 
 `scripts/test-npm-publication.sh` uses synthetic Git repositories, external candidate staging, an opposite-target format fixture, offline install/parity, adversarial tar/provenance/tag tests, and a fake npm registry to exercise bootstrap/OIDC, partial/idempotent retry, conflicts, registry attestations, auth failure, and launcher-last policy without contacting npm. Run it with Node 22.19.0 and reviewed local npm 10.9.3 or publication npm 11.6.2.
 
-Source templates must stay `private: true`. Do not address internal native packages as user surfaces. Do not query/authenticate/publish npm, dispatch workflows, or create repository release state from an implementation session. See [`docs/contracts/npm-cli-distribution-v1.md`](docs/contracts/npm-cli-distribution-v1.md) and [`docs/releasing.md`](docs/releasing.md).
+Source templates must stay `private: true`. Active source rejects native Windows Cargo targets, and active distribution supports macOS and Linux only; Windows hosts must build and run under WSL as Linux. Do not address internal native packages as user surfaces. Do not query/authenticate/publish npm, dispatch workflows, or create repository release state from an implementation session. See [`docs/contracts/npm-cli-distribution-v2.md`](docs/contracts/npm-cli-distribution-v2.md) and [`docs/releasing.md`](docs/releasing.md).
 
 ## Maintainer-only transitional `pi-career` runtime inputs
 

@@ -10,12 +10,12 @@ usage() {
   cat <<'EOF'
 Usage: scripts/assemble-npm-publication-candidate.sh \
   --output-dir <external-empty-directory> \
-  --native-dir <directory-containing-eight-exact-native-tarballs> \
+  --native-dir <directory-containing-six-exact-native-tarballs> \
   --expected-ref refs/tags/vX.Y.Z \
   --reviewed-sha <40-lowercase-hex>
 
-Validate all eight exact native candidates, pack the public @revazi/career
-launcher last, and emit exactly nine ordered tarballs plus one integrity
+Validate all six exact native candidates, pack the public @revazi/career
+launcher last, and emit exactly seven ordered tarballs plus one integrity
 manifest. This command never queries npm, authenticates, publishes, or changes
 the checkout.
 EOF
@@ -65,8 +65,6 @@ platform_keys=(
   linux-arm64-gnu
   linux-x64-musl
   linux-arm64-musl
-  win32-x64-msvc
-  win32-arm64-msvc
 )
 native_files=(
   "10-revazi-career-darwin-arm64-$release_version.tgz"
@@ -75,8 +73,6 @@ native_files=(
   "40-revazi-career-linux-arm64-gnu-$release_version.tgz"
   "50-revazi-career-linux-x64-musl-$release_version.tgz"
   "60-revazi-career-linux-arm64-musl-$release_version.tgz"
-  "70-revazi-career-win32-x64-msvc-$release_version.tgz"
-  "80-revazi-career-win32-arm64-msvc-$release_version.tgz"
 )
 python3 - "$native_dir" "${native_files[@]}" <<'PY'
 import pathlib
@@ -157,14 +153,14 @@ print(value[0]["filename"])
 PY
 )"
 [[ -f "$output_dir/work/$packed_name" ]] || fail "npm pack launcher tarball is missing"
-mv "$output_dir/work/$packed_name" "$output_dir/90-revazi-career-$release_version.tgz"
+mv "$output_dir/work/$packed_name" "$output_dir/70-revazi-career-$release_version.tgz"
 rm -rf "$output_dir/work"
 
 "$script_dir/npm-publication-candidate.py" write-manifest "$output_dir" --source-sha "$reviewed_sha"
 "$script_dir/npm-publication-candidate.py" verify "$output_dir" \
   --source-sha "$reviewed_sha" \
   --repository-root "$repository_root"
-[[ "$(find "$output_dir" -mindepth 1 -maxdepth 1 -type f | wc -l | tr -d ' ')" == "10" ]] || \
+[[ "$(find "$output_dir" -mindepth 1 -maxdepth 1 -type f | wc -l | tr -d ' ')" == "8" ]] || \
   fail "assembled publication candidate output allowlist mismatch"
 printf 'Assembled ordered public npm candidate for v%s at %s; no publication performed.\n' \
   "$release_version" "$reviewed_sha"

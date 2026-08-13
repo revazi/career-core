@@ -19,6 +19,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Changed
 
+- Remove native Windows from active Career Core source and future npm distribution: the root crate rejects native Windows compilation so the library, CLI, and adapters use WSL on Windows hosts; the launcher declares macOS/Linux-only installation, and the catalog and stable workflows contain six native packages plus launcher. macOS, Linux, and existing Apple iOS/Swift targets are unchanged.
+- Preserve `v0.1.1` Windows publication/workflow records as immutable historical evidence rather than active support.
 - Advance Cargo, npm source templates, `career --version`, and version-bearing synthetic contract fixtures to patch version `0.1.1`; v1 operation and schema semantics remain unchanged.
 - Rewrite the public README to lead with verified scope, exact installation, limitations, supported target policy, discovery, and integration boundaries.
 - Record completed `v0.1.1` publication run `31346152236`; keep version-specific workflows as immutable historical evidence and bind routine trusted publishing to the stable workflow.

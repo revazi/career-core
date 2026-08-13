@@ -53,7 +53,7 @@ case "$(uname -s):$(uname -m):$expected_target" in
     ;;
   *) fail "expected target does not match an approved native host" ;;
 esac
-launcher_tarball="$candidate_dir/90-revazi-career-$release_version.tgz"
+launcher_tarball="$candidate_dir/70-revazi-career-$release_version.tgz"
 
 temporary_root="$(mktemp -d "${TMPDIR:-/tmp}/career-npm-publication-verify.XXXXXX")"
 trap 'rm -rf "$temporary_root"' EXIT

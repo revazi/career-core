@@ -1,6 +1,9 @@
 #![doc = "Deterministic, explainable career-document analysis primitives."]
 #![forbid(unsafe_code)]
 
+#[cfg(target_os = "windows")]
+compile_error!("native Windows is unsupported; build and run Career Core in WSL");
+
 use serde::{Deserialize, Serialize};
 
 mod job;

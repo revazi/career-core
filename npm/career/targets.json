@@ -156,58 +156,6 @@
         "dynamic_import_verification_required": true,
         "sha256_verification_required": true
       }
-    },
-    {
-      "platform_key": "win32-x64-msvc",
-      "rust_target": "x86_64-pc-windows-msvc",
-      "node_platform": "win32",
-      "node_arch": "x64",
-      "libc_family": null,
-      "native_package": "@revazi/career-win32-x64-msvc",
-      "executable": "career.exe",
-      "binary_format": "pe32+-x86_64",
-      "binary_architecture": "x86_64",
-      "runner_os": "Windows",
-      "runner_arch": "X64",
-      "maximum_binary_size_bytes": 16777216,
-      "file_invariant": "windows_regular_non_symlink_exe",
-      "archive_mode": "0644",
-      "executable_mode": null,
-      "minimum_glibc_version": null,
-      "provenance_requirements": {
-        "native_execution_required": true,
-        "cross_compilation_is_release_evidence": false,
-        "emulation_is_release_evidence": false,
-        "binary_format_verification_required": true,
-        "dynamic_import_verification_required": true,
-        "sha256_verification_required": true
-      }
-    },
-    {
-      "platform_key": "win32-arm64-msvc",
-      "rust_target": "aarch64-pc-windows-msvc",
-      "node_platform": "win32",
-      "node_arch": "arm64",
-      "libc_family": null,
-      "native_package": "@revazi/career-win32-arm64-msvc",
-      "executable": "career.exe",
-      "binary_format": "pe32+-aarch64",
-      "binary_architecture": "aarch64",
-      "runner_os": "Windows",
-      "runner_arch": "ARM64",
-      "maximum_binary_size_bytes": 16777216,
-      "file_invariant": "windows_regular_non_symlink_exe",
-      "archive_mode": "0644",
-      "executable_mode": null,
-      "minimum_glibc_version": null,
-      "provenance_requirements": {
-        "native_execution_required": true,
-        "cross_compilation_is_release_evidence": false,
-        "emulation_is_release_evidence": false,
-        "binary_format_verification_required": true,
-        "dynamic_import_verification_required": true,
-        "sha256_verification_required": true
-      }
     }
   ]
 }

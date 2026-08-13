@@ -48,7 +48,7 @@ LIFECYCLE_NAMES = {
 LICENSE_FILES = {"LICENSE-MIT", "LICENSE-APACHE", "THIRD_PARTY_NOTICES.md"}
 LAUNCHER_NAME = "@revazi/career"
 TARGET_CATALOG_SHA256 = (
-    "9e56a3ca9b68799b0ff4bd52bbd2e71c2839d05a70398c5942062cb6e68032e2"
+    "cca4b925848a781ab3329b27e2f9a1f8ffdb8721d9a70c00ca2afdecd4028bd9"
 )
 REPOSITORY_ROOT = pathlib.Path(__file__).resolve().parent.parent
 TARGET_CATALOG_PATH = REPOSITORY_ROOT / "npm/career/targets.json"
@@ -64,8 +64,6 @@ def fail(message: str) -> None:
 
 
 def same_file_identity(left: os.stat_result, right: os.stat_result) -> bool:
-    if os.name == "nt":
-        return left.st_size == right.st_size
     return (left.st_dev, left.st_ino, left.st_size, left.st_mode, left.st_mtime_ns) == (
         right.st_dev,
         right.st_ino,
@@ -141,7 +139,7 @@ def load_target_catalog() -> dict[str, dict[str, Any]]:
         or set(value) != {"schema_version", "targets"}
         or value.get("schema_version") != "career.npm_target_catalog.v1"
         or not isinstance(value.get("targets"), list)
-        or len(value["targets"]) != 8
+        or len(value["targets"]) != 6
     ):
         raise RuntimeError("reviewed npm target catalog shape mismatch")
     targets: dict[str, dict[str, Any]] = {}
@@ -161,7 +159,7 @@ def load_target_catalog() -> dict[str, dict[str, Any]]:
 
 
 TARGETS = load_target_catalog()
-LAUNCHER_FILE = f"90-revazi-career-{VERSION}.tgz"
+LAUNCHER_FILE = f"70-revazi-career-{VERSION}.tgz"
 
 
 def write_object(path: pathlib.Path, value: dict[str, Any]) -> None:
@@ -191,6 +189,7 @@ def manifest_property_set(name: str, publication_candidate: bool) -> set[str]:
             "bugs",
             "keywords",
             "engines",
+            "os",
             "bin",
             "optionalDependencies",
             "career_launcher",
@@ -402,6 +401,8 @@ def validate_launcher_metadata(manifest: dict[str, Any]) -> None:
         fail("candidate launcher bin surface mismatch")
     if manifest.get("engines") != {"node": ">=22"}:
         fail("candidate launcher Node engine mismatch")
+    if manifest.get("os") != ["darwin", "linux"]:
+        fail("candidate launcher OS boundary mismatch")
     if manifest.get("files") != [
         "bin/career.js",
         "targets.json",
@@ -504,18 +505,7 @@ def valid_binary_header(binary: bytes, target: dict[str, Any]) -> bool:
             and binary[:6] == bytes([0x7F, 0x45, 0x4C, 0x46, 2, 1])
             and int.from_bytes(binary[18:20], "little") == machine
         )
-    if not binary_format.startswith("pe32+-") or len(binary) < 64:
-        return False
-    offset = int.from_bytes(binary[0x3C:0x40], "little")
-    machine = 0xAA64 if architecture == "aarch64" else 0x8664
-    return (
-        binary[:2] == b"MZ"
-        and 64 <= offset
-        and offset + 26 <= len(binary)
-        and binary[offset : offset + 4] == b"PE\0\0"
-        and int.from_bytes(binary[offset + 4 : offset + 6], "little") == machine
-        and int.from_bytes(binary[offset + 24 : offset + 26], "little") == 0x020B
-    )
+    return False
 
 
 def validate_runner(runner: Any, target: dict[str, Any]) -> None:
@@ -532,8 +522,6 @@ def validate_runner(runner: Any, target: dict[str, Any]) -> None:
             "ubuntu-24.04-arm+node:22.19.0-alpine3.22+sha256:"
             "d2166de198f26e17e5a442f537754dd616ab069c47cc57b889310a717e0abbf9"
         ),
-        "win32-x64-msvc": "windows-2025",
-        "win32-arm64-msvc": "windows-11-arm",
     }
     if not exact_keys(runner, {"os", "arch", "image", "libc"}):
         fail("candidate runner provenance property set mismatch")
@@ -740,7 +728,7 @@ def package_rows(directory: pathlib.Path) -> list[dict[str, Any]]:
     launcher_path = directory / LAUNCHER_FILE
     values.append(
         {
-            "order": 90,
+            "order": 70,
             "role": "user_facing_launcher",
             "name": LAUNCHER_NAME,
             "version": VERSION,
@@ -858,8 +846,8 @@ def verify_candidate(
     if actual_manifest != expected_manifest:
         fail("publication manifest/order/integrity mismatch")
     rows = actual_manifest["packages"]
-    if [row["order"] for row in rows] != [10, 20, 30, 40, 50, 60, 70, 80, 90]:
-        fail("publication order must be all eight exact native packages, then launcher")
+    if [row["order"] for row in rows] != [10, 20, 30, 40, 50, 60, 70]:
+        fail("publication order must be all six exact native packages, then launcher")
     if rows[-1]["name"] != LAUNCHER_NAME or rows[-1]["role"] != "user_facing_launcher":
         fail("user-facing launcher must be published last")
     if repository_root is not None:

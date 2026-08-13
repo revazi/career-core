@@ -12,7 +12,7 @@ It is **not** an AI service. The core library performs no network requests, mode
 - Minimum Rust version for source builds: Rust `1.85`
 - npm launcher runtime: Node.js `22` or newer
 
-Exact `@revazi/career@0.1.1` completed protected publication and all-eight native public acceptance in run [`31346152236`](https://github.com/revazi/career-core/actions/runs/31346152236). Later versions are supported only after the same final-tag native evidence and public acceptance pass.
+Exact `@revazi/career@0.1.1` completed a historical eight-target publication run [`31346152236`](https://github.com/revazi/career-core/actions/runs/31346152236). Native Windows support is now retired: `career-core`, its CLI, adapters, active npm source, and future releases do not build or run natively on Windows. Windows users must build and run Career Core and pi-career through WSL, where the target and runtime are Linux and the Linux package policy applies. macOS, Linux, and existing Apple iOS/Swift build targets remain supported according to their documented evidence.
 
 Use exact versions, never `latest` or a range.
 
@@ -59,7 +59,7 @@ npm install --save-exact @revazi/career@0.1.1
 npx --yes --package=@revazi/career@0.1.1 career --version
 ```
 
-Users install only `@revazi/career`. Its eight platform-specific optional packages are internal launcher implementation details and must not be installed, invoked, or pinned directly.
+Users install only `@revazi/career`. Its six active platform-specific optional packages are internal launcher implementation details and must not be installed, invoked, or pinned directly. Native Windows installation is unsupported; use WSL on a Windows host.
 
 npm/npx may contact the npm registry to acquire packages. After installation, the launcher and native CLI make no network requests and provide no PATH or runtime-download fallback.
 
@@ -72,11 +72,11 @@ cargo install --path crates/career-cli --locked
 career --version
 ```
 
-For reproducible use, check out an exact reviewed commit or release tag.
+For reproducible use, check out an exact reviewed commit or release tag. On a Windows host, run these source-build commands inside WSL; native Windows Cargo builds fail at compile time.
 
-## Supported npm targets for `0.1.1`
+## Supported npm targets
 
-The accepted release contains one launcher and eight native implementations:
+Active source and future releases contain one launcher and six native implementations:
 
 | Operating system | Architecture | Runtime |
 |---|---|---|
@@ -86,10 +86,8 @@ The accepted release contains one launcher and eight native implementations:
 | GNU/Linux | ARM64 | glibc `2.35` or newer |
 | musl Linux | x86-64 | native musl |
 | musl Linux | ARM64 | native musl |
-| Windows | x86-64 | native MSVC PE32+ |
-| Windows | ARM64 | native MSVC PE32+ |
 
-A target is supported only after its final public package executes on the exact native OS and architecture. Unknown OS, architecture, libc, package metadata, provenance, executable format, or binary bytes fail closed. Emulation and cross-compilation are not support evidence.
+A target is supported only after its final public package executes on the exact native OS and architecture. Unknown OS, architecture, libc, package metadata, provenance, executable format, or binary bytes fail closed. Emulation and cross-compilation are not support evidence. WSL is supported as Linux; native Windows is rejected by the root Rust crate at compile time and no `career.exe` launcher route exists in active source.
 
 See [`docs/distribution.md`](docs/distribution.md) and [`docs/contracts/npm-cli-distribution-v2.md`](docs/contracts/npm-cli-distribution-v2.md) for the exact policy.
 
@@ -151,7 +149,7 @@ Use `--input -` for stdin where supported. Invalid user input returns a versione
 
 The Pi integration is maintained separately in [`revazi/pi-career`](https://github.com/revazi/pi-career). Career Core does not ship a Pi package or modify that repository.
 
-After `0.1.1` public acceptance, pi-career should address only:
+On macOS, Linux, or Linux under WSL, pi-career should address only:
 
 ```text
 package: @revazi/career@0.1.1
