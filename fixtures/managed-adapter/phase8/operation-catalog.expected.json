@@ -1,6 +1,6 @@
 {
   "schema_version": "career.operation_catalog.v1",
-  "core_version": "0.1.1",
+  "core_version": "0.2.0",
   "operations": [
     {
       "operation_id": "core.capabilities",

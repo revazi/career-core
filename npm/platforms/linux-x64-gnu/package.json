@@ -1,6 +1,6 @@
 {
   "name": "@revazi/career-linux-x64-gnu",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "private": true,
   "description": "Internal Career Core CLI implementation for x86-64 GNU/Linux (glibc 2.35+)",
   "license": "MIT OR Apache-2.0",

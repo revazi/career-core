@@ -102,6 +102,7 @@ jobs:
             --binary "$output_dir/stage/${{ matrix.platform_key }}/career" \
             --target "${{ matrix.target }}" \
             --source-sha "${{ github.sha }}" \
+            --expected-version "$(node -p 'require("./npm/career/package.json").version')" \
             --runner-image "${{ matrix.runner_image }}" \
             --evidence-kind exact_native_ci \
             --output "$evidence"
@@ -214,6 +215,7 @@ jobs:
             --binary "/output/prepared/stage/$PLATFORM_KEY/career" \
             --target "$EXPECTED_TARGET" \
             --source-sha "$SOURCE_SHA" \
+            --expected-version "$(node -p 'require("./npm/career/package.json").version')" \
             --runner-image "$RUNNER_IMAGE" \
             --evidence-kind exact_native_ci \
             --output /output/evidence.json

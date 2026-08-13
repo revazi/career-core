@@ -55,10 +55,10 @@ Career Core ships no harness-specific package or bundled Agent Skill. The option
 Phase 9 adds one generic npm consumer surface for the same CLI:
 
 ```bash
-npx --yes --package=@revazi/career@0.1.1 career <args>
+npx --yes --package=@revazi/career@0.2.0 career <args>
 ```
 
-Use exact `0.1.1`; never use `latest` or a range. Distribution supports macOS and Linux only. The root crate rejects native Windows compilation. On a Windows host, build and run Career Core or pi-career through WSL, where Rust and Node target Linux and Node reports `process.platform === "linux"`. npx acquisition may use the network and remains caller-owned; launcher/native runtime is network-free, package-local, and fail-closed. Native optional packages are internal implementation details and must never appear in consumer installation or invocation logic. See [`contracts/npm-cli-distribution-v2.md`](contracts/npm-cli-distribution-v2.md).
+After publication acceptance, use exact `0.2.0`; never use `latest` or a range. Distribution supports macOS and Linux only. The root crate rejects native Windows compilation. On a Windows host, build and run Career Core or pi-career through WSL, where Rust and Node target Linux and Node reports `process.platform === "linux"`. npx acquisition may use the network and remains caller-owned; launcher/native runtime is network-free, package-local, and fail-closed. Native optional packages are internal implementation details and must never appear in consumer installation or invocation logic. See [`contracts/npm-cli-distribution-v2.md`](contracts/npm-cli-distribution-v2.md).
 
 All harnesses may invoke the installed `career` CLI directly using the safe process rules in this document.
 

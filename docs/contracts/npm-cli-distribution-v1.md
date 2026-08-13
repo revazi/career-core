@@ -2,7 +2,7 @@
 
 Phase 9 distributes the unchanged native `career` CLI through one user-facing npm package without changing Core algorithms, schemas, capability/operation discovery, output ordering, warnings, evidence, uncertainty, assisted authority, the 33,554,432-byte successful machine-output ceiling, or Swift behavior.
 
-> This document is the immutable public `0.1.0` two-target contract. Proposed release-blocked `0.1.1` matrix work is documented separately in [`npm-cli-distribution-v2.md`](npm-cli-distribution-v2.md).
+> This document is the immutable public `0.1.0` two-target contract. The current six-target macOS/Linux contract is documented separately in [`npm-cli-distribution-v2.md`](npm-cli-distribution-v2.md).
 
 ## Consumer surface
 

@@ -6,18 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-08-13
+
 ### Added
 
 - Add exact native Darwin ARM64/x64 and GNU Linux x64/ARM64 packaged-binary execution plus bounded linkage/import inspection evidence.
 - Add digest-pinned exact native Alpine 3.22/musl 1.2.5 x64/ARM64 packaged-binary execution and static ELF/no-interpreter/no-import evidence.
-- Add an exact `@revazi/career@0.1.1` pi-career consumer handoff and a public-package parity verifier.
+- Add an exact `@revazi/career@0.2.0` pi-career consumer handoff and a public-package parity verifier.
 - Add stable OIDC-only `npm-release.yml` for later annotated stable-SemVer tags, with dynamically derived versions, filenames, provenance, publication plans, and all-six public acceptance.
 
 ### Changed
 
+- Prepare exact `0.2.0` Cargo, CLI, result, launcher, native-package, fixture, Swift-metadata, documentation, and pi-career handoff coordinates for the breaking macOS/Linux-only distribution boundary; public v1 operation/schema semantics remain unchanged.
 - Remove native Windows from Career Core source and npm distribution: the root crate rejects native Windows compilation so the library, CLI, and adapters use WSL on Windows hosts; the launcher declares macOS/Linux-only installation, and the catalog and workflows contain six native packages plus launcher. macOS, Linux, and existing Apple iOS/Swift targets are unchanged.
 - Remove the obsolete native-Windows package, workflow, test, and evidence records from the current tree.
-- Advance Cargo, npm source templates, `career --version`, and version-bearing synthetic contract fixtures to patch version `0.1.1`; v1 operation and schema semantics remain unchanged.
 - Rewrite the public README to lead with verified scope, exact installation, limitations, supported target policy, discovery, and integration boundaries.
 - Bind routine trusted publishing to the stable workflow.
 

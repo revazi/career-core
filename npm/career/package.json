@@ -1,6 +1,6 @@
 {
   "name": "@revazi/career",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "private": true,
   "description": "Deterministic local Career Core CLI for resume evaluation and job matching",
   "license": "MIT OR Apache-2.0",
@@ -39,12 +39,12 @@
     "THIRD_PARTY_NOTICES.md"
   ],
   "optionalDependencies": {
-    "@revazi/career-darwin-arm64": "0.1.1",
-    "@revazi/career-darwin-x64": "0.1.1",
-    "@revazi/career-linux-x64-gnu": "0.1.1",
-    "@revazi/career-linux-arm64-gnu": "0.1.1",
-    "@revazi/career-linux-x64-musl": "0.1.1",
-    "@revazi/career-linux-arm64-musl": "0.1.1"
+    "@revazi/career-darwin-arm64": "0.2.0",
+    "@revazi/career-darwin-x64": "0.2.0",
+    "@revazi/career-linux-x64-gnu": "0.2.0",
+    "@revazi/career-linux-arm64-gnu": "0.2.0",
+    "@revazi/career-linux-x64-musl": "0.2.0",
+    "@revazi/career-linux-arm64-musl": "0.2.0"
   },
   "career_launcher": {
     "schema_version": "career.npm_launcher.v2",

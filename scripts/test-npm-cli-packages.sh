@@ -87,6 +87,7 @@ for command in cmp git node npm python3 tar; do
     exit 1
   }
 done
+package_version="$(node -e 'process.stdout.write(require(process.argv[1]).version)' "$repository_root/npm/career/package.json")"
 
 temporary_root="$(mktemp -d "${TMPDIR:-/tmp}/career-npm-package-test.XXXXXX")"
 inside_output="$repository_root/.npm-package-test-inside-$$"
@@ -180,7 +181,7 @@ assert len(targets) == 1
 target = targets[0]
 platform_packages = [value["native_package"] for value in catalog["targets"]]
 assert launcher_manifest["name"] == "@revazi/career"
-assert launcher_manifest["version"] == "0.1.1"
+assert re.fullmatch(r"(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)", launcher_manifest["version"])
 assert launcher_manifest["private"] is True
 assert launcher_manifest["bin"] == {"career": "bin/career.js"}
 assert list(launcher_manifest["optionalDependencies"]) == platform_packages
@@ -250,11 +251,12 @@ inspection="$temporary_root/native-inspection.json"
   --binary "$platform_stage/career" \
   --target "$expected_target" \
   --source-sha "$(git -C "$repository_root" rev-parse HEAD)" \
+  --expected-version "$package_version" \
   --runner-image local-package-test \
   --evidence-kind local_policy \
   --output "$inspection" \
   >"$temporary_root/native-inspection.stdout"
-python3 - "$inspection" "$platform_key" "$expected_target" <<'PY'
+python3 - "$inspection" "$platform_key" "$expected_target" "$package_version" <<'PY'
 import json
 import pathlib
 import re
@@ -262,12 +264,13 @@ import sys
 path = pathlib.Path(sys.argv[1])
 platform_key = sys.argv[2]
 target = sys.argv[3]
+version = sys.argv[4]
 value = json.loads(path.read_text())
 assert value["schema_version"] == "career.npm_native_inspection.v1"
 assert value["evidence_kind"] == "local_policy"
 assert value["target"]["platform_key"] == platform_key
 assert value["target"]["rust_target"] == target
-assert value["binary"]["observed_version"] == "career 0.1.1"
+assert value["binary"]["observed_version"] == f"career {version}"
 if value["target"]["libc_family"] == "musl":
     assert value["linkage"]["dynamic_imports"] == []
     assert value["linkage"]["highest_glibc_symbol_version"] is None
@@ -286,7 +289,25 @@ if "$inspection_script" \
   --repository-root "$repository_root" \
   --binary "$platform_stage/career" \
   --target "$expected_target" \
+  --source-sha "$(git -C "$repository_root" rev-parse HEAD)" \
+  --expected-version "999.999.999" \
+  --runner-image local-package-test \
+  --evidence-kind local_policy \
+  --output "$temporary_root/wrong-version-inspection.json" \
+  >"$temporary_root/wrong-version-inspection.stdout" \
+  2>"$temporary_root/wrong-version-inspection.stderr"; then
+  printf 'native inspection accepted an incorrect expected version\n' >&2
+  exit 1
+fi
+grep -Fq 'not exact lockstep expected version' "$temporary_root/wrong-version-inspection.stderr"
+[[ ! -e "$temporary_root/wrong-version-inspection.json" ]]
+
+if "$inspection_script" \
+  --repository-root "$repository_root" \
+  --binary "$platform_stage/career" \
+  --target "$expected_target" \
   --source-sha "0000000000000000000000000000000000000000" \
+  --expected-version "$package_version" \
   --runner-image local-package-test \
   --evidence-kind local_policy \
   --output "$temporary_root/wrong-source-inspection.json" \
@@ -303,6 +324,7 @@ if "$inspection_script" \
   --binary "$platform_stage/career" \
   --target "$expected_target" \
   --source-sha "$(git -C "$repository_root" rev-parse HEAD)" \
+  --expected-version "$package_version" \
   --runner-image local-package-test \
   --evidence-kind local_policy \
   --output "$inside_inspection" \
@@ -321,6 +343,7 @@ if "$inspection_script" \
   --binary "$inspection_symlink" \
   --target "$expected_target" \
   --source-sha "$(git -C "$repository_root" rev-parse HEAD)" \
+  --expected-version "$package_version" \
   --runner-image local-package-test \
   --evidence-kind local_policy \
   --output "$temporary_root/symlink-inspection.json" \
@@ -474,14 +497,15 @@ compare_golden job-normalize fixtures/job/phase4a/complete-normalization.expecte
 compare_golden job-match fixtures/job/phase4b/complete-match.expected.json \
   job match --input "$repository_root/fixtures/job/phase4b/complete-match.input.json"
 
-python3 - "$result_dir" <<'PY'
+python3 - "$result_dir" "$package_version" <<'PY'
 import json
 import pathlib
 import sys
 root = pathlib.Path(sys.argv[1])
+version = sys.argv[2]
 for path in root.glob("*.launcher.stdout"):
     if path.name == "version.launcher.stdout":
-        assert path.read_text() == "career 0.1.1\n"
+        assert path.read_text() == f"career {version}\n"
         continue
     json.loads(path.read_bytes())
 PY

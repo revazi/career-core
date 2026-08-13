@@ -1,7 +1,7 @@
 {
   "schema_version": "career.resume_variant.v1",
   "policy_version": "resume_variant_review_v1",
-  "core_version": "0.1.1",
+  "core_version": "0.2.0",
   "authority": "assisted_non_authoritative",
   "baseline_resume": {
     "schema_version": "career.resume_input.v1",

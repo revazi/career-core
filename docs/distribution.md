@@ -44,11 +44,11 @@ The script uses a temporary Cargo root, executes capability/operation/schema dis
 
 ## npm package
 
-The only user-facing npm package is exact `@revazi/career@0.1.1`, exposing bin `career`:
+The next user-facing npm package candidate is exact `@revazi/career@0.2.0`, exposing bin `career`:
 
 ```bash
-npx --yes --package=@revazi/career@0.1.1 career --version
-npx --yes --package=@revazi/career@0.1.1 career capabilities --format json-compact
+npx --yes --package=@revazi/career@0.2.0 career --version
+npx --yes --package=@revazi/career@0.2.0 career capabilities --format json-compact
 ```
 
 Always use an exact reviewed version, never `latest` or a range. npm/npx acquisition may contact npm; launcher runtime remains offline. Native platform packages are internal lockstep optional dependencies. Users and consumers must not install, invoke, or pin them directly.
@@ -153,7 +153,7 @@ Checksums detect accidental corruption and substitution relative to the release 
 
 ## Package managers
 
-Exact accepted `@revazi/career@0.1.1` is the sole approved package-manager consumer surface. Protected npm workflows publish no crate, Homebrew formula, GitHub Release asset, signature, or other channel. Every other package-manager channel requires separate maintenance, ownership, security, and publication approval.
+After its six-target release gate passes, exact `@revazi/career@0.2.0` is the sole approved package-manager consumer surface. Protected npm workflows publish no crate, Homebrew formula, GitHub Release asset, signature, or other channel. Every other package-manager channel requires separate maintenance, ownership, security, and publication approval.
 
 Maintainers preparing an approved release must follow [`releasing.md`](releasing.md).
 

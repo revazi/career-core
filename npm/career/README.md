@@ -5,7 +5,7 @@ Deterministic local CLI for Career Core resume evaluation, normalization, and co
 ## Run an exact version
 
 ```bash
-npx --yes --package=@revazi/career@0.1.1 career --version
+npx --yes --package=@revazi/career@0.2.0 career --version
 ```
 
 Use an exact version rather than `latest`. npm/npx may access the npm registry to acquire the package; after installation, the launcher and native `career` CLI perform no network requests or telemetry.

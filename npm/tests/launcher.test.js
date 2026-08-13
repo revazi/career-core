@@ -13,6 +13,7 @@ const ROOT = path.resolve(__dirname, "..");
 const LAUNCHER_SOURCE = path.join(ROOT, "career", "bin", "career.js");
 const LAUNCHER_MANIFEST_SOURCE = path.join(ROOT, "career", "package.json");
 const TARGET_CATALOG_SOURCE = path.join(ROOT, "career", "targets.json");
+const PACKAGE_VERSION = JSON.parse(fs.readFileSync(LAUNCHER_MANIFEST_SOURCE, "utf8")).version;
 const HELPER_SOURCE = path.join(__dirname, "fixtures", "native-helper.rs");
 const launcher = require(LAUNCHER_SOURCE);
 const CATALOG = launcher.loadTargetCatalog(TARGET_CATALOG_SOURCE);
@@ -136,7 +137,7 @@ function syntheticBinary(target) {
   return binary;
 }
 
-function provenanceFor(platformDirectory, target, version = "0.1.1") {
+function provenanceFor(platformDirectory, target, version = PACKAGE_VERSION) {
   const binaryPath = path.join(platformDirectory, target.executable);
   const runnerLibc =
     target.libc_family === "glibc" ? "glibc 2.35" : target.libc_family === "musl" ? "musl" : null;
@@ -369,7 +370,7 @@ test("resolves and verifies every exact synthetic target package", () => {
     const result = resolveTree(tree);
     assert.equal(result.binaryPath, tree.binaryPath);
     assert.equal(result.target.platform_key, target.platform_key);
-    assert.equal(result.launcherVersion, "0.1.1");
+    assert.equal(result.launcherVersion, PACKAGE_VERSION);
   }
 });
 
@@ -378,7 +379,7 @@ test("resolves and verifies a complete package-local native install", () => {
   const result = resolveTree(tree);
   assert.equal(result.binaryPath, tree.binaryPath);
   assert.equal(result.target.platform_key, tree.target.platform_key);
-  assert.equal(result.launcherVersion, "0.1.1");
+  assert.equal(result.launcherVersion, PACKAGE_VERSION);
 });
 
 test("reverifies immediately before spawn and rejects a replaced pathname", async () => {
@@ -582,8 +583,8 @@ test("rejects missing, malformed, and mismatched provenance", async (t) => {
   await t.test("dirty publication candidate", () => {
     const tree = makeInstalledTree();
     mutateJson(tree.provenancePath, (value) => {
-      value.source.git_ref = "refs/tags/v0.1.1";
-      value.source.git_tag = "v0.1.1";
+      value.source.git_ref = `refs/tags/v${PACKAGE_VERSION}`;
+      value.source.git_tag = `v${PACKAGE_VERSION}`;
       value.source.git_dirty = true;
       value.source.publication_candidate = true;
     });
@@ -609,8 +610,8 @@ test("rejects missing, malformed, and mismatched provenance", async (t) => {
       delete manifest.private;
     });
     mutateJson(tree.provenancePath, (value) => {
-      value.source.git_ref = "refs/tags/v0.1.1";
-      value.source.git_tag = "v0.1.1";
+      value.source.git_ref = `refs/tags/v${PACKAGE_VERSION}`;
+      value.source.git_tag = `v${PACKAGE_VERSION}`;
       value.source.publication_candidate = true;
       value.build.rustc_version = "rustc 1.97.1 (synthetic test)";
       value.build.cargo_version = "cargo 1.97.1 (synthetic test)";
@@ -815,7 +816,7 @@ test("all six package templates are private, exact, lifecycle-free, and lockstep
   const platformManifests = CATALOG.targets.map((target) =>
     readJson(path.join(ROOT, "platforms", target.platform_key, "package.json")),
   );
-  assert.equal(launcherManifest.version, "0.1.1");
+  assert.equal(launcherManifest.version, PACKAGE_VERSION);
   assert.equal(launcherManifest.private, true);
   assert.deepEqual(
     Object.keys(launcherManifest.optionalDependencies),
@@ -902,7 +903,7 @@ test("pi-career handoff pins the exact public package and version", () => {
   );
   assert.match(
     handoff,
-    /npx --yes --package=@revazi\/career@0\.1\.1 career <args>/u,
+    new RegExp(`npx --yes --package=@revazi/career@${PACKAGE_VERSION.replaceAll(".", "\\.")} career <args>`, "u"),
   );
   assert.match(handoff, /[Nn]ever substitute `latest`/u);
 });

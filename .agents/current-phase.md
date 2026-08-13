@@ -2,7 +2,7 @@
 
 ## Active phase
 
-**Phase 9 maintenance — `@revazi/career` distribution supports six macOS/Linux native target classes plus launcher. The root crate rejects `target_os = "windows"`, so Career Core, the CLI, and adapters cannot build natively on Windows; Windows users build and run through WSL as Linux. Existing Apple iOS/Swift targets remain unchanged.**
+**Phase 9 release preparation — exact `@revazi/career@0.2.0` is the six-target macOS/Linux launcher candidate. The root crate rejects `target_os = "windows"`, so Career Core, the CLI, and adapters cannot build natively on Windows; Windows users build and run through WSL as Linux. Existing Apple iOS/Swift targets remain unchanged. Tagging, publication, public acceptance, release creation, and pi-career migration remain separately authorized gates.**
 
 ## Active macOS/Linux distribution maintenance
 
@@ -14,9 +14,9 @@ The extension retains one user-facing npm surface, `@revazi/career`, and six exa
 
 Stable `npm-release.yml` derives `X.Y.Z` from annotated `vX.Y.Z`, verifies lockstep Cargo/npm metadata, dynamically names all candidate/public artifacts, and permits OIDC only. All seven package names must have trusted publishers bound to the stable workflow. `npm-production` uses required approval plus a protected `v*` tag policy. Implementation work must not dispatch publication, authenticate/query npm, create tags/releases, use credentials, or edit pi-career.
 
-Current local stable-workflow verification passes generic current/future stable-SemVer source fixtures, prerelease/lightweight/moved/dirty/non-main/version failures, dynamic seven-package candidate filenames and provenance, OIDC all-package/partial/idempotent/conflict/absent-name/transient/auth/output-bound fake-registry behavior, visible bounded readiness, native-before-launcher order, YAML/shell/Python syntax, launcher/private-package/installed-CLI tests, the complete Rust/CLI/managed-adapter/runtime-artifact ladder, and Fallow changed/all/security with zero correctness or security findings. No publication workflow, npm query/authentication, tag/release, credential, or pi-career edit occurred.
+Exact `0.2.0` local release-preparation verification passes generic current/future stable-SemVer source fixtures, prerelease/lightweight/moved/dirty/non-main/version failures, dynamic seven-package candidate filenames and provenance, explicit native-inspection version binding and mismatch rejection, OIDC all-package/partial/idempotent/conflict/absent-name/transient/auth/output-bound fake-registry behavior, visible bounded readiness, native-before-launcher order, YAML/shell/Python syntax, 58 launcher checks, private package/install parity, 143 Rust tests, Rust 1.85 MSRV, warnings-denied Clippy/docs/build, installed CLI, the complete CLI/schema/managed-adapter/runtime-artifact ladder, Swift/XCFramework verification, and clean-main semantic parity after normalizing only version metadata. Fallow changed/all/security reports zero correctness or security findings. No publication workflow, npm query/authentication, tag/release, credential, or pi-career edit occurred.
 
-The deterministic Core algorithms, public v1 operation/schema descriptors, limits, ordering, warnings, evidence, uncertainty, and assisted authority remain unchanged. `career operations` and successful result documents report exact `core_version: "0.1.1"`; descriptor and schema semantics do not change.
+The deterministic Core algorithms, public v1 operation/schema descriptors, limits, ordering, warnings, evidence, uncertainty, and assisted authority remain unchanged. The breaking native-platform boundary advances Cargo/npm/CLI metadata to `0.2.0`; `career operations` and successful result documents report exact `core_version: "0.2.0"`, while descriptor and schema semantics do not change.
 
 ## Completed `v0.1.0` Phase 9 baseline
 

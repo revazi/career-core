@@ -39,9 +39,17 @@ swift run --package-path "$PACKAGE_DIR" career-core-smoke \
   > "$TEMP_DIR/rust-capabilities.json"
 cmp "$TEMP_DIR/swift-capabilities.json" "$TEMP_DIR/rust-capabilities.json"
 
+package_version="$(
+  "$CAREER_SWIFT_CARGO" metadata \
+    --no-deps \
+    --format-version 1 \
+    --manifest-path "$ROOT_DIR/Cargo.toml" |
+    python3 -c 'import json, sys; print(next(value["version"] for value in json.load(sys.stdin)["packages"] if value["name"] == "career-core"))'
+)"
 python3 - \
   "$ARTIFACTS_DIR/CareerCoreFFI.xcframework/Info.plist" \
-  "$ARTIFACTS_DIR/CareerCoreFFI.metadata.json" <<'PY'
+  "$ARTIFACTS_DIR/CareerCoreFFI.metadata.json" \
+  "$package_version" <<'PY'
 from pathlib import Path
 import json
 import plistlib
@@ -68,9 +76,10 @@ if slices != expected:
     raise SystemExit(f"unexpected XCFramework slices: {slices!r}")
 
 metadata = json.loads(Path(sys.argv[2]).read_text())
+package_version = sys.argv[3]
 if metadata != {
     "schema_version": "career.swift_artifact_metadata.v1",
-    "package_version": "0.1.1",
+    "package_version": package_version,
     "uniffi_version": "0.30.0",
     "deployment_targets": {"macos": "13.0", "ios": "16.0"},
     "rust_targets": [

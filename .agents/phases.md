@@ -414,7 +414,7 @@ Publish the unchanged native `career` CLI through one exact user-facing npm pack
 - actual completion requires both public-registry matrix smokes acquiring only exact `@revazi/career@0.1.0` and verifying the correct internal native implementation plus deterministic parity
 - complete Rust/MSRV/Swift/managed-adapter/transitional-artifact/npm/parity/Fallow verification and independent review pass with no existing contract-byte change
 
-### Phase 9 extension — completed `v0.1.1` macOS/Linux npm matrix
+### Phase 9 extension — completed six-target macOS/Linux npm matrix
 
 The extension adds one ordered six-target catalog, lockstep private templates, internal npm metadata/provenance v2, strict launcher/libc/binary/file verification, synthetic adversarial tests, native Darwin x64 and GNU Linux ARM64 execution while retaining Darwin ARM64 and GNU Linux x64, and native x64/ARM64 musl execution with linkage inspection and GNU/musl substitution rejection.
 

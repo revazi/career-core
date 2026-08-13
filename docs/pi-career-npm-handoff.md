@@ -6,7 +6,7 @@ This is the exact consumer transition contract. It is not permission to edit, pu
 
 On macOS, Linux, or Linux under WSL, pi-career may address only:
 
-- package: exact `@revazi/career@0.1.1`
+- package candidate: exact `@revazi/career@0.2.0`
 - bin: `career`
 - launcher runtime: Node.js `>=22`
 
@@ -18,7 +18,7 @@ Exact npx process contract:
 executable: npx
 argv: [
   "--yes",
-  "--package=@revazi/career@0.1.1",
+  "--package=@revazi/career@0.2.0",
   "career",
   ...careerArguments
 ]
@@ -29,7 +29,7 @@ stdio: caller-owned
 Equivalent command:
 
 ```bash
-npx --yes --package=@revazi/career@0.1.1 career <args>
+npx --yes --package=@revazi/career@0.2.0 career <args>
 ```
 
 Never substitute `latest`, a range, or an internal native package. npx acquisition may use the network and remains an explicit pi-career-owned action. The installed Career Core launcher and native CLI make no network requests.
@@ -40,7 +40,7 @@ A separately reviewed pi-career change may use only this order:
 
 1. user-configured absolute `career` executable path;
 2. an existing `career` on the caller's `PATH`;
-3. package-local exact `@revazi/career@0.1.1` resolution;
+3. package-local exact `@revazi/career@0.2.0` resolution;
 4. a separately enabled exact-version npx runner.
 
 Package-local resolution locates `@revazi/career/package.json` relative to pi-career, reads exact `bin.career`, and executes it with an argument vector. It must not inspect internal optional packages. Target/libc selection and package/provenance/binary checks belong exclusively to the launcher.

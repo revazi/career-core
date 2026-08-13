@@ -147,7 +147,7 @@ dependencies = [
 
 [[package]]
 name = "career-cli"
-version = "0.1.1"
+version = "0.2.0"
 dependencies = [
  "career-core",
  "clap",
@@ -157,7 +157,7 @@ dependencies = [
 
 [[package]]
 name = "career-core"
-version = "0.1.1"
+version = "0.2.0"
 dependencies = [
  "regex",
  "serde",
@@ -166,7 +166,7 @@ dependencies = [
 
 [[package]]
 name = "career-swift"
-version = "0.1.1"
+version = "0.2.0"
 dependencies = [
  "career-core",
  "serde",
