@@ -196,12 +196,12 @@ const [root, launcherPath, catalogPath, platformPath, expectedPlatformName, vers
 const launcher = JSON.parse(fs.readFileSync(launcherPath, "utf8"));
 const catalog = JSON.parse(fs.readFileSync(catalogPath, "utf8"));
 const platform = JSON.parse(fs.readFileSync(platformPath, "utf8"));
-if (catalog.schema_version !== "career.npm_target_catalog.v1" || !Array.isArray(catalog.targets) || catalog.targets.length !== 8) {
+if (catalog.schema_version !== "career.npm_target_catalog.v1" || !Array.isArray(catalog.targets) || catalog.targets.length !== 6) {
   throw new Error("reviewed target catalog is invalid");
 }
 const names = catalog.targets.map((target) => target.native_package);
 const expectedOptional = Object.fromEntries(names.map((name) => [name, version]));
-if (launcher.name !== "@revazi/career" || launcher.version !== version || launcher.private !== true) {
+if (launcher.name !== "@revazi/career" || launcher.version !== version || launcher.private !== true || JSON.stringify(launcher.os) !== JSON.stringify(["darwin", "linux"])) {
   throw new Error("launcher identity/private guard is invalid");
 }
 if (JSON.stringify(launcher.optionalDependencies) !== JSON.stringify(expectedOptional)) {

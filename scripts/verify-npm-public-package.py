@@ -10,11 +10,14 @@ import pathlib
 import platform
 import re
 import shutil
+import signal
+import subprocess
 import sys
 
 sys.dont_write_bytecode = True
 
-from npm_windows_process import BoundedProcessError, run_bounded  # noqa: E402
+import tempfile
+import time
 
 MAX_OUTPUT_BYTES = 32 * 1024 * 1024
 TARGETS = {
@@ -49,18 +52,6 @@ TARGETS = {
         "@revazi/career-linux-arm64-musl",
         "career",
     ),
-    "x86_64-pc-windows-msvc": (
-        "Windows",
-        "x86_64",
-        "@revazi/career-win32-x64-msvc",
-        "career.exe",
-    ),
-    "aarch64-pc-windows-msvc": (
-        "Windows",
-        "arm64",
-        "@revazi/career-win32-arm64-msvc",
-        "career.exe",
-    ),
 }
 LICENSE_FILES = {"LICENSE-MIT", "LICENSE-APACHE", "THIRD_PARTY_NOTICES.md"}
 
@@ -69,16 +60,125 @@ class AcceptanceError(ValueError):
     pass
 
 
+class BoundedProcessError(ValueError):
+    pass
+
+
+def process_group_exists(process_group: int) -> bool:
+    try:
+        os.killpg(process_group, 0)
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+    return True
+
+
+def wait_for_process_group(
+    process: subprocess.Popen[bytes], settlement_timeout: float
+) -> bool:
+    deadline = time.monotonic() + settlement_timeout
+    while True:
+        process_exited = process.poll() is not None
+        if process_exited and not process_group_exists(process.pid):
+            return True
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            return False
+        time.sleep(min(0.01, remaining))
+
+
+def signal_process_group(process_group: int, requested_signal: signal.Signals) -> None:
+    try:
+        os.killpg(process_group, requested_signal)
+    except ProcessLookupError:
+        pass
+    except PermissionError as error:
+        raise BoundedProcessError("subprocess group could not be signaled") from error
+
+
+def stop_process_group(
+    process: subprocess.Popen[bytes], settlement_timeout: float = 10
+) -> None:
+    signal_process_group(process.pid, signal.SIGTERM)
+    if wait_for_process_group(process, settlement_timeout):
+        return
+    signal_process_group(process.pid, signal.SIGKILL)
+    if not wait_for_process_group(process, settlement_timeout):
+        raise BoundedProcessError(
+            "subprocess group did not settle within its reviewed bound"
+        )
+
+
+def run_bounded(
+    command: list[str],
+    label: str,
+    *,
+    maximum_output_bytes: int,
+    cwd: pathlib.Path | None = None,
+    timeout: float = 180,
+    settlement_timeout: float = 10,
+) -> tuple[bytes, bytes]:
+    process: subprocess.Popen[bytes] | None = None
+    try:
+        with tempfile.TemporaryFile() as stdout, tempfile.TemporaryFile() as stderr:
+            process = subprocess.Popen(
+                command,
+                cwd=cwd,
+                stdout=stdout,
+                stderr=stderr,
+                start_new_session=True,
+            )
+            deadline = time.monotonic() + timeout
+            while process.poll() is None:
+                output_size = (
+                    os.fstat(stdout.fileno()).st_size
+                    + os.fstat(stderr.fileno()).st_size
+                )
+                if output_size > maximum_output_bytes:
+                    stop_process_group(process, settlement_timeout)
+                    raise BoundedProcessError(
+                        f"{label} output exceeds its reviewed bound"
+                    )
+                if time.monotonic() >= deadline:
+                    stop_process_group(process, settlement_timeout)
+                    raise BoundedProcessError(f"{label} timed out")
+                time.sleep(0.01)
+            output_size = (
+                os.fstat(stdout.fileno()).st_size
+                + os.fstat(stderr.fileno()).st_size
+            )
+            if output_size > maximum_output_bytes:
+                raise BoundedProcessError(f"{label} output exceeds its reviewed bound")
+            stdout.seek(0)
+            stderr.seek(0)
+            stdout_bytes = stdout.read(maximum_output_bytes + 1)
+            stderr_bytes = stderr.read(maximum_output_bytes + 1)
+    except BoundedProcessError:
+        raise
+    except (OSError, subprocess.SubprocessError) as error:
+        if process is not None:
+            try:
+                stop_process_group(process, settlement_timeout)
+            except BoundedProcessError as settlement_error:
+                raise settlement_error from error
+        raise BoundedProcessError(f"{label} could not run") from error
+    if process.returncode != 0:
+        diagnostic = stderr_bytes[:512].decode("utf-8", errors="replace").strip()
+        raise BoundedProcessError(
+            f"{label} returned an unexpected exit code: {diagnostic}"
+        )
+    return stdout_bytes, stderr_bytes
+
+
 def fail(message: str) -> None:
     raise AcceptanceError(message)
 
 
 def command_path(name: str) -> str:
-    candidates = (f"{name}.exe", f"{name}.cmd", name) if os.name == "nt" else (name,)
-    for candidate in candidates:
-        value = shutil.which(candidate)
-        if value is not None:
-            return value
+    value = shutil.which(name)
+    if value is not None:
+        return value
     fail(f"required acceptance command is unavailable: {name}")
 
 
@@ -279,21 +379,11 @@ def main() -> int:
             launcher,
             repository_root / "fixtures/job/phase4b/complete-match.expected.json",
         )
-        if os.name == "nt":
-            comspec = os.environ.get("COMSPEC")
-            if comspec is None:
-                fail("Windows command processor is unavailable")
-            shim = run(
-                [comspec, "/d", "/c", r"node_modules\.bin\career.cmd --version"],
-                "public Windows npm shim",
-                cwd=consumer,
-            )
-        else:
-            shim = run(
-                [str(modules / ".bin/career"), "--version"],
-                "public npm bin shim",
-                cwd=consumer,
-            )
+        shim = run(
+            [str(modules / ".bin/career"), "--version"],
+            "public npm bin shim",
+            cwd=consumer,
+        )
         if shim.strip() != f"career {release_version}".encode("ascii"):
             fail("public npm bin shim version mismatch")
         print(f"Exact public npm acceptance passed for {args.expected_target}.")

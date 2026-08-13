@@ -95,7 +95,7 @@ root = pathlib.Path(sys.argv[1])
 version = sys.argv[2]
 launcher_name = "@revazi/career"
 catalog = json.loads((root / "npm/career/targets.json").read_text(encoding="utf-8"))
-if catalog.get("schema_version") != "career.npm_target_catalog.v1" or len(catalog.get("targets", [])) != 8:
+if catalog.get("schema_version") != "career.npm_target_catalog.v1" or len(catalog.get("targets", [])) != 6:
     raise SystemExit("reviewed target catalog is invalid")
 native_names = [target["native_package"] for target in catalog["targets"]]
 if len(native_names) != len(set(native_names)):
@@ -137,6 +137,8 @@ if launcher.get("name") != launcher_name or launcher.get("version") != version:
     raise SystemExit("launcher name/version does not match the release tag")
 if launcher.get("private") is not True:
     raise SystemExit("source launcher template must retain private: true")
+if launcher.get("os") != ["darwin", "linux"]:
+    raise SystemExit("source launcher must declare the exact macOS/Linux OS boundary")
 expected_optional = {name: version for name in native_names}
 if launcher.get("optionalDependencies") != expected_optional:
     raise SystemExit("launcher optional dependencies are not exact and lockstep")

@@ -11,7 +11,7 @@ const TARGET_CATALOG_SCHEMA = "career.npm_target_catalog.v1";
 const PROVENANCE_SCHEMA = "career.npm_native_provenance.v2";
 const NATIVE_PACKAGE_SCHEMA = "career.npm_native_package.v2";
 const LAUNCHER_SCHEMA = "career.npm_launcher.v2";
-const TARGET_CATALOG_SHA256 = "9e56a3ca9b68799b0ff4bd52bbd2e71c2839d05a70398c5942062cb6e68032e2";
+const TARGET_CATALOG_SHA256 = "cca4b925848a781ab3329b27e2f9a1f8ffdb8721d9a70c00ca2afdecd4028bd9";
 const MAX_MANIFEST_BYTES = 32 * 1024;
 const MAX_CATALOG_BYTES = 64 * 1024;
 const MAX_PROVENANCE_BYTES = 64 * 1024;
@@ -172,7 +172,7 @@ function validProvenanceRequirements(value) {
 }
 
 function validCatalogTarget(target) {
-  const nullableStrings = ["libc_family", "executable_mode", "minimum_glibc_version"];
+  const nullableStrings = ["libc_family", "minimum_glibc_version"];
   return [
     hasExactKeys(target, TARGET_KEYS),
     TARGET_KEYS.filter((key) => !nullableStrings.includes(key) && key !== "maximum_binary_size_bytes" && key !== "provenance_requirements").every(
@@ -190,15 +190,6 @@ function valuesAreUnique(values) {
   return new Set(values).size === values.length;
 }
 
-function validWindowsFileMapping(target) {
-  return [
-    target.executable === "career.exe",
-    target.file_invariant === "windows_regular_non_symlink_exe",
-    target.archive_mode === "0644",
-    target.executable_mode === null,
-  ].every(Boolean);
-}
-
 function validUnixFileMapping(target) {
   return [
     target.executable === "career",
@@ -209,9 +200,7 @@ function validUnixFileMapping(target) {
 }
 
 function validCatalogFileMapping(target) {
-  return target.node_platform === "win32"
-    ? validWindowsFileMapping(target)
-    : validUnixFileMapping(target);
+  return ["darwin", "linux"].includes(target.node_platform) && validUnixFileMapping(target);
 }
 
 function validCatalogLibcMapping(target) {
@@ -242,7 +231,7 @@ function validateTargetCatalog(document, bytes) {
     hasExactKeys(document, ["schema_version", "targets"]),
     document.schema_version === TARGET_CATALOG_SCHEMA,
     Array.isArray(document.targets),
-    document.targets?.length === 8,
+    document.targets?.length === 6,
     document.targets?.every(validCatalogTarget),
   ].every(Boolean);
   if (!valid) catalogError();
@@ -430,6 +419,7 @@ function validateLauncherSurface(manifest) {
     matchesExactValues(manifest.bin, { career: "bin/career.js" }),
     matchesExactValues(manifest.engines, { node: ">=22" }),
     equalStringArray(manifest.files, LAUNCHER_FILES),
+    equalStringArray(manifest.os, ["darwin", "linux"]),
     hasNoCodeFields(manifest, false),
   ].every(Boolean);
   if (!valid) {
@@ -448,7 +438,7 @@ function validateLauncherOptionalDependencies(manifest, platformPackages) {
   if (!hasExactOrderedKeys(optional, platformPackages) || !versionsMatch) {
     fail(
       "CAREER_NPM_LAUNCHER_MANIFEST_INVALID",
-      "The launcher must declare exactly eight ordered lockstep optional native packages.",
+      "The launcher must declare exactly six ordered lockstep optional native packages.",
     );
   }
 }
@@ -836,25 +826,10 @@ function validElfHeader(header, target) {
   return header.subarray(0, prefix.length).equals(prefix) && header.readUInt16LE(18) === machine;
 }
 
-function validPeHeader(header, target) {
-  if (header.length < 64) return false;
-  if (header.readUInt16LE(0) !== 0x5a4d) return false;
-  const offset = header.readUInt32LE(0x3c);
-  if (offset < 64) return false;
-  if (offset + 26 > header.length) return false;
-  const machine = target.binary_architecture === "aarch64" ? 0xaa64 : 0x8664;
-  return [
-    header.readUInt32LE(offset) === 0x00004550,
-    header.readUInt16LE(offset + 4) === machine,
-    header.readUInt16LE(offset + 24) === 0x020b,
-  ].every(Boolean);
-}
-
 function verifyBinaryFormat(header, target) {
   let valid = false;
   if (target.binary_format.startsWith("mach-o-64-")) valid = validMachOHeader(header, target);
   if (target.binary_format.startsWith("elf-64-")) valid = validElfHeader(header, target);
-  if (target.binary_format.startsWith("pe32+-")) valid = validPeHeader(header, target);
   if (!valid) {
     fail(
       "CAREER_NPM_BINARY_TYPE_MISMATCH",
@@ -889,19 +864,16 @@ function validateBinaryFileType(stat) {
 
 function validateBinaryFileInvariant(stat, target) {
   validateBinaryFileType(stat);
-  if (target.file_invariant === "unix_regular_non_symlink_mode_0755") {
-    if ((stat.mode & 0o7777) !== EXPECTED_MODE) {
-      fail(
-        "CAREER_NPM_BINARY_MODE_MISMATCH",
-        "The Unix native executable must have exact mode 0755.",
-      );
-    }
-    return;
-  }
-  if (target.file_invariant !== "windows_regular_non_symlink_exe") {
+  if (target.file_invariant !== "unix_regular_non_symlink_mode_0755") {
     fail(
       "CAREER_NPM_BINARY_TYPE_INVALID",
       "The native executable file invariant is not approved.",
+    );
+  }
+  if ((stat.mode & 0o7777) !== EXPECTED_MODE) {
+    fail(
+      "CAREER_NPM_BINARY_MODE_MISMATCH",
+      "The Unix native executable must have exact mode 0755.",
     );
   }
 }

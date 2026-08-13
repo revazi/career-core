@@ -325,11 +325,7 @@ def synthetic_binary(target):
         binary[0:6] = bytes([0x7F, 0x45, 0x4C, 0x46, 2, 1])
         binary[18:20] = (0xB7 if architecture == "aarch64" else 0x3E).to_bytes(2, "little")
     else:
-        binary[0:2] = b"MZ"
-        binary[0x3C:0x40] = (0x80).to_bytes(4, "little")
-        binary[0x80:0x84] = b"PE\0\0"
-        binary[0x84:0x86] = (0xAA64 if architecture == "aarch64" else 0x8664).to_bytes(2, "little")
-        binary[0x98:0x9A] = (0x020B).to_bytes(2, "little")
+        raise ValueError(f"unsupported synthetic binary format: {target['binary_format']}")
     binary[-1] = 1
     return bytes(binary)
 
@@ -346,8 +342,6 @@ runner_images = {
     "linux-arm64-gnu": "ubuntu-24.04-arm+ubuntu:22.04",
     "linux-x64-musl": "ubuntu-22.04+node:22.19.0-alpine3.22+sha256:d2166de198f26e17e5a442f537754dd616ab069c47cc57b889310a717e0abbf9",
     "linux-arm64-musl": "ubuntu-24.04-arm+node:22.19.0-alpine3.22+sha256:d2166de198f26e17e5a442f537754dd616ab069c47cc57b889310a717e0abbf9",
-    "win32-x64-msvc": "windows-2025",
-    "win32-arm64-msvc": "windows-11-arm",
 }
 
 for index, target in enumerate(catalog["targets"], start=1):
@@ -421,7 +415,7 @@ CARGO_TARGET_DIR="$repository_root/target" \
 
 acceptance_consumer="$temporary_root/public-acceptance-consumer"
 mkdir -p "$acceptance_consumer"
-python3 - "$acceptance_consumer/package.json" "$candidate_dir/90-revazi-career-$release_version.tgz" "$current_tarball" "$current_key" <<'PY'
+python3 - "$acceptance_consumer/package.json" "$candidate_dir/70-revazi-career-$release_version.tgz" "$current_tarball" "$current_key" <<'PY'
 import json
 import pathlib
 import sys
@@ -453,6 +447,109 @@ python3 "$fixture_repository/scripts/verify-npm-public-package.py" \
   --expected-target "$current_target" \
   --expected-version "$release_version"
 
+python3 - "$repository_root/scripts/verify-npm-public-package.py" "$temporary_root" <<'PY'
+import importlib.util
+import os
+import pathlib
+import sys
+import time
+
+sys.dont_write_bytecode = True
+
+module_path = pathlib.Path(sys.argv[1])
+temporary_root = pathlib.Path(sys.argv[2])
+spec = importlib.util.spec_from_file_location("verify_npm_public_package", module_path)
+if spec is None or spec.loader is None:
+    raise SystemExit("could not load public-package verifier subprocess helper")
+module = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(module)
+
+
+def expect_failure(label, command, expected, **kwargs):
+    try:
+        module.run_bounded(command, label, **kwargs)
+    except module.BoundedProcessError as error:
+        if expected not in str(error):
+            raise SystemExit(f"unexpected {label} rejection: {error}") from error
+        return
+    raise SystemExit(f"bounded subprocess accepted {label}")
+
+
+expect_failure(
+    "synthetic overflow",
+    [sys.executable, "-c", "import sys; sys.stdout.buffer.write(b'x' * 65537)"],
+    "output exceeds its reviewed bound",
+    maximum_output_bytes=65536,
+    timeout=5,
+    settlement_timeout=1,
+)
+
+
+def assert_process_absent(pid, label):
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return
+    raise SystemExit(f"bounded subprocess left a live or zombie {label} descendant")
+
+
+marker = temporary_root / "bounded-process-descendant.marker"
+program = r'''
+import os
+import pathlib
+import sys
+import time
+
+marker = pathlib.Path(sys.argv[1])
+pid = os.fork()
+if pid == 0:
+    time.sleep(1)
+    marker.write_text("descendant survived\n", encoding="utf-8")
+    os._exit(0)
+time.sleep(30)
+'''
+started = time.monotonic()
+expect_failure(
+    "synthetic timeout",
+    [sys.executable, "-c", program, str(marker)],
+    "timed out",
+    maximum_output_bytes=65536,
+    timeout=0.1,
+    settlement_timeout=1,
+)
+if time.monotonic() - started >= 3:
+    raise SystemExit("bounded subprocess timeout settlement exceeded its test bound")
+time.sleep(1.2)
+if marker.exists():
+    raise SystemExit("bounded subprocess timeout did not terminate its descendant")
+
+child_pid_path = temporary_root / "bounded-process-child.pid"
+program = r'''
+import os
+import pathlib
+import sys
+import time
+
+child_pid_path = pathlib.Path(sys.argv[1])
+pid = os.fork()
+if pid == 0:
+    time.sleep(30)
+    os._exit(0)
+child_pid_path.write_text(f"{pid}\n", encoding="ascii")
+time.sleep(30)
+'''
+expect_failure(
+    "synthetic descendant timeout",
+    [sys.executable, "-c", program, str(child_pid_path)],
+    "timed out",
+    maximum_output_bytes=65536,
+    timeout=0.1,
+    settlement_timeout=1,
+)
+child_pid = int(child_pid_path.read_text(encoding="ascii").strip())
+assert_process_absent(child_pid, "timeout")
+PY
+
 mutate_candidate() {
   local kind="$1"
   local destination="$2"
@@ -468,7 +565,7 @@ root = pathlib.Path(sys.argv[1])
 kind = sys.argv[2]
 current_file = sys.argv[3]
 release_version = sys.argv[4]
-launcher_file = f"90-revazi-career-{release_version}.tgz"
+launcher_file = f"70-revazi-career-{release_version}.tgz"
 
 def rewrite(
     tarball,
@@ -523,7 +620,7 @@ def reorder_launcher_packages(name, data):
 if kind == "wrong-sha":
     rewrite(root / current_file, mutate_json_member("package/provenance.json", None, lambda v: v["source"].update(git_sha="f" * 40)))
 elif kind == "wrong-target":
-    rewrite(root / current_file, mutate_json_member("package/provenance.json", None, lambda v: v["package"].update(rust_target="x86_64-pc-windows-msvc")))
+    rewrite(root / current_file, mutate_json_member("package/provenance.json", None, lambda v: v["package"].update(rust_target="x86_64-unknown-linux-musl")))
 elif kind == "provenance-mismatch":
     rewrite(root / current_file, mutate_json_member("package/provenance.json", None, lambda v: v["source"].update(publication_candidate=False)))
 elif kind == "wrong-toolchain":
@@ -853,8 +950,6 @@ assert published == [
     "@revazi/career-linux-arm64-gnu",
     "@revazi/career-linux-x64-musl",
     "@revazi/career-linux-arm64-musl",
-    "@revazi/career-win32-x64-msvc",
-    "@revazi/career-win32-arm64-msvc",
     "@revazi/career",
 ]
 PY
@@ -899,7 +994,6 @@ PY
 
 python3 - \
   "$repository_root/.github/workflows/npm-publish.yml" \
-  "$repository_root/.github/workflows/npm-publish-v0.1.1.yml" \
   "$repository_root/.github/workflows/npm-release.yml" \
   "$publication_driver" <<'PY'
 import hashlib
@@ -907,24 +1001,21 @@ import pathlib
 import sys
 
 historical_v010 = pathlib.Path(sys.argv[1]).read_bytes()
-historical_v011 = pathlib.Path(sys.argv[2]).read_bytes()
-stable = pathlib.Path(sys.argv[3]).read_text(encoding="utf-8")
-driver = pathlib.Path(sys.argv[4]).read_text(encoding="utf-8")
+stable = pathlib.Path(sys.argv[2]).read_text(encoding="utf-8")
+driver = pathlib.Path(sys.argv[3]).read_text(encoding="utf-8")
 if hashlib.sha256(historical_v010).hexdigest() != "4b085e8a71a527ccf800ca218dab053febe95ad8fcdb3edbbd86c231ccf55414":
     raise SystemExit("historical v0.1.0 publication workflow bytes changed")
-if hashlib.sha256(historical_v011).hexdigest() != "bd3bc507516d0133ef7840750580714b0f3288d2ecdc167fce73cf7d7a1582fe":
-    raise SystemExit("historical v0.1.1 publication workflow bytes changed")
 required = [
     "name: Publish npm release", "workflow_dispatch:", "reviewed_sha:",
     "github.ref_name", "release_version", "npm-production",
     "node-version: '22.19.0'", "npm@11.6.2", "id-token: write",
     "ubuntu-22.04", "ubuntu-24.04-arm", "macos-14", "macos-15-intel",
-    "windows-2025", "windows-11-arm", "1.97.1", "1.85.0",
+    "1.97.1", "1.85.0",
     "node:22.19.0-alpine3.22@sha256:d2166de198f26e17e5a442f537754dd616ab069c47cc57b889310a717e0abbf9",
     "scripts/publish-npm-publication-candidate.sh",
     "scripts/verify-npm-public-package.py",
     "public-acceptance-unix:", "public-acceptance-musl:",
-    "public-acceptance-windows:", "npm-publication-candidate-${{ needs.source.outputs.release_version }}",
+    "npm-publication-candidate-${{ needs.source.outputs.release_version }}",
     "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a",
     "actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c",
     "timeout-minutes: 110", "Publish with OIDC trusted publishing only",
@@ -959,13 +1050,12 @@ if stable.index("Configure exact release Rust for publication policy") > stable.
 native_unix = stable.split("\n  native-unix:\n", 1)[1].split("\n  native-musl:\n", 1)[0]
 if "    defaults:\n      run:\n        shell: bash\n" not in native_unix or "shell: sh" in native_unix:
     raise SystemExit("native Unix publication job does not force Bash safely")
-for workflow in (stable, historical_v011.decode("utf-8")):
-    for line in workflow.splitlines():
-        stripped = line.strip()
-        if stripped.startswith("uses: actions/"):
-            ref = stripped.rsplit("@", 1)[-1].split()[0]
-            if len(ref) != 40 or any(character not in "0123456789abcdef" for character in ref):
-                raise SystemExit(f"GitHub-owned action is not pinned by immutable SHA: {stripped}")
+for line in stable.splitlines():
+    stripped = line.strip()
+    if stripped.startswith("uses: actions/"):
+        ref = stripped.rsplit("@", 1)[-1].split()[0]
+        if len(ref) != 40 or any(character not in "0123456789abcdef" for character in ref):
+            raise SystemExit(f"GitHub-owned action is not pinned by immutable SHA: {stripped}")
 if driver.index('"@revazi/career-darwin-arm64"') > driver.index('"@revazi/career"'):
     raise SystemExit("publication driver does not encode native-before-launcher ordering")
 if "0.1.1.tgz" in driver or "v0.1.1\"" in driver:
@@ -987,6 +1077,43 @@ do
   fi
 done
 
+python3 - "$repository_root" <<'PY'
+import pathlib
+import sys
+root = pathlib.Path(sys.argv[1])
+active_paths = [
+    root / ".github/workflows/npm-cli-packages.yml",
+    root / ".github/workflows/npm-release.yml",
+    root / "npm/career/bin/career.js",
+    root / "npm/career/package.json",
+    root / "npm/career/targets.json",
+    root / "scripts/assemble-npm-publication-candidate.sh",
+    root / "scripts/inspect-npm-native-binary.py",
+    root / "scripts/npm-publication-candidate.py",
+    root / "scripts/prepare-npm-cli-packages.sh",
+    root / "scripts/prepare-npm-publication-native.sh",
+    root / "scripts/publish-npm-publication-candidate.sh",
+    root / "scripts/verify-npm-public-package.py",
+    root / "scripts/verify-npm-publication-candidate.sh",
+    root / "scripts/verify-npm-publication-source.sh",
+]
+for path in active_paths:
+    text = path.read_text(encoding="utf-8").lower()
+    for value in (
+        "win32",
+        "pc-windows",
+        "career.exe",
+        "pe32+",
+        "windows_regular_non_symlink_exe",
+        "windows-2025",
+        "windows-11-arm",
+        "native-windows",
+        "public-acceptance-windows",
+    ):
+        if value in text:
+            raise SystemExit(f"active npm implementation retains native Windows policy: {path.name}: {value}")
+PY
+
 [[ "$(cat "$repository_root/.gitattributes")" == "* text=auto eol=lf" ]] || {
   printf 'repository checkout text normalization policy is not exact\n' >&2
   exit 1
@@ -1003,8 +1130,6 @@ ordered = [
     "aarch64-unknown-linux-gnu",
     "x86_64-unknown-linux-musl",
     "aarch64-unknown-linux-musl",
-    "x86_64-pc-windows-msvc",
-    "aarch64-pc-windows-msvc",
 ]
 positions = [text.index(value) for value in ordered]
 if positions != sorted(positions):
@@ -1024,12 +1149,6 @@ for value in (
     "expected_linkage: static-pie",
     "expected_linkage: static",
     "chmod 0644 /output/evidence.json",
-    "windows-2025",
-    "windows-11-arm",
-    "RuntimeInformation]::ProcessArchitecture",
-    "scripts/prepare-npm-cli-packages-windows.py",
-    "scripts/test-npm-cli-packages-windows.py",
-    "career.exe",
     "scripts/inspect-npm-native-binary.py",
     'test "$(node --version)" = "v22.19.0"',
     "--evidence-kind exact_native_ci",
@@ -1042,7 +1161,6 @@ for forbidden in (
     "schedule:",
     "macos-latest",
     "ubuntu-latest",
-    "windows-latest",
     "continue-on-error:",
     "qemu",
     "--platform",
@@ -1074,16 +1192,12 @@ for value in (
     '"aarch64-unknown-linux-gnu": "ubuntu-24.04-arm+ubuntu:22.04"',
     '"x86_64-unknown-linux-musl"',
     '"aarch64-unknown-linux-musl"',
-    '"x86_64-pc-windows-msvc": "windows-2025"',
-    '"aarch64-pc-windows-msvc": "windows-11-arm"',
     "inspect_linux_musl",
-    "inspect_windows",
     '"musl 1.2.5"',
     "MAX_COMMAND_OUTPUT_BYTES",
     "MAX_EVIDENCE_BYTES",
     "verify_unchanged_bytes",
     "O_NOFOLLOW",
-    "O_BINARY",
     '"glibc 2.35"',
     '"career.npm_native_inspection.v1"',
 ):
@@ -1110,15 +1224,10 @@ for value in (
     'final_name="40-revazi-career-linux-arm64-gnu-$release_version.tgz"',
     'final_name="50-revazi-career-linux-x64-musl-$release_version.tgz"',
     'final_name="60-revazi-career-linux-arm64-musl-$release_version.tgz"',
-    'final_name="70-revazi-career-win32-x64-msvc-$release_version.tgz"',
-    'final_name="80-revazi-career-win32-arm64-msvc-$release_version.tgz"',
     "x86_64-apple-darwin)",
     "aarch64-unknown-linux-gnu)",
     "x86_64-unknown-linux-musl)",
     "aarch64-unknown-linux-musl)",
-    "x86_64-pc-windows-msvc)",
-    "aarch64-pc-windows-msvc)",
-    "prepare-npm-cli-packages-windows.py",
     "--evidence-kind exact_native_ci",
     'readelf --file-header --wide "$platform_stage/career"',
     "Type:[[:space:]]+DYN",
@@ -1131,128 +1240,6 @@ for value in (
         raise SystemExit(f"native publication preparation is missing target policy text: {value}")
 PY
 
-python3 - \
-  "$repository_root/scripts/inspect-npm-native-binary.py" \
-  "$repository_root/scripts/prepare-npm-cli-packages-windows.py" \
-  "$repository_root/scripts/test-npm-cli-packages-windows.py" \
-  "$repository_root/scripts/npm_windows_process.py" <<'PY'
-import importlib.util
-import pathlib
-import sys
-sys.dont_write_bytecode = True
-inspection_path, preparation_path, test_path, process_path = map(pathlib.Path, sys.argv[1:])
-for path in (preparation_path, test_path):
-    text = path.read_text(encoding="utf-8")
-    for value in (
-        "Windows",
-        "career.exe",
-        "x86_64-pc-windows-msvc",
-        "aarch64-pc-windows-msvc",
-    ):
-        if value not in text:
-            raise SystemExit(f"Windows package script is missing policy text: {path.name}: {value}")
-    for forbidden in ("requests", "urllib", "http.client", "qemu", "--platform"):
-        if forbidden in text.lower():
-            raise SystemExit(f"Windows package script contains forbidden mechanism: {path.name}: {forbidden}")
-test_source = test_path.read_text(encoding="utf-8")
-if r"node_modules\.bin\career.cmd --version" not in test_source:
-    raise SystemExit("Windows package test does not use the fixed relative npm shim path")
-preparation = preparation_path.read_text(encoding="utf-8")
-for value in ("windows_regular_non_symlink_exe", "0644"):
-    if value not in preparation:
-        raise SystemExit(f"Windows preparation is missing file policy text: {value}")
-process_source = process_path.read_text(encoding="utf-8")
-for value in ("TemporaryFile", "Popen", "maximum_output_bytes", "process.kill()"):
-    if value not in process_source:
-        raise SystemExit(f"Windows bounded process helper is missing policy text: {value}")
-spec = importlib.util.spec_from_file_location("career_native_inspection", inspection_path)
-if spec is None or spec.loader is None:
-    raise SystemExit("could not load native inspection policy")
-module = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(module)
-observed_windows_api_imports = (
-    "api-ms-win-core-synch-l1-2-0.dll",
-    "api-ms-win-crt-heap-l1-1-0.dll",
-    "api-ms-win-crt-locale-l1-1-0.dll",
-    "api-ms-win-crt-math-l1-1-0.dll",
-    "api-ms-win-crt-runtime-l1-1-0.dll",
-    "api-ms-win-crt-stdio-l1-1-0.dll",
-    "bcryptprimitives.dll",
-)
-if not all(module.approved_windows_import(value) for value in observed_windows_api_imports):
-    raise SystemExit("exact observed Windows system imports are not reviewed")
-if module.approved_windows_import("api-ms-win-evil.dll"):
-    raise SystemExit("arbitrary Windows API-set import was accepted")
-binary = bytearray(1024)
-binary[0:2] = b"MZ"
-binary[0x3C:0x40] = (0x80).to_bytes(4, "little")
-pe = 0x80
-binary[pe:pe + 4] = b"PE\0\0"
-binary[pe + 4:pe + 6] = (0x8664).to_bytes(2, "little")
-binary[pe + 6:pe + 8] = (1).to_bytes(2, "little")
-binary[pe + 20:pe + 22] = (240).to_bytes(2, "little")
-binary[pe + 22:pe + 24] = (2).to_bytes(2, "little")
-optional = pe + 24
-binary[optional:optional + 2] = (0x020B).to_bytes(2, "little")
-binary[optional + 60:optional + 64] = (0x200).to_bytes(4, "little")
-binary[optional + 108:optional + 112] = (16).to_bytes(4, "little")
-binary[optional + 120:optional + 124] = (0x1000).to_bytes(4, "little")
-binary[optional + 124:optional + 128] = (40).to_bytes(4, "little")
-section = optional + 240
-binary[section + 8:section + 12] = (0x200).to_bytes(4, "little")
-binary[section + 12:section + 16] = (0x1000).to_bytes(4, "little")
-binary[section + 16:section + 20] = (0x200).to_bytes(4, "little")
-binary[section + 20:section + 24] = (0x200).to_bytes(4, "little")
-binary[0x200 + 12:0x200 + 16] = (0x1050).to_bytes(4, "little")
-binary[0x250:0x250 + len(b"kernel32.dll\0")] = b"kernel32.dll\0"
-target = {"binary_format": "pe32+-x86_64", "binary_architecture": "x86_64"}
-module.verify_header(bytes(binary), target)
-linkage = module.inspect_windows(bytes(binary))
-if linkage["dynamic_imports"] != ["kernel32.dll"] or linkage["linkage"] != "dynamic":
-    raise SystemExit("synthetic bounded PE import inspection did not match")
-reviewed_binary = bytes(binary)
-def expect_pe_rejection(candidate, label):
-    try:
-        module.inspect_windows(bytes(candidate))
-    except module.InspectionError:
-        return
-    raise SystemExit(f"PE import inspection accepted {label}")
-non_system = bytearray(reviewed_binary)
-non_system[0x250:0x250 + len(b"api-ms-win-evil.dll\0")] = b"api-ms-win-evil.dll\0"
-expect_pe_rejection(non_system, "a non-reviewed API-set DLL")
-truncated_descriptor = bytearray(reviewed_binary)
-truncated_descriptor[section + 16:section + 20] = (4).to_bytes(4, "little")
-expect_pe_rejection(truncated_descriptor, "a cross-section import descriptor")
-unterminated = bytearray(reviewed_binary)
-unterminated[optional + 124:optional + 128] = (20).to_bytes(4, "little")
-expect_pe_rejection(unterminated, "an unterminated import table")
-crossing_name = bytearray(reviewed_binary)
-crossing_name[0x200 + 12:0x200 + 16] = (0x11FC).to_bytes(4, "little")
-crossing_name[0x3FC:0x400] = b"abcd"
-expect_pe_rejection(crossing_name, "a cross-section import name")
-overlapping = bytearray(reviewed_binary)
-overlapping[pe + 6:pe + 8] = (2).to_bytes(2, "little")
-second = section + 40
-overlapping[second + 8:second + 12] = (0x200).to_bytes(4, "little")
-overlapping[second + 12:second + 16] = (0x1100).to_bytes(4, "little")
-expect_pe_rejection(overlapping, "overlapping PE sections")
-process_spec = importlib.util.spec_from_file_location("career_windows_process", process_path)
-if process_spec is None or process_spec.loader is None:
-    raise SystemExit("could not load Windows bounded process helper")
-process_module = importlib.util.module_from_spec(process_spec)
-process_spec.loader.exec_module(process_module)
-try:
-    process_module.run_bounded(
-        [sys.executable, "-c", "import sys; sys.stdout.write('x' * 4096)"],
-        "synthetic over-bound child",
-        maximum_output_bytes=1024,
-    )
-except process_module.BoundedProcessError:
-    pass
-else:
-    raise SystemExit("Windows process helper accepted over-bound child output")
-PY
-
 for package in \
   @revazi/career-darwin-arm64 \
   @revazi/career-darwin-x64 \
@@ -1260,8 +1247,6 @@ for package in \
   @revazi/career-linux-arm64-gnu \
   @revazi/career-linux-x64-musl \
   @revazi/career-linux-arm64-musl \
-  @revazi/career-win32-x64-msvc \
-  @revazi/career-win32-arm64-msvc \
   @revazi/career
 do
   grep -Fq "$package" "$repository_root/docs/releasing.md"
@@ -1275,7 +1260,6 @@ grep -Fq 'exact npm CLI 11.15.0' "$repository_root/docs/releasing.md"
 grep -Fq 'publication and public acceptance remain pinned to npm 11.6.2' "$repository_root/docs/releasing.md"
 grep -Fq 'sha512-+k0tk7lRnpMUPnC7kTuU/yrV/mnFoPhJQ75VfLtZ6fwbzOVXaPsTE/Il9Pn1DHi482byMyqkHv/XsQ76mNjXLw==' "$repository_root/docs/releasing.md"
 ! grep -Fq '11.15.0 or newer' "$repository_root/docs/releasing.md"
-grep -Fq 'Protected bootstrap/public-acceptance run `31346152236`' "$repository_root/.agents/current-phase.md"
 ! grep -Eq '@revazi/career-(darwin|linux|win32)' "$repository_root/npm/career/README.md"
 
 printf 'npm publication source, candidate, adversarial, parity, npx-equivalent, fake-registry, and workflow dry-run tests passed.\n'

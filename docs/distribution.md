@@ -1,6 +1,6 @@
 # Installation and distribution
 
-`career` is local-first software. The project does not provide a remote execution service or an installer that pipes network content into a shell. Exact `@revazi/career@0.1.1` is the completed public npm release for eight native targets after protected run `31346152236` passed publication and all eight public-registry acceptance jobs.
+`career` is local-first software. The project does not provide a remote execution service or an installer that pipes network content into a shell. Source and distribution support only six macOS/Linux target classes; native Windows is unsupported.
 
 ## Run from a source checkout
 
@@ -12,7 +12,7 @@ cd career-core
 cargo run --quiet --locked -p career-cli -- capabilities
 ```
 
-Check out a reviewed commit or release tag when reproducibility matters.
+Check out a reviewed commit or release tag when reproducibility matters. Windows hosts must run these Cargo commands inside WSL; the root crate rejects native Windows targets at compile time, which also prevents native CLI and adapter builds. macOS, Linux, and existing Apple iOS/Swift targets are unaffected.
 
 ## Install locally from a checkout
 
@@ -53,13 +53,13 @@ npx --yes --package=@revazi/career@0.1.1 career capabilities --format json-compa
 
 Always use an exact reviewed version, never `latest` or a range. npm/npx acquisition may contact npm; launcher runtime remains offline. Native platform packages are internal lockstep optional dependencies. Users and consumers must not install, invoke, or pin them directly.
 
-### `0.1.1` native matrix
+### Active native matrix
 
-Source version `0.1.1` contains one reviewed ordered catalog and private templates for Darwin ARM64/x64, GNU Linux x64/ARM64, musl Linux x64/ARM64, and MSVC Windows x64/ARM64. The launcher positively distinguishes glibc, musl, and unknown libc; unknown never falls back to musl. It validates exact package/version/target/provenance, regular non-symlink files, target-specific Unix or Windows invariants, bounded size, Mach-O/ELF/PE architecture, and SHA-256 before direct execution.
+Active source contains one reviewed ordered catalog and private templates for Darwin ARM64/x64, GNU Linux x64/ARM64, and musl Linux x64/ARM64. The public launcher declares npm `os` support for `darwin` and `linux` only. It positively distinguishes glibc, musl, and unknown libc; unknown never falls back to musl. It validates exact package/version/target/provenance, regular non-symlink mode-`0755` files, bounded size, Mach-O/ELF architecture, and SHA-256 before direct execution.
 
-Protected `v0.1.1` run `31346152236` recompiled, executed, inspected, packaged, published, reacquired, and executed all eight final-tag native packages on their exact target classes. Synthetic fixtures still prove policy only; cross-compilation, emulation, package metadata, and skipped jobs are not support evidence for later releases.
+GNU builds use native Ubuntu 22.04 userland and reject imports above the glibc 2.35 floor. Musl builds use immutable Node 22.19.0 Alpine 3.22 on architecture-matched runners and require exact musl 1.2.5 plus the observed target-specific static form: x64 ELF `DYN` static PIE with `NOW PIE` flags or AArch64 ELF `EXEC`, both without an interpreter or shared-library imports. Synthetic fixtures prove policy only; cross-compilation, emulation, package metadata, and skipped jobs are not support evidence for a release.
 
-GNU builds use native Ubuntu 22.04 userland and reject imports above the glibc 2.35 floor. Musl builds use immutable Node 22.19.0 Alpine 3.22 on architecture-matched runners and require exact musl 1.2.5 plus the observed target-specific static form: x64 ELF `DYN` static PIE with `NOW PIE` flags or AArch64 ELF `EXEC`, both without an interpreter or shared-library imports. Windows builds use native `windows-2025` x64 and `windows-11-arm` ARM64, exact process/toolchain architecture agreement, `career.exe` regular non-symlink semantics without a Unix mode claim, and bounded PE32+/machine/reviewed-system-DLL import evidence. See [`contracts/npm-cli-distribution-v2.md`](contracts/npm-cli-distribution-v2.md).
+Native Windows is unsupported: the root crate rejects `target_os = "windows"` at compile time, and npm source has no Windows package template, target, executable route, binary policy, runner, or public-acceptance job. Windows users must build and run Career Core and pi-career through WSL; Rust and Node target Linux there, and Node reports `process.platform === "linux"`, so normal Linux architecture/libc selection and verification apply. See [`contracts/npm-cli-distribution-v2.md`](contracts/npm-cli-distribution-v2.md).
 
 Checked-in templates remain `private: true` even after release. Private current-host tests are prepared outside the checkout with:
 
@@ -69,7 +69,7 @@ trap 'rm -rf "$package_dir"' EXIT
 scripts/prepare-npm-cli-packages.sh --output-dir "$package_dir"
 ```
 
-`--allow-dirty` is local-test-only and records a private dirty non-candidate. Stable candidate scripts derive the release version from exact annotated `vX.Y.Z` source, require the reviewed `origin/main` SHA, Node 22.19.0/npm 11.6.2, rustc/Cargo 1.97.1, exact native runners, and external empty outputs. `npm-release.yml` supplies exactly eight ordered native tarballs, assembles the launcher ninth and last, and publishes through OIDC only after `npm-production` approval. Candidate commands themselves do not query or publish to npm.
+`--allow-dirty` is local-test-only and records a private dirty non-candidate. Stable candidate scripts derive the release version from exact annotated `vX.Y.Z` source, require the reviewed `origin/main` SHA, Node 22.19.0/npm 11.6.2, rustc/Cargo 1.97.1, exact native runners, and external empty outputs. `npm-release.yml` supplies exactly six ordered native tarballs, assembles the launcher seventh and last, and publishes through OIDC only after `npm-production` approval. Candidate commands themselves do not query or publish to npm.
 
 Run registry-free package/candidate/publish-driver verification with local reviewed Node 22.19.0 and npm 10.9.3 or publication npm 11.6.2:
 
@@ -79,7 +79,7 @@ scripts/test-npm-cli-packages.sh
 scripts/test-npm-publication.sh
 ```
 
-The package-contained SHA-256 is consistency evidence only. npm tarball integrity and npm SLSA registry provenance are separate acquisition evidence. No independent native-binary signature exists. Future releases use stable OIDC-only `npm-release.yml`; version-specific workflows remain historical. See [`contracts/npm-cli-distribution-v2.md`](contracts/npm-cli-distribution-v2.md) and [`releasing.md`](releasing.md).
+The package-contained SHA-256 is consistency evidence only. npm tarball integrity and npm SLSA registry provenance are separate acquisition evidence. No independent native-binary signature exists. Future releases use stable OIDC-only `npm-release.yml`. See [`contracts/npm-cli-distribution-v2.md`](contracts/npm-cli-distribution-v2.md) and [`releasing.md`](releasing.md).
 
 ## External integrations
 

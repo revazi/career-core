@@ -13,7 +13,7 @@ Usage: scripts/prepare-npm-publication-native.sh \
   --expected-target <approved-rust-target> \
   --expected-ref refs/tags/vX.Y.Z \
   --reviewed-sha <40-lowercase-hex> \
-  --runner-os <Linux|macOS|Windows> \
+  --runner-os <Linux|macOS> \
   --runner-arch <X64|ARM64> \
   --runner-image <bounded-runner-image>
 
@@ -106,18 +106,6 @@ case "$expected_target" in
     expected_runner_arch="ARM64"
     final_name="60-revazi-career-linux-arm64-musl-$release_version.tgz"
     ;;
-  x86_64-pc-windows-msvc)
-    platform_key="win32-x64-msvc"
-    expected_runner_os="Windows"
-    expected_runner_arch="X64"
-    final_name="70-revazi-career-win32-x64-msvc-$release_version.tgz"
-    ;;
-  aarch64-pc-windows-msvc)
-    platform_key="win32-arm64-msvc"
-    expected_runner_os="Windows"
-    expected_runner_arch="ARM64"
-    final_name="80-revazi-career-win32-arm64-msvc-$release_version.tgz"
-    ;;
   *) fail "expected target is not an approved native publication target" ;;
 esac
 [[ "$runner_os" == "$expected_runner_os" ]] || fail "runner OS does not match the approved native target"
@@ -139,19 +127,12 @@ mkdir -p "$resolved_output_dir/work" "$resolved_output_dir/tarballs"
 output_dir="$(cd "$resolved_output_dir" && pwd -P)"
 
 private_output="$output_dir/work/private"
-if [[ "$platform_key" == win32-* ]]; then
-  python3 "$script_dir/prepare-npm-cli-packages-windows.py" \
-    --output-dir "$private_output" \
-    --expected-target "$expected_target"
-else
-  "$script_dir/prepare-npm-cli-packages.sh" \
-    --output-dir "$private_output" \
-    --expected-target "$expected_target"
-fi
+"$script_dir/prepare-npm-cli-packages.sh" \
+  --output-dir "$private_output" \
+  --expected-target "$expected_target"
 
 platform_stage="$private_output/stage/$platform_key"
 executable="$platform_stage/career"
-[[ "$platform_key" == win32-* ]] && executable="$platform_stage/career.exe"
 inspection="$output_dir/work/native-inspection.json"
 "$script_dir/inspect-npm-native-binary.py" \
   --repository-root "$repository_root" \

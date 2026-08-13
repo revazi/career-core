@@ -9,6 +9,46 @@ install_root="$temporary_root/install"
 run_root="$temporary_root/outside-checkout"
 mkdir -p "$run_root"
 
+python3 - "$repository_root/src/lib.rs" <<'PY'
+import pathlib
+import sys
+
+source = pathlib.Path(sys.argv[1]).read_text(encoding="utf-8")
+policy = '''#[cfg(target_os = "windows")]
+compile_error!("native Windows is unsupported; build and run Career Core in WSL");'''
+if source.count(policy) != 1:
+    raise SystemExit("career-core native Windows compile rejection policy is missing or changed")
+if source.index(policy) > source.index("use serde"):
+    raise SystemExit("career-core native Windows compile rejection must precede library implementation")
+PY
+
+windows_policy_output="$temporary_root/native-windows-policy.rlib"
+windows_policy_stdout="$temporary_root/native-windows-policy.stdout"
+windows_policy_stderr="$temporary_root/native-windows-policy.stderr"
+if rustc \
+  --edition 2024 \
+  --crate-type lib \
+  --cfg 'target_os="windows"' \
+  -Aexplicit_builtin_cfgs_in_flags \
+  "$repository_root/src/lib.rs" \
+  -o "$windows_policy_output" \
+  >"$windows_policy_stdout" \
+  2>"$windows_policy_stderr"
+then
+  printf 'career-core unexpectedly compiled for native Windows\n' >&2
+  exit 1
+fi
+grep -Fq \
+  'native Windows is unsupported; build and run Career Core in WSL' \
+  "$windows_policy_stderr" || {
+  printf 'career-core native Windows rejection omitted exact WSL guidance\n' >&2
+  exit 1
+}
+[[ ! -e "$windows_policy_output" ]] || {
+  printf 'career-core native Windows rejection produced a library artifact\n' >&2
+  exit 1
+}
+
 cargo install \
   --path "$repository_root/crates/career-cli" \
   --locked \

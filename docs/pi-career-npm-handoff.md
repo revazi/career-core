@@ -4,13 +4,13 @@ This is the exact consumer transition contract. It is not permission to edit, pu
 
 ## Consumer boundary
 
-Protected `v0.1.1` publication and all-eight public acceptance passed in run `31346152236`; pi-career may address only:
+On macOS, Linux, or Linux under WSL, pi-career may address only:
 
 - package: exact `@revazi/career@0.1.1`
 - bin: `career`
 - launcher runtime: Node.js `>=22`
 
-The eight native platform packages are internal optional dependencies owned by the Career Core launcher. pi-career must never name, install, resolve, invoke, pin, select, or expose them.
+The six active Darwin/Linux platform packages are internal optional dependencies owned by the Career Core launcher. pi-career must never name, install, resolve, invoke, pin, select, or expose them. The root crate rejects native Windows compilation; on a Windows host pi-career must build and run through WSL, where Rust and Node target Linux and Node reports `process.platform === "linux"`.
 
 Exact npx process contract:
 
@@ -61,20 +61,17 @@ pi-career must preserve:
 
 npm registry integrity/provenance, package-contained SHA-256 consistency, and independent binary signatures are distinct. Career Core requires exact npm integrity and SLSA registry provenance, uses package-contained hashes only for consistency, and records independent native signatures as absent.
 
-## Transitional bundled-runtime removal gate
+## Consumer release gate
 
-Do not remove pi-career's transitional runtime until all conditions are true:
+Before a pi-career release changes its pinned Career package coordinate or managed launcher contract:
 
-1. the protected Career Core `v0.1.1` workflow completed successfully from the exact annotated tag and reviewed `origin/main` SHA;
-2. exact public `@revazi/career@0.1.1` and all eight internal packages expose the reviewed npm integrity and SLSA provenance;
-3. no-secret public-registry acceptance passed on native macOS ARM64/x64, GNU Linux ARM64/x64, musl Linux ARM64/x64, and Windows MSVC ARM64/x64;
-4. the temporary bootstrap token and GitHub environment secret were deleted and the npm token was revoked;
-5. package-level GitHub trusted publishers for all nine packages point to repository `revazi/career-core`, stable workflow `npm-release.yml`, environment `npm-production`, and publish permission, verified with `npm trust list`;
-6. a no-token OIDC rerun completed idempotently with exact integrity/provenance;
-7. a separate pi-career change tests configured/PATH/package-local/exact-npx order, explicit npx network consent, cancellation, diagnostics, and exact version pinning without naming internal packages; and
-8. a reviewed pi-career release no longer needs tracked transitional runtime archives.
+1. exact public `@revazi/career@X.Y.Z` and all six Darwin/Linux internal packages expose the reviewed npm integrity and SLSA provenance;
+2. package-level GitHub trusted publishers for all seven packages point to repository `revazi/career-core`, workflow `npm-release.yml`, environment `npm-production`, and publish permission, verified with `npm trust list`;
+3. no-token OIDC publication completes with exact integrity/provenance and public acceptance on all six target classes;
+4. a separate pi-career change tests configured/PATH/package-local/exact-npx order, explicit network behavior, cancellation, diagnostics, and exact version pinning without naming internal packages; and
+5. the pi-career release passes its full package, audit, compatibility, installation, and offline gates.
 
-Until every condition passes, Career Core retains the transitional artifact mechanism. Those archives are maintainer handoff inputs, not public installation or release assets.
+Career Core's transitional artifact mechanism remains a maintainer-only compatibility tool until separately removed; those archives are not public installation or release assets.
 
 ## Remaining external work
 
