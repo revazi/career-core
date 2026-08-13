@@ -411,6 +411,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--binary", type=pathlib.Path, required=True)
     parser.add_argument("--target", required=True, choices=sorted(SUPPORTED_TARGETS))
     parser.add_argument("--source-sha", required=True)
+    parser.add_argument("--expected-version", required=True)
     parser.add_argument("--runner-image", required=True)
     parser.add_argument(
         "--evidence-kind", required=True, choices=["exact_native_ci", "local_policy"]
@@ -428,6 +429,8 @@ def main() -> int:
             fail("native inspection evidence must be written outside the checkout")
         if re.fullmatch(r"[0-9a-f]{40}", args.source_sha) is None:
             fail("source SHA must be one full lowercase commit identifier")
+        if re.fullmatch(r"(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)", args.expected_version) is None:
+            fail("expected version must be one exact stable SemVer")
         if re.fullmatch(r"[A-Za-z0-9._/+:-]{1,128}", args.runner_image) is None:
             fail("runner image label is outside its reviewed bound")
         require_source_state(repository_root, args.source_sha, args.evidence_kind)
@@ -453,8 +456,8 @@ def main() -> int:
         observed_version = run_bounded(
             [str(binary_path), "--version"], "native execution"
         ).strip()
-        if observed_version != "career 0.1.1":
-            fail("native executable version is not exact lockstep 0.1.1")
+        if observed_version != f"career {args.expected_version}":
+            fail("native executable version is not exact lockstep expected version")
         verify_unchanged_bytes(
             binary_path,
             binary,

@@ -6,8 +6,8 @@ It is **not** an AI service. The core library performs no network requests, mode
 
 ## Release status
 
-- Source and CLI version: `0.1.1`
-- npm consumer package: exact `@revazi/career@0.1.1`
+- Source and CLI version: `0.2.0`
+- npm consumer package candidate: exact `@revazi/career@0.2.0`
 - Public CLI name: `career`
 - Minimum Rust version for source builds: Rust `1.85`
 - npm launcher runtime: Node.js `22` or newer
@@ -52,11 +52,11 @@ Document text is always data, never instructions.
 
 ### npm
 
-Install the exact accepted release:
+After the six-target publication and public-acceptance gate passes, install the exact release:
 
 ```bash
-npm install --save-exact @revazi/career@0.1.1
-npx --yes --package=@revazi/career@0.1.1 career --version
+npm install --save-exact @revazi/career@0.2.0
+npx --yes --package=@revazi/career@0.2.0 career --version
 ```
 
 Users install only `@revazi/career`. Its six active platform-specific optional packages are internal launcher implementation details and must not be installed, invoked, or pinned directly. Native Windows installation is unsupported; use WSL on a Windows host.
@@ -152,7 +152,7 @@ The Pi integration is maintained separately in [`revazi/pi-career`](https://gith
 On macOS, Linux, or Linux under WSL, pi-career should address only:
 
 ```text
-package: @revazi/career@0.1.1
+package: @revazi/career@0.2.0
 bin: career
 ```
 
@@ -192,7 +192,7 @@ cargo build --workspace --all-features --locked
 
 The complete required command ladder is in [`AGENTS.md`](AGENTS.md). Release publication has additional clean-source, annotated-tag, native-runner, candidate-integrity, npm provenance, and public-acceptance gates in [`docs/releasing.md`](docs/releasing.md).
 
-Source templates remain `private: true`. Generated public manifests, native binaries, provenance records, and tarballs are staged outside the checkout. No Rust crate, Homebrew formula, independent native signature, notarized binary, or custom GitHub Release asset is part of `v0.1.1`.
+Source templates remain `private: true`. Generated public manifests, native binaries, provenance records, and tarballs are staged outside the checkout. No Rust crate, Homebrew formula, independent native signature, notarized binary, or custom GitHub Release asset is part of the `v0.2.0` candidate.
 
 ## Security and privacy
 

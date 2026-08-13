@@ -139,6 +139,7 @@ inspection="$output_dir/work/native-inspection.json"
   --binary "$executable" \
   --target "$expected_target" \
   --source-sha "$reviewed_sha" \
+  --expected-version "$release_version" \
   --runner-image "$runner_image" \
   --evidence-kind exact_native_ci \
   --output "$inspection"

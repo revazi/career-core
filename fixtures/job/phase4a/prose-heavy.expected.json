@@ -2,7 +2,7 @@
   "schema_version": "career.job_normalization.v1",
   "policy_version": "job_normalization_v1",
   "reference_policy_version": "job_description_normalization_v6",
-  "core_version": "0.1.1",
+  "core_version": "0.2.0",
   "document_id": "synthetic-job-prose-v1",
   "deterministic_document": {
     "title": {

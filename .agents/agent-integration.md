@@ -4,7 +4,7 @@
 
 The `career` executable is the primary agent interface. A CLI is portable across coding-agent harnesses, inspectable, scriptable, and does not require each harness to implement a protocol client.
 
-Harness-specific adapters and bundled skills are maintained outside this repository. The optional native Pi integration lives in [`pi-career`](https://github.com/revazi/pi-career). Phase 9 prepares exact `@revazi/career@0.1.1` distribution around the same CLI; internal optional native packages are launcher-owned implementation details and do not move `pi-career` runtime ownership or Core authority.
+Harness-specific adapters and bundled skills are maintained outside this repository. The optional native Pi integration lives in [`pi-career`](https://github.com/revazi/pi-career). Phase 9 prepares exact `@revazi/career@0.2.0` distribution around the same CLI; internal optional native packages are launcher-owned implementation details and do not move `pi-career` runtime ownership or Core authority.
 
 The installed CLI embeds reviewed Draft 2020-12 schemas. Agents can discover exact contracts without a source checkout or network request:
 
@@ -56,17 +56,17 @@ Schema bundles retain the requested embedded root and recursively place dependen
 
 ## npm launcher contract
 
-The accepted Node 22+ `@revazi/career@0.1.1` launcher exposes the same `career` bin for six active macOS/Linux target classes. It resolves only its package-local optional implementation, positively identifies Linux libc, requires glibc 2.35 or newer for GNU packages, verifies strict versioned provenance and binary type/file-invariant/size/target/SHA-256 consistency, and preserves argv/stdin/stdout/stderr/exit/signal behavior. It has no PATH fallback, runtime download, lifecycle script, provider/network behavior, telemetry, or bypass. Package-contained SHA-256 is not a signature.
+The Node 22+ `@revazi/career@0.2.0` launcher candidate exposes the same `career` bin for six macOS/Linux target classes. It resolves only its package-local optional implementation, positively identifies Linux libc, requires glibc 2.35 or newer for GNU packages, verifies strict versioned provenance and binary type/file-invariant/size/target/SHA-256 consistency, and preserves argv/stdin/stdout/stderr/exit/signal behavior. It has no PATH fallback, runtime download, lifecycle script, provider/network behavior, telemetry, or bypass. Package-contained SHA-256 is not a signature.
 
-Agents and pi-career may use exact `0.1.1` on macOS and Linux. The root crate rejects native Windows compilation; Windows hosts must build and run under WSL, where Rust and Node target Linux and Node reports `process.platform === "linux"`. Catalog data, private templates, cross-compilation, emulation, and skipped jobs are never support evidence for a release.
+After publication acceptance, agents and pi-career may use exact `0.2.0` on macOS and Linux. The root crate rejects native Windows compilation; Windows hosts must build and run under WSL, where Rust and Node target Linux and Node reports `process.platform === "linux"`. Catalog data, private templates, cross-compilation, emulation, and skipped jobs are never support evidence for a release.
 
 After that gate, agents and managed consumers address only:
 
 ```bash
-npx --yes --package=@revazi/career@0.1.1 career <args>
+npx --yes --package=@revazi/career@0.2.0 career <args>
 ```
 
-Use exact `0.1.1`, never `latest` or a range. Never install or resolve a native implementation package directly. npx acquisition is outside launcher runtime. The separate [`../docs/pi-career-npm-handoff.md`](../docs/pi-career-npm-handoff.md) defines the consumer transition and bundled-runtime removal gates.
+Use exact `0.2.0`, never `latest` or a range. Never install or resolve a native implementation package directly. npx acquisition is outside launcher runtime. The separate [`../docs/pi-career-npm-handoff.md`](../docs/pi-career-npm-handoff.md) defines the consumer transition and bundled-runtime removal gates.
 
 ## Agent safety rules
 

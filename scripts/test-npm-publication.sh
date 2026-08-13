@@ -1151,6 +1151,7 @@ for value in (
     "chmod 0644 /output/evidence.json",
     "scripts/inspect-npm-native-binary.py",
     'test "$(node --version)" = "v22.19.0"',
+    "--expected-version",
     "--evidence-kind exact_native_ci",
     "Confirm workflow remains preparation-only",
 ):
@@ -1196,6 +1197,7 @@ for value in (
     '"musl 1.2.5"',
     "MAX_COMMAND_OUTPUT_BYTES",
     "MAX_EVIDENCE_BYTES",
+    'parser.add_argument("--expected-version", required=True)',
     "verify_unchanged_bytes",
     "O_NOFOLLOW",
     '"glibc 2.35"',

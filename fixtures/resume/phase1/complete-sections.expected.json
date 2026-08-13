@@ -1,7 +1,7 @@
 {
   "schema_version": "career.resume_evaluation.v1",
   "policy_version": "resume_section_coverage_v1",
-  "core_version": "0.1.1",
+  "core_version": "0.2.0",
   "document_id": "phase1-complete-sections",
   "scope": "section_coverage",
   "score": 100,
